@@ -1,0 +1,56 @@
+##################
+# Setup you host #
+##################
+sudo apt-get update
+
+sudo apt-get upgrade
+
+sudo apt-get install -y git curl vim build-essential zlib1g-dev libssl-dev libreadline-gplv2-dev
+	strategicsec
+
+sudo apt-get purge ruby ruby1.9.1
+	strategicsec
+
+#########################################################
+# Add some env stuff to the bottom of your .bashrc file #
+#########################################################
+echo export RBENV_ROOT=\"${HOME}/.rbenv\" >> ~/.bashrc
+echo export PATH=\"~/.rbenv/bin:$PATH\" >> ~/.bashrc
+echo export PATH=\"~/.rbenv/shims:$PATH\" >> ~/.bashrc
+ 
+echo if [ -d \"${RBENV_ROOT}\" ]; then >> ~/.bashrc
+echo   export PATH=\"${RBENV_ROOT}/bin:${PATH}\" >> ~/.bashrc
+echo   eval \"$(rbenv init -)\" >> ~/.bashrc
+echo fi >> ~/.bashrc
+
+
+
+#################
+# Install rbenv #
+#################
+source ~/.bashrc
+
+cd ~
+curl -L https://raw.github.com/fesplugas/rbenv-installer/master/bin/rbenv-installer | bash
+
+rbenv install 2.1.5
+
+rbenv global 2.1.5
+
+
+
+#####################
+# Update Metasploit #
+#####################
+cd ~/toolz/
+sudo rm -rf metasploit
+	strategicsec
+git clone https://github.com/rapid7/metasploit-framework.git
+mv metasploit-framework/ metasploit/
+cd ~/toolz/metasploit/
+sudo bash -c 'for MSF in $(ls msf*); do ln -s /home/strategicsec/toolz/metasploit/$MSF /usr/local/bin/$MSF;done'
+sudo chmod 777 /home/strategicsec/.msf4/*
+gem install metasploit_data_models -v '0.23.1'
+gem install bundler
+./msfupdate
+./msfconsole
