@@ -1,0 +1,314 @@
+#########################################
+# Teaching the r00kies NMap NSE   	#
+# By Joe McCray  		 	#
+#########################################
+
+
+Let's have you connect to the VPN. I wanted to make sure that I did some of the stuff on my local virtual machines because I want you to do the hunting for vulnerable hosts to attack. If I attack the live targets in the lab then I'll end up giving away a lot of the little secrets that I want you to discover.
+
+So, let's start with some lab fun (just a little bit)...lol. Here are the instructions for connecting to the VPN:
+https://s3.amazonaws.com/StrategicSec-Files/Strategic-Security-2016-VPN-Info.pdf 
+
+sudo nmap -sP 10.0.0.0/24
+
+sudo nmap -sL 10.0.0.0/24
+
+cd ~/toolz
+
+wget --no-check-certificate https://raw.githubusercontent.com/BenDrysdale/ipcrawl/master/ipcrawl.c
+
+gcc ipcrawl.c -o ipcrawl
+
+chmod 777 ipcrawl
+
+./ipcrawl 10.0.0.1 10.0.0.254
+
+
+
+wget --no-check-certificate https://dl.packetstormsecurity.net/UNIX/scanners/propecia.c
+
+gcc propecia.c propecia
+
+sudo cp propecia /bin
+
+propecia 10.0.0 22
+
+propecia 10.0.0 3389
+
+nmap -Pn -sV -T 5 -oG - -p 21,22,80,443,1433,3389 10.0.0.* | grep open
+
+nmap -Pn -sV -T 5 -oG - -p 21,22,80,443,1433,3389 10.0.0.* | awk '/open/{print $2 " " $3}'
+
+nmap -Pn -sV -T 5 -oG - -p 21,22,80,443,1433,3389 10.0.0.* | awk '/open/{print $2}' | wc -l
+
+nmap -Pn -sV -T 5 -oG - -p 21,22,80,443,1433,3389 10.0.0.* | awk '/open/{print $2}'
+
+nmap -Pn -sV -T 5 -oG - -p 21,22,80,443,1433,3389 10.0.0.* | awk '/open/{print $2}' > ~/labnet-ip-list.txt
+
+
+##########################
+#  Playing with Nmap NSE #
+##########################
+ 
+nmap -Pn -p80 --script ip-geolocation-* strategicsec.com
+ 
+nmap -p80 --script dns-brute strategicsec.com
+ 
+nmap --script http-robtex-reverse-ip secore.info
+ 
+nmap -Pn -p80 --script=http-headers strategicsec.com
+ 
+ 
+ls /usr/share/nmap/scripts | grep http
+nmap -Pn -p80 --script=http-* strategicsec.com
+
+cd ~/toolz
+wget http://wkhtmltopdf.googlecode.com/files/wkhtmltoimage-0.11.0_rc1-static-i386.tar.bz2
+tar -jxvf wkhtmltoimage-0.11.0_rc1-static-i386.tar.bz2
+sudo cp wkhtmltoimage-i386 /usr/local/bin/
+
+git clone git://github.com/SpiderLabs/Nmap-Tools.git
+cd Nmap-Tools/NSE/
+sudo cp http-screenshot.nse /usr/share/nmap/scripts/
+sudo nmap --script-updatedb
+
+cd ~/toolz/
+mkdir labscreenshots
+cd labscreenshots/
+
+sudo nmap -Pn -T 5 -p 80 -A --script=http-screenshot 10.0.0.0/24 -iL /home/strategicsec/labnet-ip-list.txt
+
+
+
+
+vi screenshots.sh
+
+#!/bin/bash
+printf "<HTML><BODY><BR>" > labnet-port-80-screenshots.html
+ls -1 *.png | awk -F : '{ print $1":"$2"\n<BR><IMG SRC=\""$1"%3A"$2"\" width=400><BR><BR>"}' >> labnet-port-80-screenshots.html
+printf "</BODY></HTML>" >> labnet-port-80-screenshots.html
+
+
+
+
+
+sh screenshots.sh
+
+
+
+
+##########################
+# Nmap NSE tricks to try #
+##########################
+sudo nmap -Pn -n --open -p21 --script=banner,ftp-anon,ftp-bounce,ftp-proftpd-backdoor,ftp-vsftpd-backdoor 10.0.0.0/24
+
+sudo nmap -Pn -n --open -p22 --script=sshv1,ssh2-enum-algos 10.0.0.0/24
+
+sudo nmap -Pn -n -sU --open -p53 --script=dns-blacklist,dns-cache-snoop,dns-nsec-enum,dns-nsid,dns-random-srcport,dns-random-txid,dns-recursion,dns-service-discovery,dns-update,dns-zeustracker,dns-zone-transfer 10.0.0.0/24
+
+sudo nmap -Pn -n --open -p111 --script=nfs-ls,nfs-showmount,nfs-statfs,rpcinfo 10.0.0.0/24
+
+sudo nmap -Pn -n --open -p445 --script=msrpc-enum,smb-enum-domains,smb-enum-groups,smb-enum-processes,smb-enum-sessions,smb-enum-shares,smb-enum-users,smb-mbenum,smb-os-discovery,smb-security-mode,smb-server-stats,smb-system-info,smbv2-enabled,stuxnet-detect 10.0.0.0/24
+
+sudo nmap -Pn -n --open -p1433 --script=ms-sql-dump-hashes,ms-sql-empty-password,ms-sql-info 10.0.0.0/24
+
+sudo nmap -Pn -n --open -p1521 --script=oracle-sid-brute --script oracle-enum-users --script-args oracle-enum-users.sid=ORCL,userdb=orausers.txt 10.0.0.0/24
+
+sudo nmap -Pn -n --open -p3306 --script=mysql-databases,mysql-empty-password,mysql-info,mysql-users,mysql-variables 10.0.0.0/24
+
+sudo nmap -Pn -n --open -p3389 --script=rdp-vuln-ms12-020,rdp-enum-encryption 10.0.0.0/24
+
+sudo nmap -Pn -n --open -p5900 --script=realvnc-auth-bypass,vnc-info 10.0.0.0/24
+
+sudo nmap -Pn -n --open -p6000-6005 --script=x11-access 10.0.0.0/24
+
+sudo nmap -Pn -n --open -p27017 --script=mongodb-databases,mongodb-info 10.0.0.0/24
+
+
+
+ 
+#####################################
+# Writing Your Own Nmap NSE Scripts #
+#####################################
+ 
+- Reference for this tutorial is:
+https://thesprawl.org/research/writing-nse-scripts-for-vulnerability-scanning/
+ 
+----------------------------------------------------------------------
+sudo vi /usr/share/nmap/scripts/intro-nse.nse
+ 
+-- The Head Section --
+-- The Rule Section --
+portrule = function(host, port)
+    return port.protocol == "tcp"
+            and port.number == 80
+            and port.state == "open"
+end
+ 
+-- The Action Section --
+action = function(host, port)
+    return "Advanced Pentester Night School!"
+end
+----------------------------------------------------------------------
+ 
+- Ok, now that we've made that change let's run the script
+sudo nmap --script=/usr/share/nmap/scripts/intro-nse.nse strategicsec.com -p 22,80,443
+ 
+ 
+ 
+ 
+ 
+ 
+----------------------------------------------------------------------
+sudo vi /usr/share/nmap/scripts/intro-nse.nse
+ 
+-- The Head Section --
+local shortport = require "shortport"
+ 
+-- The Rule Section --
+portrule = shortport.http
+ 
+ 
+-- The Action Section --
+action = function(host, port)
+    return "Advanced Pentester Night School!"
+end
+----------------------------------------------------------------------
+ 
+- Ok, now that we've made that change let's run the script
+sudo nmap --script=/usr/share/nmap/scripts/intro-nse.nse strategicsec.com -p 22,80,443
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+OK, now let's have some fun with my buddy Carlos Perez's website which you should have been looking at quite a lot if you were trying to get Ruby 2.1.5 working last year.
+ 
+----------------------------------------------------------------------
+sudo vi /usr/share/nmap/scripts/intro-nse.nse
+ 
+-- The Head Section --
+local shortport = require "shortport"
+local http = require "http"
+ 
+-- The Rule Section --
+portrule = shortport.http
+ 
+-- The Action Section --
+action = function(host, port)
+ 
+    local uri = "/installing-metasploit-in-ubunt/"
+    local response = http.get(host, port, uri)
+    return response.status
+ 
+end
+----------------------------------------------------------------------
+ 
+- Ok, now that we've made that change let's run the script
+sudo nmap --script=/usr/share/nmap/scripts/intro-nse.nse darkoperator.com -p 22,80,443
+ 
+ 
+ 
+ 
+----------------------------------------------------------------------
+sudo vi /usr/share/nmap/scripts/intro-nse.nse
+ 
+-- The Head Section --
+local shortport = require "shortport"
+local http = require "http"
+ 
+-- The Rule Section --
+portrule = shortport.http
+ 
+-- The Action Section --
+action = function(host, port)
+ 
+    local uri = "/installing-metasploit-in-ubunt/"
+    local response = http.get(host, port, uri)
+ 
+    if ( response.status == 200 ) then
+        return response.body
+    end
+ 
+end
+----------------------------------------------------------------------
+ 
+- Ok, now that we've made that change let's run the script
+sudo nmap --script=/usr/share/nmap/scripts/intro-nse.nse darkoperator.com -p 22,80,443
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+----------------------------------------------------------------------
+sudo vi /usr/share/nmap/scripts/intro-nse.nse
+ 
+-- The Head Section --
+local shortport = require "shortport"
+local http = require "http"
+local string = require "string"
+ 
+-- The Rule Section --
+portrule = shortport.http
+ 
+-- The Action Section --
+action = function(host, port)
+ 
+    local uri = "/installing-metasploit-in-ubunt/"
+    local response = http.get(host, port, uri)
+ 
+    if ( response.status == 200 ) then
+        local title = string.match(response.body, "Installing Metasploit in Ubuntu and Debian")
+        return title
+    end
+ 
+end
+----------------------------------------------------------------------
+ 
+- Ok, now that we've made that change let's run the script
+sudo nmap --script=/usr/share/nmap/scripts/intro-nse.nse darkoperator.com -p 22,80,443
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+----------------------------------------------------------------------
+sudo vi /usr/share/nmap/scripts/intro-nse.nse
+ 
+-- The Head Section --
+local shortport = require "shortport"
+local http = require "http"
+local string = require "string"
+ 
+-- The Rule Section --
+portrule = shortport.http
+ 
+-- The Action Section --
+action = function(host, port)
+ 
+    local uri = "/installing-metasploit-in-ubunt/"
+    local response = http.get(host, port, uri)
+ 
+    if ( response.status == 200 ) then
+        local title = string.match(response.body, "Installing Metasploit in Ubuntu and Debian")
+ 
+        if (title) then
+            return "Vulnerable"
+        else
+            return "Not Vulnerable"
+        end
+    end
+end
+ 
+----------------------------------------------------------------------
+ 
+- Ok, now that we've made that change let's run the script
+sudo nmap --script=/usr/share/nmap/scripts/intro-nse.nse darkoperator.com -p 22,80,443

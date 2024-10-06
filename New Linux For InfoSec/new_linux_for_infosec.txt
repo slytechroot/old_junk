@@ -1,0 +1,1102 @@
+##############################
+# Linux For InfoSec Pros     # 
+# By Joe McCray              #
+##############################
+
+
+
+##########
+# VMWare #
+##########
+- For this workshop you'll need the latest version of VMWare Workstation (Windows), Fusion (Mac), or Player.
+
+- http://www.vmware.com/ap/products/player.html
+
+
+- Although you can get the VM to run in VirtualBox, I will not be supporting this configuration for this class.
+
+
+##########################
+# Download the attack VM #
+##########################
+https://s3.amazonaws.com/StrategicSec-VMs/StrategicsecUbuntu14.zip
+user: strategicsec
+pass: strategicsec
+
+- Here is a good set of slides for getting started with Linux:
+http://www.slideshare.net/olafusimichael/linux-training-24086319
+
+
+
+
+- Log in to your Ubuntu host with the following credentials:
+	user: strategicsec
+	pass: strategicsec
+
+
+
+- I prefer to use Putty to SSH into my Ubuntu host on pentests and I'll be teaching this class in the same manner that I do pentests.
+- You can download Putty from here:
+- http://the.earth.li/~sgtatham/putty/latest/x86/putty.exe
+
+
+- For the purpose of this workshop 192.168.230.128 is my Ubuntu IP address so anytime you see that IP you'll know that's my Ubuntu host
+
+
+
+########################
+# Basic Linux Commands #
+########################
+
+pwd
+
+whereis pwd
+
+which pwd
+
+sudo find / -name pwd
+
+/bin/pwd
+
+mkdir test
+
+cd test
+
+touch one two three
+
+ls -l t		(without pressing the Enter key, press the Tab key twice. What happens?)
+
+h		(and again without pressing the Enter key, press the Tab key twice. What happens?)
+
+Press the 'Up arrow key'	(What happens?)
+
+Press 'Ctrl-A'			(What happens?)
+
+ls
+
+clear				(What happens?)
+
+echo one > one
+
+cat one				(What happens?)
+
+man cat				(What happens?)
+	q
+
+cat two
+
+cat one > two
+
+cat two
+
+cat one two > three
+
+cat three
+
+echo four >> three
+
+cat three 			(What happens?)
+
+wc -l three
+
+man wc
+	q
+
+cat three | grep four
+
+cat three | grep one
+
+man grep
+	q
+
+
+sudo grep eth[01] /etc/*	(What happens?)
+
+cat /etc/iftab
+
+
+man ps
+	q
+
+ps
+
+ps aux
+
+ps aux | less
+
+Press the 'Up arrow key'	(What happens?)
+
+Press the 'Down arrow key'	(What happens?)
+	q
+
+top
+
+############
+# VIM Demo #
+############
+http://www.thegeekstuff.com/2009/03/8-essential-vim-editor-navigation-fundamentals/
+
+-- DO VIM THIS TUTORIAL --
+
+
+
+#########################################################################
+# What kind of Linux am I on and how can I find out? 			#
+# Great reference: 							#
+# https://blog.g0tmi1k.com/2011/08/basic-linux-privilege-escalation/ 	#
+#########################################################################
+- What’s the distribution type? What version?
+-------------------------------------------
+cat /etc/issue
+cat /etc/*-release
+cat /etc/lsb-release      		# Debian based
+cat /etc/redhat-release   		# Redhat based
+
+
+
+- What’s the kernel version? Is it 64-bit?
+-------------------------------------------
+cat /proc/version
+uname -a
+uname -mrs
+rpm -q kernel
+dmesg | grep Linux
+ls /boot | grep vmlinuz-
+
+
+
+- What can be learnt from the environmental variables?
+----------------------------------------------------
+cat /etc/profile
+cat /etc/bashrc
+cat ~/.bash_profile
+cat ~/.bashrc
+cat ~/.bash_logout
+env
+set
+
+
+- What services are running? Which service has which user privilege?
+------------------------------------------------------------------
+ps aux
+ps -ef
+top
+cat /etc/services
+
+
+- Which service(s) are been running by root? Of these services, which are vulnerable - it’s worth a double check!
+---------------------------------------------------------------------------------------------------------------
+ps aux | grep root
+ps -ef | grep root
+
+
+
+- What applications are installed? What version are they? Are they currently running?
+------------------------------------------------------------------------------------
+ls -alh /usr/bin/
+ls -alh /sbin/
+dpkg -l
+rpm -qa
+ls -alh /var/cache/apt/archivesO
+ls -alh /var/cache/yum/
+
+
+- Any of the service(s) settings misconfigured? Are any (vulnerable) plugins attached?
+------------------------------------------------------------------------------------
+cat /etc/syslog.conf
+cat /etc/chttp.conf
+cat /etc/lighttpd.conf
+cat /etc/cups/cupsd.conf
+cat /etc/inetd.conf
+cat /etc/apache2/apache2.conf
+cat /etc/my.conf
+cat /etc/httpd/conf/httpd.conf
+cat /opt/lampp/etc/httpd.conf
+ls -aRl /etc/ | awk '$1 ~ /^.*r.*/
+
+
+
+- What jobs are scheduled?
+------------------------
+crontab -l
+ls -alh /var/spool/cron
+ls -al /etc/ | grep cron
+ls -al /etc/cron*
+cat /etc/cron*
+cat /etc/at.allow
+cat /etc/at.deny
+cat /etc/cron.allow
+cat /etc/cron.deny
+cat /etc/crontab
+cat /etc/anacrontab
+cat /var/spool/cron/crontabs/root
+
+
+- Any plain text usernames and/or passwords?
+------------------------------------------
+grep -i user [filename]
+grep -i pass [filename]
+grep -C 5 "password" [filename]
+find . -name "*.php" -print0 | xargs -0 grep -i -n "var $password"   		# Search for Joomla passwords
+
+
+- What NIC(s) does the system have? Is it connected to another network?
+---------------------------------------------------------------------
+/sbin/ifconfig -a
+cat /etc/network/interfaces
+cat /etc/sysconfig/network
+
+
+- What are the network configuration settings? What can you find out about this network? DHCP server? DNS server? Gateway?
+------------------------------------------------------------------------------------------------------------------------
+cat /etc/resolv.conf
+cat /etc/sysconfig/network
+cat /etc/networks
+iptables -L
+hostname
+dnsdomainname
+
+- What other users & hosts are communicating with the system?
+-----------------------------------------------------------
+lsof -i
+lsof -i :80
+grep 80 /etc/services
+netstat -antup
+netstat -antpx
+netstat -tulpn
+chkconfig --list
+chkconfig --list | grep 3:on
+last
+w
+
+
+
+- Whats cached? IP and/or MAC addresses
+-------------------------------------
+arp -e
+route
+/sbin/route -nee
+
+
+- Who are you? Who is logged in? Who has been logged in? Who else is there? Who can do what?
+------------------------------------------------------------------------------------------
+id
+who
+w
+last
+cat /etc/passwd | cut -d:    # List of users
+grep -v -E "^#" /etc/passwd | awk -F: '$3 == 0 { print $1}'   # List of super users
+awk -F: '($3 == "0") {print}' /etc/passwd   # List of super users
+cat /etc/sudoers
+sudo -l
+
+
+
+- What sensitive files can be found?
+----------------------------------
+cat /etc/passwd
+cat /etc/group
+cat /etc/shadow
+ls -alh /var/mail/
+
+
+
+- Anything “interesting” in the home directorie(s)? If it’s possible to access
+----------------------------------------------------------------------------
+ls -ahlR /root/
+ls -ahlR /home/
+
+
+- Are there any passwords in; scripts, databases, configuration files or log files? Default paths and locations for passwords
+---------------------------------------------------------------------------------------------------------------------------
+cat /var/apache2/config.inc
+cat /var/lib/mysql/mysql/user.MYD
+cat /root/anaconda-ks.cfg
+
+
+- What has the user being doing? Is there any password in plain text? What have they been edting?
+-----------------------------------------------------------------------------------------------
+cat ~/.bash_history
+cat ~/.nano_history
+cat ~/.atftp_history
+cat ~/.mysql_history
+cat ~/.php_history
+
+
+
+- What user information can be found?
+-----------------------------------
+cat ~/.bashrc
+cat ~/.profile
+cat /var/mail/root
+cat /var/spool/mail/root
+
+
+- Can private-key information be found?
+-------------------------------------
+cat ~/.ssh/authorized_keys
+cat ~/.ssh/identity.pub
+cat ~/.ssh/identity
+cat ~/.ssh/id_rsa.pub
+cat ~/.ssh/id_rsa
+cat ~/.ssh/id_dsa.pub
+cat ~/.ssh/id_dsa
+cat /etc/ssh/ssh_config
+cat /etc/ssh/sshd_config
+cat /etc/ssh/ssh_host_dsa_key.pub
+cat /etc/ssh/ssh_host_dsa_key
+cat /etc/ssh/ssh_host_rsa_key.pub
+cat /etc/ssh/ssh_host_rsa_key
+cat /etc/ssh/ssh_host_key.pub
+cat /etc/ssh/ssh_host_key
+
+
+- Any settings/files (hidden) on website? Any settings file with database information?
+------------------------------------------------------------------------------------
+ls -alhR /var/www/
+ls -alhR /srv/www/htdocs/
+ls -alhR /usr/local/www/apache22/data/
+ls -alhR /opt/lampp/htdocs/
+ls -alhR /var/www/html/
+
+
+- Is there anything in the log file(s) (Could help with “Local File Includes”!)
+-----------------------------------------------------------------------------
+cat /etc/httpd/logs/access_log
+cat /etc/httpd/logs/access.log
+cat /etc/httpd/logs/error_log
+cat /etc/httpd/logs/error.log
+cat /var/log/apache2/access_log
+cat /var/log/apache2/access.log
+cat /var/log/apache2/error_log
+cat /var/log/apache2/error.log
+cat /var/log/apache/access_log
+cat /var/log/apache/access.log
+cat /var/log/auth.log
+cat /var/log/chttp.log
+cat /var/log/cups/error_log
+cat /var/log/dpkg.log
+cat /var/log/faillog
+cat /var/log/httpd/access_log
+cat /var/log/httpd/access.log
+cat /var/log/httpd/error_log
+cat /var/log/httpd/error.log
+cat /var/log/lastlog
+cat /var/log/lighttpd/access.log
+cat /var/log/lighttpd/error.log
+cat /var/log/lighttpd/lighttpd.access.log
+cat /var/log/lighttpd/lighttpd.error.log
+cat /var/log/messages
+cat /var/log/secure
+cat /var/log/syslog
+cat /var/log/wtmp
+cat /var/log/xferlog
+cat /var/log/yum.log
+cat /var/run/utmp
+cat /var/webmin/miniserv.log
+cat /var/www/logs/access_log
+cat /var/www/logs/access.log
+ls -alh /var/lib/dhcp3/
+ls -alh /var/log/postgresql/
+ls -alh /var/log/proftpd/
+ls -alh /var/log/samba/
+
+- Note: auth.log, boot, btmp, daemon.log, debug, dmesg, kern.log, mail.info, mail.log, mail.warn, messages, syslog, udev, wtmp
+
+
+
+
+#################
+# IPTables Demo #
+#################
+- Reference:
+http://www.thegeekstuff.com/2011/06/iptables-rules-examples/
+
+- Delete Existing Rules
+---------------------
+sudo /sbin/iptables -F
+	(or)
+sudo /sbin/iptables --flush
+
+
+
+- Set Default Chain Policies
+--------------------------
+iptables -P INPUT DROP
+iptables -P FORWARD DROP
+iptables -P OUTPUT DROP
+
+
+
+- Delete Existing Rules
+---------------------
+sudo /sbin/iptables -F
+	(or)
+sudo /sbin/iptables --flush
+
+
+- Block a Specific ip-address
+---------------------------
+BLOCK_THIS_IP="1.2.3.4"
+iptables -A INPUT -s "$BLOCK_THIS_IP" -j DROP
+
+
+iptables -A INPUT -i eth0 -s "$BLOCK_THIS_IP" -j DROP
+iptables -A INPUT -i eth0 -p tcp -s "$BLOCK_THIS_IP" -j DROP
+
+
+- Allow ALL Incoming SSH
+----------------------
+iptables -A INPUT -i eth0 -p tcp --dport 22 -m state --state NEW,ESTABLISHED -j ACCEPT
+iptables -A OUTPUT -o eth0 -p tcp --sport 22 -m state --state ESTABLISHED -j ACCEPT
+
+
+- Allow Incoming SSH only from a Sepcific Network
+-----------------------------------------------
+iptables -A INPUT -i eth0 -p tcp -s 192.168.100.0/24 --dport 22 -m state --state NEW,ESTABLISHED -j ACCEPT
+iptables -A OUTPUT -o eth0 -p tcp --sport 22 -m state --state ESTABLISHED -j ACCEPT
+
+
+- Allow Incoming HTTP and HTTPS
+-----------------------------
+iptables -A INPUT -i eth0 -p tcp --dport 80 -m state --state NEW,ESTABLISHED -j ACCEPT
+iptables -A OUTPUT -o eth0 -p tcp --sport 80 -m state --state ESTABLISHED -j ACCEPT
+
+
+iptables -A INPUT -i eth0 -p tcp --dport 443 -m state --state NEW,ESTABLISHED -j ACCEPT
+iptables -A OUTPUT -o eth0 -p tcp --sport 443 -m state --state ESTABLISHED -j ACCEPT
+
+
+
+- Combine Multiple Rules Together using MultiPorts
+------------------------------------------------
+iptables -A INPUT -i eth0 -p tcp -m multiport --dports 22,80,443 -m state --state NEW,ESTABLISHED -j ACCEPT
+iptables -A OUTPUT -o eth0 -p tcp -m multiport --sports 22,80,443 -m state --state ESTABLISHED -j ACCEPT                                                                                                                                                                                 
+
+
+- Allow Outgoing SSH
+------------------
+iptables -A OUTPUT -o eth0 -p tcp --dport 22 -m state --state NEW,ESTABLISHED -j ACCEPT
+iptables -A INPUT -i eth0 -p tcp --sport 22 -m state --state ESTABLISHED -j ACCEPT
+
+
+
+
+
+
+
+
+
+####################
+# MD5 Hashing Demo #
+####################
+mkdir ~/demo
+cd ~/demo
+
+
+
+mkdir hashdemo
+cd hashdemo
+echo test > test.txt
+cat test.txt
+md5sum test.txt
+echo hello >> test.txt
+cat test.txt
+md5sum test.txt
+cd ..
+
+
+
+Reference:
+https://www.howtoforge.com/tutorial/linux-commandline-encryption-tools/
+
+
+#################################
+# Symmetric Key Encryption Demo #
+#################################
+mkdir gpgdemo
+cd gpgdemo
+echo test > test.txt
+cat test.txt
+gpg -c test.txt
+	password
+	password
+ls | grep test
+cat test.txt
+cat test.txt.gpg
+rm -rf test.txt
+ls | grep test
+gpg -o output.txt test.txt.gpg
+cat output.txt
+
+
+#########################################################################################################################
+# Asymmetric Key Encryption Demo 											#
+#															#
+# Configure random number generator 											#
+# https://www.howtoforge.com/helping-the-random-number-generator-to-gain-enough-entropy-with-rng-tools-debian-lenny	#
+#########################################################################################################################
+
+sudo apt-get install rng-tools
+	strategicsec
+
+/etc/init.d/rng-tools start
+
+sudo rngd -r /dev/urandom
+	strategicsec
+
+
+echo hello > file1.txt
+echo goodbye > file2.txt
+echo green > file3.txt
+echo blue > file4.txt
+
+tar czf files.tar.gz *.txt
+
+gpg --gen-key
+	1
+	1024
+	0
+	y
+	John Doe
+	john@doe.com
+	--blank comment--
+	O
+		password
+		password	
+
+
+
+gpg --armor --output file-enc-pubkey.txt --export 'John Doe'
+
+cat file-enc-pubkey.txt
+
+gpg --armor --output file-enc-privkey.asc --export-secret-keys 'John Doe'
+
+cat file-enc-privkey.asc
+
+gpg --encrypt --recipient 'John Doe' files.tar.gz
+
+rm -rf files.tar.gz *.txt
+
+ls
+
+tar -zxvf files.tar.gz.gpg
+
+gpg --output output.tar.gz --decrypt files.tar.gz.gpg
+	password
+
+tar -zxvf output.tar.gz
+
+ls
+
+Reference:
+http://linoxide.com/security/gpg-comand-linux-how-to-encrypt-and-decrypt-file/
+
+
+
+############################
+# Encryption using OpenSSL #
+############################
+openssl genrsa -out private_key.pem 1024
+openssl rsa -in private_key.pem -out public_key.pem -outform PEM -pubout
+
+
+echo hello > encrypt.txt
+openssl rsautl -encrypt -inkey public_key.pem -pubin -in encrypt.txt -out encrypt.dat
+
+cat encrypt.dat
+
+rm -rf encrypt.txt
+
+ls
+
+openssl rsautl -decrypt -inkey private_key.pem -in encrypt.dat -out decrypt.txt
+
+cat decrypt.txt
+
+
+
+
+##############################################
+# Log Analysis with Linux command-line tools #
+##############################################
+- The following command line executables are found in the Mac as well as most Linux Distributions.
+ 
+cat –  prints the content of a file in the terminal window
+grep – searches and filters based on patterns
+awk –  can sort each row into fields and display only what is needed
+sed –  performs find and replace functions
+sort – arranges output in an order
+uniq – compares adjacent lines and can report, filter or provide a count of duplicates
+ 
+ 
+ 
+###############
+# Apache Logs #
+###############
+ 
+Reference:
+http://www.the-art-of-web.com/system/logs/
+ 
+wget https://s3.amazonaws.com/SecureNinja/Python/access_log
+ 
+ 
+- You want to list all user agents ordered by the number of times they appear (descending order):
+ 
+awk -F\" '{print $6}' access_log | sort | uniq -c | sort -fr
+ 
+ 
+ 
+- Using the default separator which is any white-space (spaces or tabs) we get the following:
+ 
+awk '{print $1}' access_log         # ip address (%h)
+awk '{print $2}' access_log         # RFC 1413 identity (%l)
+awk '{print $3}' access_log         # userid (%u)
+awk '{print $4,5}' access_log       # date/time (%t)
+awk '{print $9}' access_log         # status code (%>s)
+awk '{print $10}' access_log        # size (%b)
+ 
+- You might notice that we've missed out some items. To get to them we need to set the delimiter to the " character which changes the way the lines are 'exploded' and allows the following:
+ 
+awk -F\" '{print $2}' access_log    # request line (%r)
+awk -F\" '{print $4}' access_log    # referer
+awk -F\" '{print $6}' access_log    # user agent
+ 
+ 
+awk -F\" '{print $6}' access_log \
+  | sed 's/(\([^;]\+; [^;]\+\)[^)]*)/(\1)/' \
+  | sort | uniq -c | sort -fr
+ 
+ 
+- The next step is to start filtering the output so you can narrow down on a certain page or referer. Would you like to know which pages Google has been requesting from your site?
+ 
+awk -F\" '($6 ~ /Googlebot/){print $2}' access_log | awk '{print $2}'
+Or who's been looking at your guestbook?
+ 
+awk -F\" '($2 ~ /guestbook\.html/){print $6}' access_log
+ 
+ 
+Reference:
+https://blog.nexcess.net/2011/01/21/one-liners-for-apache-log-files/
+ 
+# top 20 URLs from the last 5000 hits
+tail -5000 ./access_log | awk '{print $7}' | sort | uniq -c | sort -rn | head -20
+tail -5000 ./access_log | awk '{freq[$7]++} END {for (x in freq) {print freq[x], x}}' | sort -rn | head -20
+ 
+# top 20 URLS excluding POST data from the last 5000 hits
+tail -5000 ./access_log | awk -F"[ ?]" '{print $7}' | sort | uniq -c | sort -rn | head -20
+tail -5000 ./access_log | awk -F"[ ?]" '{freq[$7]++} END {for (x in freq) {print freq[x], x}}' | sort -rn | head -20
+ 
+# top 20 IPs from the last 5000 hits
+tail -5000 ./access_log | awk '{print $1}' | sort | uniq -c | sort -rn | head -20
+tail -5000 ./access_log | awk '{freq[$1]++} END {for (x in freq) {print freq[x], x}}' | sort -rn | head -20
+ 
+# top 20 URLs requested from a certain ip from the last 5000 hits
+IP=1.2.3.4; tail -5000 ./access_log | grep $IP | awk '{print $7}' | sort | uniq -c | sort -rn | head -20
+IP=1.2.3.4; tail -5000 ./access_log | awk -v ip=$IP ' $1 ~ ip {freq[$7]++} END {for (x in freq) {print freq[x], x}}' | sort -rn | head -20
+ 
+# top 20 URLS requested from a certain ip excluding, excluding POST data, from the last 5000 hits
+IP=1.2.3.4; tail -5000 ./access_log | fgrep $IP | awk -F "[ ?]" '{print $7}' | sort | uniq -c | sort -rn | head -20
+IP=1.2.3.4; tail -5000 ./access_log | awk -F"[ ?]" -v ip=$IP ' $1 ~ ip {freq[$7]++} END {for (x in freq) {print freq[x], x}}' | sort -rn | head -20
+ 
+# top 20 referrers from the last 5000 hits
+tail -5000 ./access_log | awk '{print $11}' | tr -d '"' | sort | uniq -c | sort -rn | head -20
+tail -5000 ./access_log | awk '{freq[$11]++} END {for (x in freq) {print freq[x], x}}' | tr -d '"' | sort -rn | head -20
+ 
+# top 20 user agents from the last 5000 hits
+tail -5000 ./access_log | cut -d\  -f12- | sort | uniq -c | sort -rn | head -20
+ 
+# sum of data (in MB) transferred in the last 5000 hits
+tail -5000 ./access_log | awk '{sum+=$10} END {print sum/1048576}'
+ 
+ 
+##############
+# Cisco Logs #
+##############
+ 
+wget https://s3.amazonaws.com/StrategicSec-Files/LogAnalysis/cisco.log
+ 
+ 
+AWK Basics
+----------
+- To quickly demonstrate the print feature in awk, we can instruct it to show only the 5th word of each line. Here we will print $5. Only the last 4 lines are being shown for brevity.
+ 
+cat cisco.log | awk '{print $5}' | tail -n 4
+ 
+ 
+ 
+ 
+- Looking at a large file would still produce a large amount of output. A more useful thing to do might be to output every entry found in “$5”, group them together, count them, then sort them from the greatest to least number of occurrences. This can be done by piping the output through “sort“, using “uniq -c” to count the like entries, then using “sort -rn” to sort it in reverse order.
+ 
+cat cisco.log | awk '{print $5}'| sort | uniq -c | sort -rn
+ 
+ 
+ 
+ 
+- While that’s sort of cool, it is obvious that we have some garbage in our output. Evidently we have a few lines that aren’t conforming to the output we expect to see in $5. We can insert grep to filter the file prior to feeding it to awk. This insures that we are at least looking at lines of text that contain “facility-level-mnemonic”.
+ 
+cat cisco.log | grep %[a-zA-Z]*-[0-9]-[a-zA-Z]* | awk '{print $5}' | sort | uniq -c | sort -rn
+ 
+ 
+ 
+ 
+ 
+- Now that the output is cleaned up a bit, it is a good time to investigate some of the entries that appear most often. One way to see all occurrences is to use grep.
+ 
+cat cisco.log | grep %LINEPROTO-5-UPDOWN:
+ 
+cat cisco.log | grep %LINEPROTO-5-UPDOWN:| awk '{print $10}' | sort | uniq -c | sort -rn
+ 
+cat cisco.log | grep %LINEPROTO-5-UPDOWN:| sed 's/,//g' | awk '{print $10}' | sort | uniq -c | sort -rn
+ 
+cat cisco.log | grep %LINEPROTO-5-UPDOWN:| sed 's/,//g' | awk '{print $10 " changed to " $14}' | sort | uniq -c | sort -rn
+
+
+
+###########################
+# Target IP Determination #
+###########################
+- This portion starts the actual workshop content
+- Zone Transfer fails on most domains, but here is an example of one that works:
+dig axfr heartinternet.co.uk  @ns.heartinternet.co.uk
+
+
+- Usually you will need to do a DNS brute-force with something like blindcrawl or fierce
+perl blindcrawl.pl -d motorola.com
+	Look up the IP addresses at: 
+	http://www.networksolutions.com/whois/index.jsp
+
+cd ~/toolz/fierce2
+sudo apt-get install -y cpanminus cpan-listchanges cpanoutdated libappconfig-perl libyaml-appconfig-perl libnetaddr-ip-perl libnet-cidr-perl vim
+	strategicsec
+wget http://search.cpan.org/CPAN/authors/id/A/AB/ABW/Template-Toolkit-2.14.tar.gz
+tar -zxvf Template-Toolkit-2.14.tar.gz
+cd Template-Toolkit-2.14/
+perl Makefile.PL
+	y
+	y
+	n
+	y
+sudo make install
+
+sudo bash install.sh
+
+./fierce
+
+./fierce -dns motorola.com
+
+cd ~/toolz/
+
+
+
+
+- Here we do a forward lookup against an entire IP range. Basically take every IP in the range and see what it's hostname is
+cd ~/toolz/
+./ipcrawl 148.87.1.1 148.87.1.254				(DNS forward lookup against an IP range)
+
+
+sudo nmap -sL 148.87.1.0-255
+sudo nmap -sL 148.87.1.0-255 | grep oracle
+
+
+	
+
+
+
+###########################
+# Load Balancer Detection #
+###########################
+
+- Here are some options to use for identifying load balancers:
+	- http://toolbar.netcraft.com/site_report/
+	- Firefox LiveHTTP Headers
+
+
+- Here are some command-line options to use for identifying load balancers:
+
+dig google.com
+
+cd ~/toolz
+./lbd-0.1.sh google.com
+
+
+halberd microsoft.com
+halberd motorola.com
+halberd oracle.com
+
+
+
+
+
+######################################
+# Web Application Firewall Detection #
+######################################
+
+cd ~/toolz/wafw00f
+python wafw00f.py http://www.oracle.com
+python wafw00f.py http://www.strategicsec.com
+
+
+cd ~/toolz/
+sudo nmap -p 80 --script http-waf-detect.nse oracle.com
+
+sudo nmap -p 80 --script http-waf-detect.nse healthcare.gov
+
+
+#########################
+# Playing with Nmap NSE #
+#########################
+
+nmap -Pn -p80 --script ip-geolocation-* strategicsec.com 
+
+nmap -p80 --script dns-brute strategicsec.com
+
+nmap --script http-robtex-reverse-ip secore.info
+
+nmap -Pn -p80 --script=http-headers strategicsec.com
+
+
+ls /usr/share/nmap/scripts | grep http
+nmap -Pn -p80 --script=http-* strategicsec.com
+
+sudo nmap -Pn -n --open -p21 --script=banner,ftp-anon,ftp-bounce,ftp-proftpd-backdoor,ftp-vsftpd-backdoor 148.87.1.0/24
+
+sudo nmap -Pn -n --open -p22 --script=sshv1,ssh2-enum-algos 148.87.1.0/24
+
+sudo nmap -Pn -n -sU --open -p53 --script=dns-blacklist,dns-cache-snoop,dns-nsec-enum,dns-nsid,dns-random-srcport,dns-random-txid,dns-recursion,dns-service-discovery,dns-update,dns-zeustracker,dns-zone-transfer 148.87.1.0/24
+
+sudo nmap -Pn -n --open -p111 --script=nfs-ls,nfs-showmount,nfs-statfs,rpcinfo 148.87.1.0/24
+
+sudo nmap -Pn -n --open -p445 --script=msrpc-enum,smb-enum-domains,smb-enum-groups,smb-enum-processes,smb-enum-sessions,smb-enum-shares,smb-enum-users,smb-mbenum,smb-os-discovery,smb-security-mode,smb-server-stats,smb-system-info,smbv2-enabled,stuxnet-detect 148.87.1.0/24
+
+sudo nmap -Pn -n --open -p1433 --script=ms-sql-dump-hashes,ms-sql-empty-password,ms-sql-info 148.87.1.0/24
+
+sudo nmap -Pn -n --open -p1521 --script=oracle-sid-brute --script oracle-enum-users --script-args oracle-enum-users.sid=ORCL,userdb=orausers.txt 148.87.1.0/24
+
+sudo nmap -Pn -n --open -p3306 --script=mysql-databases,mysql-empty-password,mysql-info,mysql-users,mysql-variables 148.87.1.0/24
+
+sudo nmap -Pn -n --open -p3389 --script=rdp-vuln-ms12-020,rdp-enum-encryption 148.87.1.0/24
+
+sudo nmap -Pn -n --open -p5900 --script=realvnc-auth-bypass,vnc-info 148.87.1.0/24
+
+sudo nmap -Pn -n --open -p6000-6005 --script=x11-access 148.87.1.0/24
+
+sudo nmap -Pn -n --open -p27017 --script=mongodb-databases,mongodb-info 148.87.1.0/24  
+
+############
+# Nmap NSE #
+############
+
+- Reference for this tutorial is:
+https://thesprawl.org/research/writing-nse-scripts-for-vulnerability-scanning/
+
+----------------------------------------------------------------------
+sudo vi /usr/share/nmap/scripts/intro-nse.nse
+
+-- The Head Section --
+-- The Rule Section --
+portrule = function(host, port)
+    return port.protocol == "tcp"
+            and port.number == 80
+            and port.state == "open"
+end
+
+-- The Action Section --
+action = function(host, port)
+    return "Linux for InfoSec Professionals!"
+end
+----------------------------------------------------------------------
+
+- Ok, now that we've made that change let's run the script
+sudo nmap --script=/usr/share/nmap/scripts/intro-nse.nse darkoperator.com -p 22,80,443
+
+
+
+
+
+
+----------------------------------------------------------------------
+sudo vi /usr/share/nmap/scripts/intro-nse.nse
+
+-- The Head Section --
+local shortport = require "shortport"
+
+-- The Rule Section --
+portrule = shortport.http
+
+
+-- The Action Section --
+action = function(host, port)
+    return "Linux for InfoSec Professionals!"
+end
+----------------------------------------------------------------------
+
+- Ok, now that we've made that change let's run the script
+sudo nmap --script=/usr/share/nmap/scripts/intro-nse.nse darkoperator.com -p 22,80,443
+
+
+
+
+
+
+
+----------------------------------------------------------------------
+sudo vi /usr/share/nmap/scripts/intro-nse.nse
+
+-- The Head Section --
+local shortport = require "shortport"
+local http = require "http"
+
+-- The Rule Section --
+portrule = shortport.http
+
+-- The Action Section --
+action = function(host, port)
+
+    local uri = "/blog/2016/4/2/meterpreter-new-windows-powershell-extension/"
+    local response = http.get(host, port, uri)
+    return response.status
+
+end
+----------------------------------------------------------------------
+
+- Ok, now that we've made that change let's run the script
+sudo nmap --script=/usr/share/nmap/scripts/intro-nse.nse darkoperator.com -p 22,80,443
+
+
+
+
+----------------------------------------------------------------------
+sudo vi /usr/share/nmap/scripts/intro-nse.nse
+
+-- The Head Section --
+local shortport = require "shortport"
+local http = require "http"
+
+-- The Rule Section --
+portrule = shortport.http
+
+-- The Action Section --
+action = function(host, port)
+
+    local uri = "/blog/2016/4/2/meterpreter-new-windows-powershell-extension/"
+    local response = http.get(host, port, uri)
+
+    if ( response.status == 200 ) then
+        return response.body
+    end
+
+end
+----------------------------------------------------------------------
+
+- Ok, now that we've made that change let's run the script
+sudo nmap --script=/usr/share/nmap/scripts/intro-nse.nse darkoperator.com -p 22,80,443
+
+
+
+
+
+
+
+
+
+----------------------------------------------------------------------
+sudo vi /usr/share/nmap/scripts/intro-nse.nse
+
+-- The Head Section --
+local shortport = require "shortport"
+local http = require "http"
+local string = require "string"
+
+-- The Rule Section --
+portrule = shortport.http
+
+-- The Action Section --
+action = function(host, port)
+
+    local uri = "/blog/2016/4/2/meterpreter-new-windows-powershell-extension/"
+    local response = http.get(host, port, uri)
+
+    if ( response.status == 200 ) then
+        local title = string.match(response.body, "Pentest Candidate Program")
+        return title
+    end
+
+end
+----------------------------------------------------------------------
+
+- Ok, now that we've made that change let's run the script
+sudo nmap --script=/usr/share/nmap/scripts/intro-nse.nse darkoperator.com -p 22,80,443
+
+
+
+
+
+
+
+----------------------------------------------------------------------
+sudo vi /usr/share/nmap/scripts/intro-nse.nse
+
+-- The Head Section --
+local shortport = require "shortport"
+local http = require "http"
+local string = require "string"
+
+-- The Rule Section --
+portrule = shortport.http
+
+-- The Action Section --
+action = function(host, port)
+
+    local uri = "/blog/2016/4/2/meterpreter-new-windows-powershell-extension/"
+    local response = http.get(host, port, uri)
+
+    if ( response.status == 200 ) then
+        local title = string.match(response.body, "Pentest Candidate Program")
+
+        if (title) then
+            return "Vulnerable"
+        else
+            return "Not Vulnerable"
+        end
+    end
+end
+
+----------------------------------------------------------------------
+
+- Ok, now that we've made that change let's run the script
+sudo nmap --script=/usr/share/nmap/scripts/intro-nse.nse darkoperator.com -p 22,80,443
+
+
+
+
+
+
+
+
+
+#############################
+# Linux For InfoSe Homework #
+#############################
+In order to receive your certificate of attendance you must complete the all of the quizzes on the http://linuxsurvival.com/linux-tutorial-introduction/ website.
+
+
+Submit the results via email in an MS Word document with (naming convention example: YourFirstName-YourLastName-Linux-For-InfoSec-Homework.docx)
+
+
+
+
+##############################
+# Linux For InfoSe Challenge #
+##############################
+
+In order to receive your certificate of proficiency you must complete all of the tasks covered in the Linux For InfoSec pastebin (http://pastebin.com/b5SxBRf6).
+
+Submit the results via email in an MS Word document with (naming convention example: YourFirstName-YourLastName-Linux-For-InfoSec-Challenge.docx)
+
+
+
+
+IMPORTANT NOTE:
+Your homework/challenge must be submitted via email to both (joe-at-strategicsec-.-com and kasheia-at-strategicsec-.-com) by Sunday October 16th at midnight EST.

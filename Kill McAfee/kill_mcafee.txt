@@ -1,0 +1,214 @@
+
+#########################
+# Kill McAfee AV & HIPS #
+#########################
+
+1. Stop the services
+====================
+
+Stop the overall AV Framework
+	net stop "McAfee Framework Service"		
+
+
+Stop the HIPS
+	net stop hips
+	net stop enterceptagent
+	net stop firepm
+	
+
+
+2. Kill the processes
+=====================
+
+McAfee Processes
+	pskill -t UdaterUI
+	pskill -t TBMon
+	pskill -t Mcshield
+	pskill -t VsTskMgr
+	pskill -t shstat
+
+
+HIPS Processes
+	pskill -t firetray
+
+
+
+Altiris Processes
+	pskill -t AeXNSAgent
+
+
+Hercules Processes
+	pskill -t HercUserAgent
+	pskill -t HercClient
+
+
+3. Unload DLLs
+==============
+
+Unload EPO HIPS plugin
+	regsvr32 -u fireepo.dll
+
+
+#####################################
+# Everything below this is research #
+#####################################
+
+	
+
+4. Remove Drivers
+=================
+
+Note:
+Somehow the "mfebopk.sys" driver needs to be unloaded. This is the Buffer Overflow protection Driver. This file should be located in "c:\windows\system32\drivers".
+
+naiavf5x.sys is the Anti-Virus file system driver.
+mvstdi5x.sys is the Anti-Virus mini-Firewall driver.
+
+
+Research devcon.exe: http://support.microsoft.com/kb/311272
+
+Research:
+https://knowledge.mcafee.com/article/469/614226_f.SAL_Public.html
+
+
+5. Remove the IPS Agent
+=======================
+To completely remove the Host IPS agent:
+ 
+Disable the Host IPS agent:
+
+   1.
+      Open a command line session Click Start, Run, type CMD and press ENTER.
+   2.
+      At the command line issue the following commands:
+      net stop hips
+      net stop enterceptagent
+      net stop firepm
+   3.
+      Close the ClientUI
+   4.
+      Press CTRL+ALT+DEL, in the Security menu click Task Manager.
+      Select firetray.exe and click End Process  
+
+Unload the epo Plugin:
+
+   1.
+      Open regedit: Click Start, Run, type regedit and press ENTER. 
+   2.
+      Delete the registry key:
+      HKEY_LOCAL_MACHINE\SOFTWARE\Network Associates\ePolicy Orchestrator\Application Plugins\HOSTIPS_7000
+   3.
+      At the command-line, run:
+      regsvr32 -u fireepo.dll
+
+Remove Talkback:
+
+   1.
+      At the command-line run:
+      C:\Program Files\Common Files\McAfee Inc\TalkBack\tbmon.exe -delref
+   2.
+      Delete the folder:
+      C:\Program Files\Common Files\McAfee Inc\TalkBack
+   3.
+      Using Regedit delete the following registry entries.
+       HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\SharedDlls
+      C:\Program Files\Common Files\McAfee Inc.\TalkBack\dbghelp.dll
+      C:\Program Files\Common Files\McAfee Inc.\TalkBack\TBMon.exe
+      C:\Program Files\Common Files\McAfee Inc.\TalkBack\TBMon.loc
+      C:\Program Files\Common Files\McAfee Inc\TalkBack\TBMon.exe
+
+Remove firehk driver
+
+   1.
+      At the command-line run:
+      C:\Program Files\McAfee\Host Intrusion Prevention\Inf\installfirehk.bat /u
+   2.
+      Using Regedit delete the following registry entries:
+      HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Firehk
+      HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\FirehkMP
+   3.
+      Delete the file: C:\windows\system32\drivers\firehk.sys
+
+Delete the hipscore service and remove the drivers:
+
+   1.
+      Using Regedit delete the following registry entry:
+      HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\hips
+   2.
+      From the command-line run:
+      C:\Program Files\McAfee\Host Intrusion Prevention\HIPSCore\mfehidin.exe -u HIPK.sys HIPPSK.sys HIPQK.sys
+   3.
+      Using Regedit delete the following registry entries:
+      HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\HIPK
+      HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\HIPSK
+      HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\HIPQK
+      HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\mfehidk
+      HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\mfetdik
+   4.
+      Delete the files:
+      C:\windows\system32\drivers\HIPK.sys
+      C:\windows\system32\drivers\HIPPSK.sys
+      C:\windows\system32\drivers\HIPQK.sys
+      C:\windows\system32\hipqa.dll
+      C:\windows\system32\hipis.dll
+      C:\windows\system32\mfehida.dll 
+   5.
+      From the command-line, run:
+      C:\Program Files\McAfee\Host Intrusion Prevention\HIPSCore\HIPSCoreReg.exe -u
+      Using Regedit delete the following registry entries:
+      HKEY_LOCAL_MACHINE\SOFTWARE\McAfee\HIPSCore
+
+Delete services and drivers:
+
+   1.
+      Using Regedit delete the following registry entries:
+      HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\enterceptAgent
+      HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\FirePM
+      HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\firelm01
+      HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\FireTDI
+   2.
+      Delete the files:
+      C:\WINDOWS\system32\drivers\firelm01.sys
+      C:\WINDOWS\system32\drivers\FirePM.sys
+      C:\WINDOWS\system32\drivers\FireTDI.sys
+
+Remove the Host IPS registry
+
+   1.
+      Using Regedit delete the following registry entries:
+      HKEY_LOCAL_MACHINE\SOFTWARE\McAfee\HIP
+      HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Eventlog\Application\enterceptAgent
+      HKEY_LOCAL_MACHINE\SOFTWARE\Entercept\EnterceptAgent
+      HKEY_LOCAL_MACHINE\SOFTWARE\Network Associates\McAfee Fire
+      HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Run\ McAfee Host Intrusion Prevention Tray
+
+Remove Host IPS files
+
+   1.
+      Delete the folder
+      C:\Program Files\McAfee\Host Intrusion Prevention
+   2.
+      Delete the files:
+      C:\WINDOWS\system32\FireCL.dll
+      C:\WINDOWS\system32\FireCNL.dll
+      C:\WINDOWS\system32\FireComm.dll
+      C:\WINDOWS\system32\FireCore.dll
+      C:\WINDOWS\system32\FireEpo.dll
+      C:\WINDOWS\system32\FireNHC.dll
+      C:\WINDOWS\system32\FireSCV.dll 
+
+Remove the shortcut:
+
+   1. Navigate to: C:\Documents and Settings\All Users\Start Menu\Programs\McAfee\
+   2. Delete the Host Intrusion Prevention shortcut.
+
+Clean up:
+
+   1.
+      Use msizap.exe to remove the MSI registry values.
+      From the command line execute: 
+      msizap.exe TW! {B332732A-4958-41DD-B439-DDA2D32753C5}.
+   2.
+      Alterntively install the Windows Installer Cleanup Utility (msicuu.exe) and use this to remove the registry keys. This displays all the MSI based products that are installed allowing selection of  the product to have it's MSI data removed. For further information: http://support.microsoft.com/kb/290301/en-us
+   3.
+      Restart the client.
