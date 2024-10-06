@@ -1,0 +1,72 @@
+#############################################
+# Quick Stack Based Buffer Overflow For Tim #
+#############################################
+
+- You can download everything you need for this exercise (except netcat) from the link below
+https://s3.amazonaws.com/StrategicSec-Files/SimpleExploitLab.zip
+ 
+- Extract this zip file to your Desktop
+ 
+- Go to folder C:\Users\Workshop\Desktop\ExploitLab\2-VulnServer, and run vulnserv.exe
+ 
+- Open a new command prompt and type:
+nc localhost 9999
+ 
+- In the new command prompt window where you ran nc type:
+HELP
+ 
+- Go to folder C:\Users\Workshop\Desktop\ExploitLab\4-AttackScripts
+- Right-click on 1-simplefuzzer.py and choose the option edit with notepad++
+ 
+- Now double-click on 1-simplefuzzer.py
+- You'll notice that vulnserv.exe crashes. Be sure to note what command and the number of As it crashed on.
+ 
+ 
+- Restart vulnserv, and run 1-simplefuzzer.py again. Be sure to note what command and the number of As it crashed on.
+ 
+- Now go to folder C:\Users\Workshop\Desktop\ExploitLab\3-OllyDBG and start OllyDBG. Choose 'File' -> 'Attach' and attach to process vulnserv.exe
+ 
+- Go back to folder C:\Users\Workshop\Desktop\ExploitLab\4-AttackScripts and double-click on 1-simplefuzzer.py.
+ 
+- Take note of the registers (EAX, ESP, EBP, EIP) that have been overwritten with As (41s).
+ 
+- Now isolate the crash by restarting your debugger and running script 2-3000chars.py
+ 
+- Calculate the distance to EIP by running script 3-3000chars.py
+- This script sends 3000 nonrepeating chars to vulserv.exe and populates EIP with the value: 396F4338
+ 
+4-count-chars-to-EIP.py
+- In the previous script we see that EIP is overwritten with 396F4338 is 8 (38), C (43), o (6F), 9 (39)
+- so we search for 8Co9 in the string of nonrepeating chars and count the distance to it
+ 
+5-2006char-eip-check.py
+- In this script we check to see if our math is correct in our calculation of the distance to EIP by overwriting EIP with 42424242
+ 
+6-jmp-esp.py
+- In this script we overwrite EIP with a JMP ESP (6250AF11) inside of essfunc.dll
+ 
+7-first-exploit
+- In this script we actually do the stack overflow and launch a bind shell on port 4444
+ 
+8 - Take a look at the file vulnserv.rb and place it in your Ubuntu host via SCP or copy it and paste the code into the host.
+ 
+ 
+------------------------------
+ 
+cd /home/strategicsec/toolz/metasploit/modules/exploits/windows/misc
+ 
+vi vulnserv.rb    (paste the code into this file)
+ 
+ 
+ 
+cd ~/toolz/metasploit
+ 
+./msfconsole
+ 
+ 
+ 
+use exploit/windows/misc/vulnserv
+set PAYLOAD windows/meterpreter/bind_tcp
+set RHOST 192.168.88.129
+set RPORT 9999
+exploit

@@ -1,0 +1,68 @@
+#!/bin/bash
+
+# This script is designed to install Metasploit in a recent version of Fedora 21 or CentOS
+
+
+
+# Check to see if the user running this is root
+if [[ $EUID -ne 0 ]]; then
+   echo "This script must be run as root" 
+   exit 1
+fi
+
+
+
+#################################################################
+# Just to make sure that yum updates everything everyday	#
+# I like to make this a script that I put in			#
+# 	/etc/cron.daily/yumupdate.sh				#
+#								#
+# Be sure to chmod +x /etc/cron.daily/yumupdate.sh		#
+#								#
+#								#
+#   		#!/bin/bash					#
+#   		YUM=/usr/bin/yum				#
+#   		$YUM -y -R 120 -d 0 -e 0 update yum		#
+#   		$YUM -y -R 10 -e 0 -d 0 update			#
+#################################################################
+
+
+# Just making sure that everything is up to date first
+yum update
+
+
+# Ruby Dependancies, git, and svn:
+yum -y install sqlite rubygem-sqlite3 mysql-server ruby-mysql ruby-irb rubygems rubygem-bigdecimal rubygem-rake rubygem-i18n rubygem-bundler ruby-devel libpcap-devel git svn postgresql-server postgresql-devel sqlite-devel
+
+gem install rake
+gem install pg
+gem install pcaprub
+gem install xpath -v '2.0.0'
+gem install sqlite3 -v '1.3.10'
+
+
+
+
+
+
+
+------------------------------------------------------------------------------
+All of this you can run as a regular user, and it should only prompt you for
+the sudo password once.
+
+
+
+cd ~/
+git clone git://github.com/rapid7/metasploit-framework.git
+mv metasploit-framework/ metasploit/
+cd metasploit/
+cd external/
+svn co http://802.11ninja.net/svn/lorcon/trunk lorcon2
+cd lorcon2
+./configure --prefix=/usr && make && sudo make install
+
+
+cd ~/metasploit/
+./msfupdate
+
+./msfconsole
