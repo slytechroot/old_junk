@@ -1,0 +1,46 @@
+#!/bin/bash
+
+# Check to see if the script is running as root
+if [ "$EUID" -ne 0 ]
+  then echo "Please run as root"
+  exit
+fi
+
+# Deleting the targets file if it is present
+rm -rf targets*.txt
+
+
+# Finding hosts via common ports
+propecia 10.0.0 21 >> targets001.txt
+propecia 10.0.0 22 >> targets001.txt
+propecia 10.0.0 25 >> targets001.txt
+propecia 10.0.0 80 >> targets001.txt
+propecia 10.0.0 110 >> targets001.txt
+propecia 10.0.0 135 >> targets001.txt
+propecia 10.0.0 139 >> targets001.txt
+propecia 10.0.0 443 >> targets001.txt
+propecia 10.0.0 111 >> targets001.txt
+propecia 10.0.0 1433 >> targets001.txt
+propecia 10.0.0 1521 >> targets001.txt
+propecia 10.0.0 3306 >> targets001.txt
+propecia 10.0.0 5432 >> targets001.txt
+propecia 10.0.0 3389 >> targets001.txt
+
+# Removing the duplicates
+cat targets001.txt | sort -u >> targets002.txt
+
+
+# Checking for the presence of the scans folder and creating it if it doesn't exist
+if [ -d "/home/infosecaddicts/scans" ]
+then
+     cd /home/infosecaddicts/scans
+     cp ../targets002.txt .
+else
+     mkdir /home/infosecaddicts/scans
+     cd /home/infosecaddicts/scans
+     cp /home/infosecaddicts/targets002.txt .
+fi
+
+
+# Doing the nmap scanning of each hosts in the network
+for i in $(cat targets002.txt); do nmap -sV -Pn -T 5 -A -O -p 21,22,23,25,80,110,135,139,443,1433,1521,3306,3389,5432,10000,27108 $i >> $i ; done

