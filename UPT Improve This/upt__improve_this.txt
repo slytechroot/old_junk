@@ -1,0 +1,211 @@
+#!/bin/bash
+
+
+# Task 1: Fix directory creation so that all new files/folders can be successfully created
+# Task 2: Add new service identification checks to the Host Identification Section of the script
+# Task 3: Add updated/verbose nmap scans to the Service Fingerprinting Section with the correct folder structure for nmap output
+# Task 4: Ensure that the Web App Testing Section commands output to the correct folder structure so that it is TOGETHER with the other output
+
+
+#Make the directories
+mkdir -p /tmp/customerAudit/internal/scan/services/
+mkdir -p /tmp/customerAudit/internal/scan/windows/
+mkdir -p /tmp/customerAudit/internal/scan/sunrpc/
+mkdir -p /tmp/customerAudit/internal/scan/telnet/
+mkdir -p /tmp/customerAudit/internal/scan/printers/
+mkdir -p /tmp/customerAudit/internal/scan/mssql_databases/
+mkdir -p /tmp/customerAudit/internal/scan/oracle_databases/
+mkdir -p /tmp/customerAudit/internal/scan/mysql_databases/
+
+
+
+
+#############################  Host Identification Section of the script  #############################
+
+
+
+
+######################
+# Find Windows Hosts #
+######################
+echo "Scanning for windows hosts."
+
+propecia 10.0.0 445 >> /tmp/customerAudit/internal/scan/services/windows_hosts
+
+echo "Done scanning for windows hosts. SSH is next."
+
+
+##########################
+# Find hosts running SSH #
+##########################
+echo "Scanning for windows hosts."
+
+propecia 10.0.0 22 >> /tmp/customerAudit/internal/scan/services/ssh_hosts
+
+echo "Done scanning for windows hosts. FTP is next."
+
+##########################
+# Find hosts running FTP #
+##########################
+echo "Scanning for windows hosts."
+
+propecia 10.0.0 21 >> /tmp/customerAudit/internal/scan/services/ftp_hosts
+echo "Done scanning for FTP hosts. SunRPC is next."
+
+
+#############################
+# Find hosts running SunRPC #
+#############################
+echo "Scanning for windows hosts."
+
+propecia 10.0.0 111 >> /tmp/customerAudit/internal/scan/services/sunrpc_hosts
+echo "Done scanning for SunRPC hosts. Telnet is next."
+
+
+#############################
+# Find hosts running Telnet #
+#############################
+echo "Scanning for windows hosts."
+
+propecia 10.0.0 23 >> /tmp/customerAudit/internal/scan/services/telnet_hosts
+echo "Done scanning for Telnet hosts. Printers are next."
+
+
+######################
+# Find Print Servers #
+######################
+echo "Scanning for windows hosts."
+
+propecia 10.0.0 9100 >> /tmp/customerAudit/internal/scan/services/print_servers
+echo "Done scanning for Printers. Databases are next."
+
+
+##################
+# Find Databases #
+##################
+echo "Scanning for MS SQL Servers"
+propecia 10.0.0 1433 >> /tmp/customerAudit/internal/scan/services/mssql_hosts
+echo "Done scanning for MS-SQL. Oracle is next."
+
+
+echo "Scanning for Oracle Servers"
+propecia 10.0.0 1521 >> /tmp/customerAudit/internal/scan/services/oracle_hosts
+echo "Done scanning for Oracle. MySQL is next."
+
+echo "Scanning for MySQL Servers"
+propecia 10.0.0 3306 >> /tmp/customerAudit/internal/scan/services/mysql_hosts
+echo "Done scanning for MySQL. MySQL is next."
+
+
+echo "Scanning for Postgres Servers"
+propecia 10.0.0 5432 >> /tmp/customerAudit/internal/scan/services/postgres_hosts
+echo "Done scanning for Postgres. MongoDB is next."
+
+echo "Scanning for MongoDB Servers"
+propecia 10.0.0 27017 >> /tmp/customerAudit/internal/scan/services/mongodb_hosts
+echo "Done scanning for MongoDB."
+
+clear
+
+
+echo "Done doing the host discovery. Moving on to nmap'ing each host discovered. Windows hosts are first."
+sleep 5
+
+
+
+
+
+
+
+
+
+#############################  Service Fingerprinting Section of the script  #############################
+
+
+
+
+
+
+
+
+
+###############################
+# Ok, let's do the NMAP files #
+###############################
+
+# Windows
+for x in `cat /tmp/customerAudit/internal/scan/services/windows_hosts` ; do nmap -Pn -n --open -p445 --script=msrpc-enum,smb-enum-domains,smb-enum-groups,smb-enum-processes,smb-enum-sessions,smb-enum-shares,smb-enum-users,smb-mbenum,smb-os-discovery,smb-security-mode,smb-server-stats,smb-system-info,smbv2-enabled,stuxnet-detect $x > /tmp/customerAudit/internal/scan/windows/$x ; done
+echo "Done with Windows."
+
+# SSH
+for x in `cat /tmp/customerAudit/internal/scan/services/ssh_hosts` ; do nmap -Pn -n --open -p22 --script=sshv1,ssh2-enum-algo $x > /tmp/customerAudit/internal/scan/windows/$x ; done
+echo "Done with SSH."
+
+# FTP
+for x in `cat /tmp/customerAudit/internal/scan/services/ftp_hosts` ; do nmap -Pn -n --open -p21 --script=banner,ftp-anon,ftp-bounce,ftp-proftpd-backdoor,ftp-vsftpd-backdoor $x > /tmp/customerAudit/internal/scan/ftp/$x ; done
+echo "Done with FTP."
+
+# SUNRPC
+for x in `cat /tmp/customerAudit/internal/scan/services/sunrpc_hosts` ; do nmap -Pn -n --open -p111 --script=nfs-ls,nfs-showmount,nfs-statfs,rpcinfo $x > /tmp/customerAudit/internal/scan/sunrpc/$x ; done
+echo "Done with SunRPC."
+
+# Telnet
+for x in `cat /tmp/customerAudit/internal/scan/services/telnet_hosts` ; do nmap -sV -O $x > /tmp/customerAudit/internal/scan/telnet/$x ; done
+echo "Done with Telnet."
+
+# Printers
+for x in `cat /tmp/customerAudit/internal/scan/services/printserver_hosts` ; do nmap -sV -O $x > /tmp/customerAudit/internal/scan/printers/$x ; done
+echo "Done with printers."
+
+# SQL Servers
+for x in `cat /tmp/customerAudit/internal/scan/services/mssql_hosts` ; do nmap -sV -O $x > /tmp/customerAudit/internal/scan/mssql_databases/$x ; done
+echo "Done with MS SQL."
+
+# Oracle Servers
+for x in `cat /tmp/customerAudit/internal/scan/services/oracle_hosts` ; do nmap -sV -O $x >> /tmp/customerAudit/internal/scan/oracle_databases/$x ; done
+echo "Done with Oracle."
+
+# MySQL Servers
+for x in `cat /tmp/customerAudit/internal/scan/services/mysql_hosts` ; do nmap -sV -O $x >> /tmp/customerAudit/internal/scan/mysql_databases/$x ; done
+echo "Done with MySQL."
+echo " "
+echo " "
+echo "Done, now check your results."
+
+
+
+
+
+
+
+
+
+#############################  Web App Testing Section of the script  #############################
+
+
+
+
+
+
+
+############################################
+# Screenshot the webservers in the network #
+############################################
+nmap -Pn -T 5 -p 80 -A --script=http-screenshot 10.0.0.0/24 -iL /home/strategicsec/labnet-ip-list.txt
+cd ~/toolz/labscreenshots/
+sh screenshots.sh
+
+
+
+#####################################
+# Run SQLmap against the webservers #
+#####################################
+cd /home/strategicsec/toolz/sqlmap-dev/
+ 
+python sqlmap.py -u http://10.0.0.9 --forms --batch --crawl=10 --level=5 --risk=3
+python sqlmap.py -u http://10.0.0.63 --forms --batch --crawl=10 --level=5 --risk=3
+python sqlmap.py -u http://10.0.0.59 --forms --batch --crawl=10 --level=5 --risk=3
+python sqlmap.py -u http://10.0.0.85 --forms --batch --crawl=10 --level=5 --risk=3
+python sqlmap.py -u http://10.0.0.94 --forms --batch --crawl=10 --level=5 --risk=3
+python sqlmap.py -u http://10.0.0.120 --forms --batch --crawl=10 --level=5 --risk=3
+python sqlmap.py -u http://10.0.0.121 --forms --batch --crawl=10 --level=5 --risk=3

