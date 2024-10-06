@@ -1,0 +1,29 @@
+# How to check to see if a script is running as root
+https://askubuntu.com/questions/15853/how-can-a-script-check-if-its-being-run-as-root
+
+
+# How to read from a file
+https://www.cyberciti.biz/faq/unix-howto-read-line-by-line-from-file/
+
+
+# How to check to see if a directory exists
+https://www.cyberciti.biz/tips/find-out-if-directory-exists.html
+
+# How to check to see if a file exists
+https://www.cyberciti.biz/tips/find-out-if-file-exists-with-conditional-expressions.html
+
+
+# Run a script against every file in a directory
+https://www.cyberciti.biz/faq/bash-loop-over-file/
+https://stackoverflow.com/questions/10523415/bash-script-to-execute-command-on-all-files-in-a-directory
+
+
+# Insert values into a database
+https://www.linuxquestions.org/questions/programming-9/shell-script-to-insert-value-in-database-666785/
+
+
+# Read values from a database
+https://www.shellhacks.com/mysql-run-query-bash-script-linux-command-line/
+
+# Parse XML file
+http://www.humbug.in/2010/parse-simple-xml-files-using-bash-extract-name-value-pairs-and-attributes/

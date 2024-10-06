@@ -1,0 +1,42 @@
+##########################
+# Palo Alto Log Analysis #
+##########################
+References:
+https://stateofsecurity.com/?p=4016
+
+
+#######################
+# Core Linux Commands #
+#######################
+cat
+grep
+Including, the ever useful grep -v (inverse grep, show me the lines that don't match my pattern)
+awk
+particularly: awk 'BEGIN { FS = ","} ; {print $x, $y}' which prints specific columns in CSV files 
+sort
+sort -n (numeric sort)
+sort -r (reverse sort, descending)
+uniq
+uniq -c (count the numbers of duplicates, used for determining "hit rates" or frequency, etc.)
+
+
+
+First, for my project, I made use of the following field #’s in the text analysis, pulled from the log header for sequence:
+$8 (source IP) 
+$9 (dest IP)
+$26 (dest port)
+$15 (AppID)
+$32 (bytes)
+
+
+
+OK, so I will get you started, here are a few of the more useful command lines I used for my quick and dirty analysis:
+cat log.csv | awk 'BEGIN { FS = ","} ; {print $8,$9,$26}' | sort | uniq -c | sort -n -r > hitrate_by_rate.txt
+
+this one produces a list of Source IP/Dest IP/Dest Port unique combinations, sorted in descending order by the number of times they appear in the log
+cat log.csv | awk 'BEGIN { FS = ","} ; {print $8,$9}' | sort -n | uniq -c | sort -n -r > uniqpairs_by_hitrate.txt
+
+this one produces a list of the uniq Source & Destination IP addresses, in descending order by how many times they talk to each other in the log (note that their reversed pairings will be separate, if they are present – that is if A talks to B, there will be an entry for that, but if B initiates conversations with A, that will be a separate line in this data set)
+cat log.csv | awk 'BEGIN { FS = ","} ; {print $15}' | sort | uniq -c | sort -n -r > appID_by_hitrate.txt
+
+this one uses the same exact techniques, but now we are looking at what applications have been identified by the firewall, in descending order by number of times that application identifier appears in the log

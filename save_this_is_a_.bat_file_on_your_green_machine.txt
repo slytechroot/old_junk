@@ -1,0 +1,28 @@
+echo off
+
+:: clears the screen
+cls
+
+:: Enter your process name below
+taskkill /F /IM FTPServer.exe
+taskkill /F /IM FTPServer.exe
+taskkill /F /IM FTPServer.exe
+taskkill /F /IM FTPServer.exe
+taskkill /F /IM FreeSSHDService.exe
+taskkill /F /IM FreeSSHDService.exe
+taskkill /F /IM FreeSSHDService.exe
+taskkill /F /IM FreeSSHDService.exe
+taskkill /F /IM tftpd32.exe
+taskkill /F /IM tftpd32.exe
+taskkill /F /IM tftpd32.exe
+taskkill /F /IM tftpd32.exe
+
+
+:: starts the program without opening a new command window
+start "" "C:\Documents and Settings\Administrator\Desktop\FTPServer.exe"
+start "" "C:\software\freesshd\FreeSSHDService.exe"
+start "" "C:\software\tftpd32\tftpd32.exe"
+
+
+:: clears the screen again
+cls

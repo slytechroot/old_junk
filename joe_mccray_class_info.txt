@@ -1,0 +1,13 @@
+Advanced Pentester Night School: http://pastebin.com/qnmbj04M
+
+Advanced Web App Pentester Night School: http://pastebin.com/nVzsHCvJ
+
+Here are some sample web app penetration test reports from other companies that you can look at:
+
+https://s3.amazonaws.com/StrategicSec-Files/WebAppSampleReports.zip
+
+Static Malware Analysis: https://www.youtube.com/watch?v=bpbTUC6IjqY
+http://pastebin.com/QXURDzmA
+
+How To Build Your Own Low Cost HackLab : https://www.youtube.com/watch?v=UKH2AMXmhEg
+Shuttle "Whitebox" http://www.ryanbirk.com/the-perfect-vsphere-6-home-lab/

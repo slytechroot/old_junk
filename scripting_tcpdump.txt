@@ -1,0 +1,49 @@
+#!/bin/bash  
+
+
+
+#############################################
+# Check to see if script is running as root #
+#############################################
+if [ "$EUID" -ne 0 ]
+  then echo "Please run as root"
+  exit
+fi
+
+
+
+#################
+# Start TCPDump #
+#################
+
+#start tcpdump in the background and make sure NOT to record ssh traffic since we may be SSH'd into the host 
+
+# tcpdump -i eth0 -w /tmp/ScanResults/ecsa_net_scan.pcap &  
+
+
+
+if = ip link | awk -F: '$0 !~ "lo|vir|wl|^[^0-9]"{print $2;getline}'
+
+
+tcpdump -i $if -w /tmp/ScanResults/ecsa_net_scan.pcap &  
+
+#########################################################
+# Quick host discovery with propecia and scan with nmap #
+#########################################################
+cd ~/toolz
+mkdir -p /tmp/ScanResults
+./propecia 172.31.2 22 > /tmp/ScanResults/iplist.txt
+sudo /bin/bash
+for x in `cat /tmp/ScanResults/iplist.txt` ; do nmap -sS $x >> /tmp/ScanResults/sr.txt ; done
+cd /tmp/ScanResults/
+
+
+
+#############################################################################
+# Identify the PID of tcpdump and kill it now that we are finished scanning #
+#############################################################################
+pid=$(ps -e | pgrep tcpdump)  
+echo $pid  
+
+#interrupt it:  
+kill -2 $pid
