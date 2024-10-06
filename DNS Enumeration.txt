@@ -1,0 +1,30 @@
+2. DNS Enumer ation
+
+A (address)—Maps a host name to an I P address
+SOA (Start of Authority)—I dentifies the DNS server responsible for the domain information
+CNAME (canonical name)—Provides additional names or aliases for the address record
+MX (mail exchange)—I dentifies the mail server for the domain
+SRV (service)—I dentifies services such as direct ory services
+PTR (pointer)—Maps I P addresses to host names
+NS (name server)—I dentifies other name servers for the domain
+DNS Zone Transfer is typically used to replicate DNS data across a number of DNS servers, or to back up DNS files. A user or server will perform a specific zone transfer request from a ?name server.
+
+If the name server allows zone transfers to occur, all the DNS names and IP addresses hosted by the name server will be returned in human-readable ASCII text.
+
+./dnsenum.pl --enum -f dns.txt --update a -r testsite.com
+
+
+Fierce.pl:
+./ fierce.pl -dns testsoft.com
+
+Host Command:
+host -t ns test.com
+host -l site.com ns1.websitetest.com
+
+Dig Command:
+dig @mail.testsoft.com testsoft.com ns
+dig @mail.testsoft.com testsoft.com axfr
+
+
+
+
