@@ -1,0 +1,23 @@
+Try a ping sweep.
+nmap –sP –v [target range]
+
+Try a list scan.
+Nmap –sL –v [target range]
+
+Try a protocol scan.
+Nmap –sO –v [target IP]
+
+Try to verify services.
+Nmap –sV –v [target IP]
+
+Try a normal connect scan.
+Nmap –sT –v [target IP]
+
+Try a stealth scan.
+Nmap –sS –v [target IP]
+
+Try an inverse scan: Xmas.
+Nmap –sX –v [target IP]
+
+Try an inverse scan: NULL.
+Nmap –sN –v [target IP]

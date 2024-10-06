@@ -1,0 +1,49 @@
+Webapp penetration and database dumping
+
+SQLmap is a fantastic tool for finding SQL injections, manipulating database queries,
+and dumping databases. It is in combination next to what I use with Metasploit. I will first
+explain what a GET and POST parameters are to refresh your memory. In simpler terms a GET
+Method is requesting data from a specific resource and a POST method is submitting data to be
+processed to a specific recourse. Both methods travel within HTTP, although GET key pair
+values are within the URL and POST is in the data portion of the request itself. There are many
+other pros and cons to them but I will exploit both for a better example. Let’s start with
+exploitation of the GET parameter.
+
+Finding if the SQL inject is valid (the result will be the banner if valid).
+
+sqlmap –u http://site.com/info.php?user=test&pass=test –b
+
+
+Retrieving the database username:
+sqlmap –u http://site.com/info.php?user=test&pass=test –current-user
+
+
+Interactive shell
+sqlmap –u http://site.com/info.php?user=test&pass=test –os-shell
+
+
+If you are stuck with commands and you need help, you can always type sqlmap –wizzard.
+
+The –u signifies a valid URL if you didn’t catch on. Kim states “ If you need to test an
+authenticated SQLmap injection finding, log into the website via a browser and grab the cookie.
+Then you can define it using the data=[COOKIE] switch.”(Kim 70).
+Next, I will move onto using the POST method.
+
+Finding if an SQL inject is valid (the result will be in the banner if valid):
+
+sqlmap –u http://site.com/info.php --data=” user=test& pass=test” –b
+
+Retrieving the database username:
+sqlmap –u http://site.com/info.php --data=” user=test& pass=test” –-current-user
+
+
+Interactive shell:
+sqlmap –u http://site.com/info.php --data=” user=test& pass=test” –-os-shell
+
+SQL map has a collection of SQL injections build in. You may specify whether you want it to be
+a blind injection where the test may come out a little more harder but those are more frequent to
+catch or even a timed method were we send a wait command to the DB and time when the
+database responds back. If the response is slowed then we have successfully used injection. We
+are able to retrieve a lot out of this injection form what was stated. The shell is considered gold if
+you can get it. The other option besides SQLmap is SQLninja. You would use this because it
+may help evade IPS signatures that would possibly detect SQLmaps based injections.
