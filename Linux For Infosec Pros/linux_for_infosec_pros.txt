@@ -1,0 +1,1307 @@
+##############################
+# Linux For InfoSec Pros     # 
+# By Joe McCray              #
+##############################
+
+Here is the download link for the video of the morning session:
+https://s3.amazonaws.com/StrategicSec-Videos/_2015_4_18_rec-lw-us-9_233534_recording.mp4
+
+Here is the download link for the video of the afternoon session:
+https://s3.amazonaws.com/StrategicSec-Videos/_2015_4_18_rec-lw-us-4_233632_recording.mp4
+
+
+
+##########
+# VMWare #
+##########
+- For this workshop you'll need the latest version of VMWare Workstation (Windows), Fusion (Mac), or Player.
+
+- A 30-day trial of Workstation 11 can be downloaded from here:
+- https://my.vmware.com/web/vmware/info/slug/desktop_end_user_computing/vmware_workstation/11_0
+
+- A 30-day trial of Fusion 7 can be downloaded from here:
+- https://my.vmware.com/web/vmware/info/slug/desktop_end_user_computing/vmware_fusion/7_0
+
+- The newest version of VMWare Player can be downloaded from here:
+- https://my.vmware.com/web/vmware/free#desktop_end_user_computing/vmware_player/7_0
+
+
+- Although you can get the VM to run in VirtualBox, I will not be supporting this configuration for this class.
+
+
+##########################
+# Download the attack VM #
+##########################
+https://s3.amazonaws.com/StrategicSec-VMs/StrategicsecUbuntu14.zip
+user: strategicsec
+pass: strategicsec
+
+Here is a good set of slides for getting started with Linux:
+http://www.slideshare.net/olafusimichael/linux-training-24086319
+
+
+
+########################################
+# Boot up the StrategicSec Ubuntu host #
+# You can also boot up the Win7 as well# 
+########################################
+
+- Log in to your Ubuntu host with the following credentials:
+	user: strategicsec
+	pass: strategicsec
+
+
+
+- I prefer to use Putty to SSH into my Ubuntu host on pentests and I'll be teaching this class in the same manner that I do pentests.
+- You can download Putty from here:
+- http://the.earth.li/~sgtatham/putty/latest/x86/putty.exe
+
+
+- For the purpose of this workshop 192.168.230.128 is my Ubuntu IP address so anytime you see that IP you'll know that's my Ubuntu host
+
+
+
+########################
+# Basic Linux Commands #
+########################
+
+pwd
+
+whereis pwd
+
+which pwd
+
+sudo find / -name pwd
+
+/bin/pwd
+
+mkdir test
+
+cd test
+
+touch one two three
+
+ls -l t		(without pressing the Enter key, press the Tab key twice. What happens?)
+
+h		(and again without pressing the Enter key, press the Tab key twice. What happens?)
+
+Press the 'Up arrow key'	(What happens?)
+
+Press 'Ctrl-A'			(What happens?)
+
+ls
+
+clear				(What happens?)
+
+echo one > one
+
+cat one				(What happens?)
+
+man cat				(What happens?)
+	q
+
+cat two
+
+cat one > two
+
+cat two
+
+cat one two > three
+
+cat three
+
+echo four >> three
+
+cat three 			(What happens?)
+
+wc -l three
+
+man wc
+	q
+
+cat three | grep four
+
+cat three | grep one
+
+man grep
+	q
+
+
+sudo grep eth[01] /etc/*	(What happens?)
+
+cat /etc/iftab
+
+
+man ps
+	q
+
+ps
+
+ps aux
+
+ps aux | less
+
+Press the 'Up arrow key'	(What happens?)
+
+Press the 'Down arrow key'	(What happens?)
+	q
+
+top
+
+
+#########################################################################
+# What kind of Linux am I on and how can I find out? 			#
+# Great reference: 							#
+# https://blog.g0tmi1k.com/2011/08/basic-linux-privilege-escalation/ 	#
+#########################################################################
+What’s the distribution type? What version?
+-------------------------------------------
+cat /etc/issue
+cat /etc/*-release
+cat /etc/lsb-release      		# Debian based
+cat /etc/redhat-release   		# Redhat based
+
+
+
+What’s the kernel version? Is it 64-bit?
+-------------------------------------------
+cat /proc/version
+uname -a
+uname -mrs
+rpm -q kernel
+dmesg | grep Linux
+ls /boot | grep vmlinuz-
+
+
+
+What can be learnt from the environmental variables?
+----------------------------------------------------
+cat /etc/profile
+cat /etc/bashrc
+cat ~/.bash_profile
+cat ~/.bashrc
+cat ~/.bash_logout
+env
+set
+
+
+What services are running? Which service has which user privilege?
+------------------------------------------------------------------
+ps aux
+ps -ef
+top
+cat /etc/services
+
+
+Which service(s) are been running by root? Of these services, which are vulnerable - it’s worth a double check!
+---------------------------------------------------------------------------------------------------------------
+ps aux | grep root
+ps -ef | grep root
+
+
+
+What applications are installed? What version are they? Are they currently running?
+------------------------------------------------------------------------------------
+ls -alh /usr/bin/
+ls -alh /sbin/
+dpkg -l
+dpkg --get-selections | grep -v deinstall
+rpm -qa
+ls -alh /var/cache/apt/archives
+ls -alh /var/cache/yum/
+
+
+Any of the service(s) settings misconfigured? Are any (vulnerable) plugins attached?
+------------------------------------------------------------------------------------
+cat /etc/syslog.conf
+cat /etc/chttp.conf
+cat /etc/lighttpd.conf
+cat /etc/cups/cupsd.conf
+cat /etc/inetd.conf
+cat /etc/apache2/apache2.conf
+cat /etc/my.conf
+cat /etc/httpd/conf/httpd.conf
+cat /opt/lampp/etc/httpd.conf
+ls -aRl /etc/ | awk '$1 ~ /^.*r.*/
+
+
+
+What jobs are scheduled?
+------------------------
+crontab -l
+ls -alh /var/spool/cron
+ls -al /etc/ | grep cron
+ls -al /etc/cron*
+cat /etc/cron*
+cat /etc/at.allow
+cat /etc/at.deny
+cat /etc/cron.allow
+cat /etc/cron.deny
+cat /etc/crontab
+cat /etc/anacrontab
+cat /var/spool/cron/crontabs/root
+
+
+Any plain text usernames and/or passwords?
+------------------------------------------
+grep -i user [filename]
+grep -i pass [filename]
+grep -C 5 "password" [filename]
+find . -name "*.php" -print0 | xargs -0 grep -i -n "var $password"   		# Search for Joomla passwords
+
+
+What NIC(s) does the system have? Is it connected to another network?
+---------------------------------------------------------------------
+/sbin/ifconfig -a
+cat /etc/network/interfaces
+cat /etc/sysconfig/network
+
+
+What are the network configuration settings? What can you find out about this network? DHCP server? DNS server? Gateway?
+------------------------------------------------------------------------------------------------------------------------
+cat /etc/resolv.conf
+cat /etc/sysconfig/network
+cat /etc/networks
+iptables -L
+hostname
+dnsdomainname
+
+What other users & hosts are communicating with the system?
+-----------------------------------------------------------
+lsof -i
+lsof -i :80
+grep 80 /etc/services
+netstat -antup
+netstat -antpx
+netstat -tulpn
+chkconfig --list
+chkconfig --list | grep 3:on
+last
+w
+
+
+
+Whats cached? IP and/or MAC addresses
+-------------------------------------
+arp -e
+route
+/sbin/route -nee
+
+
+Who are you? Who is logged in? Who has been logged in? Who else is there? Who can do what?
+------------------------------------------------------------------------------------------
+id
+who
+w
+last
+cat /etc/passwd | cut -d:    # List of users
+grep -v -E "^#" /etc/passwd | awk -F: '$3 == 0 { print $1}'   # List of super users
+awk -F: '($3 == "0") {print}' /etc/passwd   # List of super users
+cat /etc/sudoers
+sudo -l
+
+
+
+What sensitive files can be found?
+----------------------------------
+cat /etc/passwd
+cat /etc/group
+cat /etc/shadow
+ls -alh /var/mail/
+
+
+
+Anything “interesting” in the home directorie(s)? If it’s possible to access
+----------------------------------------------------------------------------
+ls -ahlR /root/
+ls -ahlR /home/
+
+
+Are there any passwords in; scripts, databases, configuration files or log files? Default paths and locations for passwords
+---------------------------------------------------------------------------------------------------------------------------
+cat /var/apache2/config.inc
+cat /var/lib/mysql/mysql/user.MYD
+cat /root/anaconda-ks.cfg
+
+
+What has the user being doing? Is there any password in plain text? What have they been edting?
+-----------------------------------------------------------------------------------------------
+cat ~/.bash_history
+cat ~/.nano_history
+cat ~/.atftp_history
+cat ~/.mysql_history
+cat ~/.php_history
+
+
+
+What user information can be found?
+-----------------------------------
+cat ~/.bashrc
+cat ~/.profile
+cat /var/mail/root
+cat /var/spool/mail/root
+
+
+Can private-key information be found?
+-------------------------------------
+cat ~/.ssh/authorized_keys
+cat ~/.ssh/identity.pub
+cat ~/.ssh/identity
+cat ~/.ssh/id_rsa.pub
+cat ~/.ssh/id_rsa
+cat ~/.ssh/id_dsa.pub
+cat ~/.ssh/id_dsa
+cat /etc/ssh/ssh_config
+cat /etc/ssh/sshd_config
+cat /etc/ssh/ssh_host_dsa_key.pub
+cat /etc/ssh/ssh_host_dsa_key
+cat /etc/ssh/ssh_host_rsa_key.pub
+cat /etc/ssh/ssh_host_rsa_key
+cat /etc/ssh/ssh_host_key.pub
+cat /etc/ssh/ssh_host_key
+
+
+Any settings/files (hidden) on website? Any settings file with database information?
+------------------------------------------------------------------------------------
+ls -alhR /var/www/
+ls -alhR /srv/www/htdocs/
+ls -alhR /usr/local/www/apache22/data/
+ls -alhR /opt/lampp/htdocs/
+ls -alhR /var/www/html/
+
+
+Is there anything in the log file(s) (Could help with “Local File Includes”!)
+-----------------------------------------------------------------------------
+cat /etc/httpd/logs/access_log
+cat /etc/httpd/logs/access.log
+cat /etc/httpd/logs/error_log
+cat /etc/httpd/logs/error.log
+cat /var/log/apache2/access_log
+cat /var/log/apache2/access.log
+cat /var/log/apache2/error_log
+cat /var/log/apache2/error.log
+cat /var/log/apache/access_log
+cat /var/log/apache/access.log
+cat /var/log/auth.log
+cat /var/log/chttp.log
+cat /var/log/cups/error_log
+cat /var/log/dpkg.log
+cat /var/log/faillog
+cat /var/log/httpd/access_log
+cat /var/log/httpd/access.log
+cat /var/log/httpd/error_log
+cat /var/log/httpd/error.log
+cat /var/log/lastlog
+cat /var/log/lighttpd/access.log
+cat /var/log/lighttpd/error.log
+cat /var/log/lighttpd/lighttpd.access.log
+cat /var/log/lighttpd/lighttpd.error.log
+cat /var/log/messages
+cat /var/log/secure
+cat /var/log/syslog
+cat /var/log/wtmp
+cat /var/log/xferlog
+cat /var/log/yum.log
+cat /var/run/utmp
+cat /var/webmin/miniserv.log
+cat /var/www/logs/access_log
+cat /var/www/logs/access.log
+ls -alh /var/lib/dhcp3/
+ls -alh /var/log/postgresql/
+ls -alh /var/log/proftpd/
+ls -alh /var/log/samba/
+
+Note: auth.log, boot, btmp, daemon.log, debug, dmesg, kern.log, mail.info, mail.log, mail.warn, messages, syslog, udev, wtmp
+
+
+###########################
+# Target IP Determination #
+###########################
+- This portion starts the actual workshop content
+- Zone Transfer fails on most domains, but here is an example of one that works:
+dig axfr heartinternet.co.uk  @ns.heartinternet.co.uk
+
+
+- Usually you will need to do a DNS brute-force with something like blindcrawl or fierce
+perl blindcrawl.pl -d motorola.com
+	Look up the IP addresses at: 
+	http://www.networksolutions.com/whois/index.jsp
+
+
+- Note: If you are on a different machine and need to download blindcrawl can you download it this way:
+wget dl.packetstormsecurity.net/UNIX/scanners/blindcrawl.pl
+chmod +x blindcrawl.pl
+
+
+
+cd ~/toolz/fierce2
+sudo apt-get install -y cpanminus cpan-listchanges cpanoutdated libappconfig-perl libyaml-appconfig-perl libnetaddr-ip-perl libnet-cidr-perl vim subversion
+	strategicsec
+
+
+- Note: Only run this 'svn co' command below if you are NOT on the strategicsec VM:
+svn co https://svn.assembla.com/svn/fierce/fierce2/trunk/ fierce2/
+
+
+cd ~/toolz/fierce2
+wget http://search.cpan.org/CPAN/authors/id/A/AB/ABW/Template-Toolkit-2.14.tar.gz
+tar -zxvf Template-Toolkit-2.14.tar.gz
+cd Template-Toolkit-2.14/
+perl Makefile.PL
+	y
+	y
+	n
+	y
+sudo make install
+     strategicsec
+
+cd ..
+
+sudo bash install.sh
+     strategicsec
+
+./fierce
+
+./fierce -dns motorola.com
+
+cd ~/toolz/
+
+- Note: Only run these 'wget, gcc, chmod' commands below if you are NOT on the strategicsec VM:
+wget https://raw.githubusercontent.com/BenDrysdale/ipcrawl/master/ipcrawl.c
+gcc -o ipcrawl ipcrawl.c
+chmod +x ipcrawl
+
+
+
+- Here we do a forward lookup against an entire IP range. Basically take every IP in the range and see what it's hostname is
+cd ~/toolz/
+./ipcrawl 148.87.1.1 148.87.1.254				(DNS forward lookup against an IP range)
+
+
+sudo nmap -sL 148.87.1.0-255
+     strategicsec
+
+sudo nmap -sL 148.87.1.0-255 | grep oracle
+     strategicsec
+
+- Reference: http://blog.depthsecurity.com/2012/01/obtaining-hostdomain-names-through-ssl.html
+sudo nmap -p 443,444,8443,8080,8088 --script=ssl-cert --open 144.189.100.1-254
+     strategicsec
+	
+
+
+
+###########################
+# Load Balancer Detection #
+###########################
+
+- Here are some options to use for identifying load balancers:
+	- http://toolbar.netcraft.com/site_report/
+	- Firefox LiveHTTP Headers
+
+
+- Here are some command-line options to use for identifying load balancers:
+
+dig google.com
+
+cd ~/toolz
+./lbd-0.1.sh google.com
+
+
+halberd microsoft.com
+halberd motorola.com
+halberd oracle.com
+
+
+
+
+
+######################################
+# Web Application Firewall Detection #
+######################################
+
+cd ~/toolz/wafw00f
+python wafw00f.py http://www.oracle.com
+python wafw00f.py http://www.strategicsec.com
+
+
+cd ~/toolz/
+sudo nmap -p 80 --script http-waf-detect.nse oracle.com
+     strategicsec
+
+sudo nmap -p 80 --script http-waf-detect.nse healthcare.gov
+     strategicsec
+
+
+#########################
+# Playing with Nmap NSE #
+#########################
+
+nmap -Pn -p80 --script ip-geolocation-* strategicsec.com 
+
+nmap -p80 --script dns-brute strategicsec.com
+
+nmap --script http-robtex-reverse-ip secore.info
+
+nmap -Pn -p80 --script=http-headers strategicsec.com
+
+
+ls /usr/share/nmap/scripts | grep http
+nmap -Pn -p80 --script=http-* strategicsec.com
+
+############
+# Nmap NSE #
+############
+
+- Reference for this tutorial is:
+https://thesprawl.org/research/writing-nse-scripts-for-vulnerability-scanning/
+
+----------------------------------------------------------------------
+sudo vi /usr/share/nmap/scripts/intro-nse.nse
+     strategicsec
+
+
+
+-- The Head Section --
+-- The Rule Section --
+portrule = function(host, port)
+    return port.protocol == "tcp"
+            and port.number == 80
+            and port.state == "open"
+end
+
+-- The Action Section --
+action = function(host, port)
+    return "I love Linux!"
+end
+----------------------------------------------------------------------
+
+- Ok, now that we've made that change let's run the script
+sudo nmap --script=/usr/share/nmap/scripts/intro-nse.nse strategicsec.com -p 22,80,443
+
+
+
+
+
+
+----------------------------------------------------------------------
+sudo vi /usr/share/nmap/scripts/intro-nse.nse
+
+-- The Head Section --
+local shortport = require "shortport"
+
+-- The Rule Section --
+portrule = shortport.http
+
+
+-- The Action Section --
+action = function(host, port)
+    return "I still love Linux!"
+end
+----------------------------------------------------------------------
+
+- Ok, now that we've made that change let's run the script
+sudo nmap --script=/usr/share/nmap/scripts/intro-nse.nse strategicsec.com -p 22,80,443
+
+
+
+
+
+
+
+OK, now let's have some fun with my buddy Carlos Perez's website which you should have been looking at quite a lot if you were trying to get Ruby 2.1.5 working.
+ 
+----------------------------------------------------------------------
+sudo vi /usr/share/nmap/scripts/intro-nse.nse
+ 
+-- The Head Section --
+local shortport = require "shortport"
+local http = require "http"
+ 
+-- The Rule Section --
+portrule = shortport.http
+ 
+-- The Action Section --
+action = function(host, port)
+ 
+    local uri = "/installing-metasploit-in-ubunt/"
+    local response = http.get(host, port, uri)
+    return response.status
+ 
+end
+----------------------------------------------------------------------
+ 
+- Ok, now that we've made that change let's run the script
+sudo nmap --script=/usr/share/nmap/scripts/intro-nse.nse darkoperator.com -p 22,80,443
+ 
+ 
+ 
+ 
+----------------------------------------------------------------------
+sudo vi /usr/share/nmap/scripts/intro-nse.nse
+ 
+-- The Head Section --
+local shortport = require "shortport"
+local http = require "http"
+ 
+-- The Rule Section --
+portrule = shortport.http
+ 
+-- The Action Section --
+action = function(host, port)
+ 
+    local uri = "/installing-metasploit-in-ubunt/"
+    local response = http.get(host, port, uri)
+ 
+    if ( response.status == 200 ) then
+        return response.body
+    end
+ 
+end
+----------------------------------------------------------------------
+ 
+- Ok, now that we've made that change let's run the script
+sudo nmap --script=/usr/share/nmap/scripts/intro-nse.nse darkoperator.com -p 22,80,443
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+----------------------------------------------------------------------
+sudo vi /usr/share/nmap/scripts/intro-nse.nse
+ 
+-- The Head Section --
+local shortport = require "shortport"
+local http = require "http"
+local string = require "string"
+ 
+-- The Rule Section --
+portrule = shortport.http
+ 
+-- The Action Section --
+action = function(host, port)
+ 
+    local uri = "/installing-metasploit-in-ubunt/"
+    local response = http.get(host, port, uri)
+ 
+    if ( response.status == 200 ) then
+        local title = string.match(response.body, "Installing Metasploit in Ubuntu and Debian")
+        return title
+    end
+ 
+end
+----------------------------------------------------------------------
+ 
+- Ok, now that we've made that change let's run the script
+sudo nmap --script=/usr/share/nmap/scripts/intro-nse.nse darkoperator.com -p 22,80,443
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+----------------------------------------------------------------------
+sudo vi /usr/share/nmap/scripts/intro-nse.nse
+ 
+-- The Head Section --
+local shortport = require "shortport"
+local http = require "http"
+local string = require "string"
+ 
+-- The Rule Section --
+portrule = shortport.http
+ 
+-- The Action Section --
+action = function(host, port)
+ 
+    local uri = "/installing-metasploit-in-ubunt/"
+    local response = http.get(host, port, uri)
+ 
+    if ( response.status == 200 ) then
+        local title = string.match(response.body, "Installing Metasploit in Ubuntu and Debian")
+ 
+        if (title) then
+            return "Vulnerable"
+        else
+            return "Not Vulnerable"
+        end
+    end
+end
+ 
+----------------------------------------------------------------------
+ 
+- Ok, now that we've made that change let's run the script
+sudo nmap --script=/usr/share/nmap/scripts/intro-nse.nse darkoperator.com -p 22,80,443
+ 
+
+
+####################
+# Installing Scapy #
+####################
+
+sudo apt-get update 
+sudo apt-get install python-scapy python-pyx python-gnuplot
+
+
+- Reference Page For All Of The Commands We Will Be Running:
+http://samsclass.info/124/proj11/proj17-scapy.html
+
+
+
+
+
+- To run Scapy interactively
+
+	sudo scapy
+
+
+
+#####################################
+# Sending ICMPv4 Packets with scapy #
+#####################################
+
+- In the Linux machine, in the Terminal window, at the >>> prompt, type this command, and then press the Enter key:
+
+    i = IP() 
+
+
+
+
+- This creates an object named i of type IP. To see the properties of that object, use the display() method with this command:
+
+    i.display() 
+
+
+
+
+- Use these commands to set the destination IP address and display the properties of the i object again. Replace the IP address in the first command with the IP address of your target Windows machine:
+
+    i.dst="192.168.54.184"
+
+    i.display() 
+
+
+
+
+- Notice that scapy automatically fills in your machine's source IP address.
+
+- Use these commands to create an object named ic of type ICMP and display its properties:
+
+
+    ic = ICMP()
+
+    ic.display() 
+
+
+
+
+
+- Use this command to send the packet onto the network and listen to a single packet in response. Note that the third character is the numeral 1, not a lowercase L:
+
+    sr1(i/ic) 
+
+
+
+
+
+- This command sends and receives one packet, of type IP at layer 3 and ICMP at layer 4. 
+ 
+
+- The Padding section shows the portion of the packet that carries higher-level data. In this case it contains only zeroes as padding.
+
+- Use this command to send a packet that is IP at layer 3, ICMP at layer 4, and that contains data with your name in it (replace YOUR NAME with your own name):
+
+
+    sr1(i/ic/"YOUR NAME") 
+
+
+- You should see a reply with a Raw section containing your name.
+
+
+
+###################################
+# Sending a UDP Packet with Scapy #
+###################################
+
+
+- Preparing the Target
+$ ncat -ulvp 4444
+
+
+
+
+--open another terminal--
+In the Linux machine, in the Terminal window, at the >>> prompt, type these commands, and then press the Enter key:
+
+    u = UDP()
+
+    u.display() 
+
+
+
+- This creates an object named u of type UDP, and displays its properties.
+
+- Execute these commands to change the destination port to 4444 and display the properties again:
+
+    i.dst="192.168.54.184"				<--- replace this with a host that you can run netcat on (ex: another VM or your host computer)
+
+    u.dport = 4444
+
+    u.display() 
+
+
+
+- Execute this command to send the packet to the Windows machine:
+
+    send(i/u/"YOUR NAME SENT VIA UDP\n") 
+
+
+
+- On the Windows target, you should see the message appear
+
+
+p = sr1(IP(dst="8.8.8.8")/UDP()/DNS(rd=1,qd=DNSQR(qname="strategicsec.com")))
+
+
+p=sr(IP(dst="192.168.230.2")/TCP(dport=[23,80,53,443]))
+
+
+p=sr(IP(dst="192.168.230.2")/TCP(dport=[80]))
+
+
+traceroute (["strategicsec.com"], maxttl=20)
+	This is actually an ICMP & TCP traceroute, default destination is port 80
+
+
+traceroute (["strategicsec.com"], dport=443, maxttl=20)
+
+
+
+############################
+# Ping Sweeping with Scapy #
+############################
+
+----------------------------------------------------------------------
+vi scapy-pingsweep.py
+
+
+#!/usr/bin/python
+from scapy.all import *
+
+TIMEOUT = 2
+conf.verb = 0
+for ip in range(0, 256):
+    packet = IP(dst="192.168.1." + str(ip), ttl=20)/ICMP()
+    reply = sr1(packet, timeout=TIMEOUT)
+    if not (reply is None):
+         print reply.dst, "is online"
+    else:
+         print "Timeout waiting for %s" % packet[IP].dst
+----------------------------------------------------------------------
+
+
+###############################################
+# Checking out some scapy based port scanners #
+###############################################
+
+wget https://s3.amazonaws.com/SecureNinja/Python/rdp_scan.py
+
+cat rdp_scan.py
+
+sudo python rdp_scan.py 192.168.1.250
+
+
+
+Log in to your Ubuntu system with the username 'malware' and the password 'malware'.
+ 
+After logging please open a terminal window and type the following commands:
+ 
+cd Desktop/
+ 
+ 
+This is actual Malware (remmeber to run it in a VM - the password to extract it is 'infected':
+ 
+wget https://s3.amazonaws.com/StrategicSec-Files/MalwareAnalysis/malware-password-is-infected.zip
+wget http://www.beenuarora.com/code/analyse_malware.py
+ 
+unzip malware-password-is-infected.zip
+        infected
+ 
+file malware.exe
+ 
+mv malware.exe malware.pdf
+ 
+file malware.pdf
+ 
+mv malware.pdf malware.exe
+ 
+hexdump -n 2 -C malware.exe
+ 
+***What is '4d 5a' or 'MZ'***
+Reference: http://www.garykessler.net/library/file_sigs.html
+ 
+ 
+objdump -x malware.exe
+ 
+strings malware.exe
+ 
+strings --all malware.exe | head -n 6
+ 
+strings malware.exe | grep -i dll
+ 
+strings malware.exe | grep -i library
+ 
+strings malware.exe | grep -i reg
+ 
+strings malware.exe | grep -i hkey
+ 
+strings malware.exe | grep -i hku
+ 
+                                                        - We didn't see anything like HKLM, HKCU or other registry type stuff
+ 
+strings malware.exe | grep -i irc
+ 
+strings malware.exe | grep -i join                     
+ 
+strings malware.exe | grep -i admin
+ 
+strings malware.exe | grep -i list
+ 
+ 
+                                                        - List of IRC commands: https://en.wikipedia.org/wiki/List_of_Internet_Relay_Chat_commands
+sudo apt-get install -y python-pefile
+ 
+vi analyse_malware.py
+ 
+python analyse_malware.py malware.exe
+ 
+ 
+Here is a 2 million sample malware DB created by Derek Morton that you can use to start your DB with:
+http://derekmorton.name/files/malware_12-14-12.sql.bz2
+ 
+ 
+Malware Repositories:
+http://malshare.com/index.php
+http://www.malwareblacklist.com/
+http://www.virusign.com/
+http://virusshare.com/
+http://www.tekdefense.com/downloads/malware-samples/
+ 
+###############################
+# Creating a Malware Database #
+###############################
+ 
+Creating a malware database (sqlite)
+------------------------------------
+wget https://malwarecookbook.googlecode.com/svn/trunk/4/4/avsubmit.py
+wget https://s3.amazonaws.com/StrategicSec-Files/MalwareAnalysis/malware-password-is-infected.zip
+unzip malware-password-is-infected.zip
+        infected
+python avsubmit.py --init
+python avsubmit.py -f malware.exe -e
+ 
+ 
+ 
+ 
+ 
+Creating a malware database (mysql)
+-----------------------------------
+Step 1: Installing MySQL database
+Run the following command in the terminal:
+ 
+sudo apt-get install mysql-server
+         
+Step 2: Installing Python MySQLdb module
+Run the following command in the terminal:
+ 
+sudo apt-get build-dep python-mysqldb
+sudo apt-get install python-mysqldb
+ 
+Step 3: Logging in
+Run the following command in the terminal:
+ 
+mysql -u root -p                                        (set a password of 'malware')
+ 
+Then create one database by running following command:
+ 
+create database malware;
+ 
+ 
+ 
+wget https://raw.githubusercontent.com/dcmorton/MalwareTools/master/mal_to_db.py
+ 
+vi mal_to_db.py -i                      (fill in database connection information)
+ 
+python mal_to_db.py -i
+ 
+python mal_to_db.py -i -f malware.exe -u
+ 
+ 
+mysql -u root -p
+        malware
+ 
+mysql> use malware;
+ 
+select id,md5,sha1,sha256,time FROM files;
+ 
+mysql> quit;
+ 
+ 
+ 
+ 
+ 
+##############################
+# Lesson 32: Setting up Yara #
+##############################
+ 
+ 
+sudo apt-get install clamav clamav-freshclam
+ 
+sudo freshclam
+ 
+sudo Clamscan
+ 
+sudo apt-get install libpcre3 libpcre3-dev
+ 
+wget https://github.com/plusvic/yara/archive/v3.1.0.tar.gz
+ 
+wget http://yara-project.googlecode.com/files/yara-python-1.4.tar.gz
+ 
+tar -zxvf v3.1.0.tar.gz
+ 
+cd yara-3.1.0/
+ 
+./bootstrap.sh
+ 
+./configure
+ 
+make
+ 
+make check
+ 
+sudo make install
+ 
+cd yara-python/
+ 
+python setup.py build
+ 
+sudo python setup.py install
+ 
+cd ..
+ 
+yara -v
+ 
+wget https://malwarecookbook.googlecode.com/svn-history/r5/trunk/3/3/clamav_to_yara.py
+ 
+sigtool -u /var/lib/clamav/main.cvd
+ 
+python clamav_to_yara.py -f main.ndb -o clamav.yara
+ 
+wget https://s3.amazonaws.com/StrategicSec-Files/MalwareAnalysis/malware-password-is-infected.zip
+ 
+unzip malware-password-is-infected.zip
+        infected
+ 
+mkdir malcode/
+ 
+mv malware.exe malcode/
+ 
+vi testrule.yara
+----------------
+rule IsPE
+{
+meta:
+description = "Windows executable file"
+ 
+condition:
+// MZ signature at offset 0 and ...
+uint16(0) == 0x5A4D and
+// ... PE signature at offset stored in MZ header at 0x3C
+uint32(uint32(0x3C)) == 0x00004550
+}
+ 
+rule has_no_DEP
+{
+meta:
+description = "DEP is not enabled"
+ 
+condition:
+IsPE and
+uint16(uint32(0x3C)+0x5E) & 0x00100 == 0
+}
+ 
+rule has_no_ASLR
+{
+meta:
+description = "ASLR is not enabled"
+ 
+condition:
+IsPE and
+uint16(uint32(0x3C)+0x5E) & 0x0040 == 0
+}
+----------------
+ 
+ 
+yara testrule.yara malcode/malware.exe
+ 
+mkdir rules/
+ 
+cd rules/
+ 
+wget https://malwarecookbook.googlecode.com/svn-history/r5/trunk/3/5/capabilities.yara
+ 
+wget https://malwarecookbook.googlecode.com/svn-history/r5/trunk/3/6/magic.yara
+ 
+wget https://malwarecookbook.googlecode.com/svn-history/r5/trunk/3/4/packer.yara
+ 
+cd ..
+ 
+yara rules/ malcode/malware.exe
+ 
+wget https://github.com/Xen0ph0n/YaraGenerator/archive/master.zip
+ 
+unzip master.zip
+ 
+cd YaraGenerator-master/
+ 
+python yaraGenerator.py ../malcode/ -r Test-Rule-2 -a "Joe McCray" -d "Test Rule Made With Yara Generator" -t "TEST" -f "exe"
+ 
+cat Test-Rule-2.yar
+ 
+wget http://the.earth.li/~sgtatham/putty/latest/x86/putty.exe
+ 
+yara Test-Rule-2.yar putty.exe
+ 
+ 
+ 
+ 
+####################
+# Additional Tasks #
+####################
+ 
+- PE Scanner:
+https://malwarecookbook.googlecode.com/svn/trunk/3/8/pescanner.py
+http://www.beenuarora.com/code/analyse_malware.py
+ 
+- AV submission:
+http://malwarecookbook.googlecode.com/svn/trunk/4/4/avsubmit.py
+https://raw.githubusercontent.com/dcmorton/MalwareTools/master/vtsubmit.py
+ 
+- Malware Database Creation:
+https://raw.githubusercontent.com/dcmorton/MalwareTools/master/mal_to_db.py
+ 
+ 
+ 
+ 
+cd /home/malware/Desktop/Browser\ Forensics
+ 
+ls | grep pcap
+ 
+perl chaosreader.pl suspicious-time.pcap
+ 
+firefox index.html
+ 
+cat index.text | grep -v '"' | grep -oE "([0-9]+\.){3}[0-9]+.*\)"
+ 
+cat index.text | grep -v '"' | grep -oE "([0-9]+\.){3}[0-9]+.*\)" | awk '{print $4, $5, $6}' | sort | uniq -c | sort -nr
+ 
+sudo tshark -i eth0 -r suspicious-time.pcap -qz io,phs  
+ 
+ 
+ 
+ 
+for i in session_00[0-9]*.www.html; do srcip=`cat "$i" | grep 'www:\ ' | awk '{print $2}' |  cut -d ':' -f1`; dstip=`cat "$i" | grep 'www:\ ' | awk '{print $4}' |  cut -d ':' -f1`; host=`cat "$i" | grep 'Host:\ ' | sort -u | sed -e 's/Host:\ //g'`; echo "$srcip --> $dstip = $host";  done | sort -u
+ 
+ 
+tshark -r suspicious-time.pcap | grep 'NB.*20\>' | sed -e 's/<[^>]*>//g' | awk '{print $3,$4,$9}' | sort -u
+ 
+ 
+tshark -r suspicious-time.pcap | grep 'NB.*1e\>' | sed -e 's/<[^>]*>//g' | awk '{print $3,$4,$9}' | sort -u
+ 
+ 
+tshark -r suspicious-time.pcap arp | grep has | awk '{print $3," -> ",$9}' | tr -d '?'
+ 
+ 
+tshark –r suspicious-time.pcap -Tfields -e “eth.src” | sort | uniq
+ 
+ 
+tshark -r suspicious-time.pcap -R "browser.command==1" -Tfields -e "ip.src" -e "browser.server" | uniq
+ 
+tshark -r suspicious-time.pcap -Tfields -e "eth.src" | sort |uniq
+ 
+tshark -r suspicious-time.pcap -qz ip_hosts,tree
+ 
+tshark -r suspicious-time.pcap -R "http.request" -Tfields -e "ip.src" -e "http.user_agent" | uniq
+ 
+tshark -r suspicious-time.pcap -R "dns" -T fields -e "ip.src" -e "dns.flags.response" -e "dns.qry.name"
+ 
+ 
+whois rapidshare.com.eyu32.ru
+ 
+whois sploitme.com.cn
+ 
+ 
+ 
+ 
+ 
+tshark -r suspicious-time.pcap -R http.request  -T fields -e ip.src -e ip.dst -e http.host -e http.request.uri | awk '{print $1," -> ",$2, "\t: ","http://"$3$4}'
+ 
+tshark -r suspicious-time.pcap -R http.request  -T fields -e ip.src -e ip.dst -e http.host -e http.request.uri | awk '{print $1," -> ",$2, "\t: ","http://"$3$4}' | grep -v -e '\/image' -e '.css' -e '.ico' -e google -e 'honeynet.org'
+ 
+tshark -r suspicious-time.pcap -qz http_req,tree
+ 
+tshark -r suspicious-time.pcap -R "data-text-lines contains \"<script\"" -T fields -e frame.number -e ip.src -e ip.dst
+ 
+tshark -r suspicious-time.pcap -R http.request  -T fields -e ip.src -e ip.dst -e http.host -e http.request.uri | awk '{print $1," -> ",$2, "\t: ","http://"$3$4}' | grep -v -e '\/image' -e '.css' -e '.ico'  | grep 10.0.3.15 | sed -e 's/\?[^cse].*/\?\.\.\./g'
+ 
+ 
+ 
+ 
+ 
+cd /home/malware/Desktop/Banking\ Troubles/Volatility
+ 
+python volatility
+python volatility pslist -f ../hn_forensics.vmem
+python volatility connscan2 -f ../hn_forensics.vmem
+python volatility memdmp -p 888 -f ../hn_forensics.vmem
+python volatility memdmp -p 1752 -f ../hn_forensics.vmem
+                                ***Takes a few min***
+strings 1752.dmp | grep "^http://" | sort | uniq
+strings 1752.dmp | grep "Ahttps://" | uniq -u
+cd ..
+cd foremost-1.5.7/
+foremost -i ../Volatility/1752.dmp -t pdf -o output/pdf2
+cd /home/malware/Desktop/Banking\ Troubles/foremost-1.5.7/output/pdf2/
+cat audit.txt
+cd pdf
+ls
+grep -i javascript *.pdf
+ 
+ 
+ 
+cd /home/malware/Desktop/Banking\ Troubles/foremost-1.5.7/output/pdf5/pdf
+wget http://didierstevens.com/files/software/pdf-parser_V0_6_4.zip
+unzip pdf-parser_V0_6_4.zip
+python pdf-parser.py -s javascript --raw 00600328.pdf
+python pdf-parser.py --object 11 00600328.pdf
+python pdf-parser.py --object 1054 --raw --filter 00600328.pdf > malicious.js
+ 
+cat malicious.js
+ 
+ 
+*****Sorry - no time to cover javascript de-obfuscation today*****
+ 
+ 
+cd /home/malware/Desktop/Banking\ Troubles/Volatility/
+python volatility files -f ../hn_forensics.vmem > files
+cat files | less
+python volatility malfind -f ../hn_forensics.vmem -d out
+ls out/
+python volatility hivescan -f ../hn_forensics.vmem                                                                     
+python volatility printkey -o 0xe1526748 -f ../hn_forensics.vmem Microsoft "Windows NT" CurrentVersion Winlogon
+for file in $(ls *.dmp); do echo $file; strings $file | grep bankofamerica; done

