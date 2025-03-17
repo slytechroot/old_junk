@@ -1,0 +1,80 @@
+#############################
+# Simple Event Log Analysis #
+#############################
+
+Step 1: Dump the event logs
+---------------------------
+The first thing to do is to dump them into a format that facilitates later processing with Windows PowerShell.
+
+To dump the event log, you can use the Get-EventLog and the Exportto-Clixml cmdlets if you are working with a traditional event log such as the Security, Application, or System event logs. 
+If you need to work with one of the trace logs, use the Get-WinEvent and the ExportTo-Clixml cmdlets.
+
+Get-EventLog -LogName application | Export-Clixml Applog.xml
+
+type .\Applog.xml
+
+$logs = "system","application","security"
+
+The % symbol is an alias for the Foreach-Object cmdlet. It is often used when working interactively from the Windows PowerShell console
+
+$logs | % { get-eventlog -LogName $_ | Export-Clixml "$_.xml" }
+
+
+
+Step 2: Import the event log of interest
+----------------------------------------
+To parse the event logs, use the Import-Clixml cmdlet to read the stored XML files. 
+Store the results in a variable. 
+Let's take a look at the commandlets Where-Object, Group-Object, and Select-Object. 
+
+The following two commands first read the exported security log contents into a variable named $seclog, and then the five oldest entries are obtained.
+
+$seclog = Import-Clixml security.xml
+
+$seclog | select -Last 5
+
+
+Cool trick from one of our students named Adam. This command allows you to look at the logs for the last 24 hours:
+
+Get-EventLog Application -After (Get-Date).AddDays(-1)
+
+You can use '-after' and '-before' to filter date ranges
+
+One thing you must keep in mind is that once you export the security log to XML, it is no longer protected by anything more than the NFTS and share permissions that are assigned to the location where you store everything. 
+By default, an ordinary user does not have permission to read the security log. 
+
+
+Step 3: Drill into a specific entry
+-----------------------------------
+To view the entire contents of a specific event log entry, choose that entry, send the results to the Format-List cmdlet, and choose all of the properties. 
+
+
+$seclog | select -first 1 | fl *
+
+The message property contains the SID, account name, user domain, and privileges that are assigned for the new login. 
+
+
+($seclog | select -first 1).message
+
+(($seclog | select -first 1).message).gettype()
+
+
+
+In the *nix world you often want a count of something (wc -l). 
+How often is the SeSecurityPrivilege privilege mentioned in the message property? 
+To obtain this information, pipe the contents of the security log to a Where-Object to filter the events, and then send the results to the Measure-Object cmdlet to determine the number of events:
+
+$seclog | ? { $_.message -match 'SeSecurityPrivilege'} | measure
+
+If you want to ensure that only event log entries return that contain SeSecurityPrivilege in their text, use Group-Object to gather the matches by the EventID property. 
+
+
+$seclog | ? { $_.message -match 'SeSecurityPrivilege'} | group eventid
+
+Because importing the event log into a variable from the stored XML results in a collection of event log entries, it means that the count property is also present. 
+Use the count property to determine the total number of entries in the event log.
+
+$seclog.Count
+
+
+
