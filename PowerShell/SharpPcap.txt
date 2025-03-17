@@ -1,0 +1,21 @@
+#############
+# SharpPcap #
+#############
+
+Reference:
+http://poshcode.org/5374
+
+SharpPcap is a cross-platform packet capture framework for the .NET environment, based on the famous pcap / WinPcap libraries. It provides an API for capturing, injecting, analyzing and building packets using any .NET language such as C# and VB.NET.
+
+# First, you have to install WinPcap
+# http://www.winpcap.org/install/default.htm
+
+# Then, you have to download SharpPcap
+# http://sourceforge.net/projects/sharppcap/
+
+# And you need to import the assembly from wherever you put it
+Add-Type -Path C:\ps\SharpPcap-4.2.0.bin\SharpPcap-4.2.0\Release\SharpPcap.dll
+
+http://poshcode.org/get/5374
+
+(new-object System.Net.WebClient).DownloadFile("http://poshcode.org/get/5374", "c:\ps\SharpPcap.ps1")
