@@ -1,0 +1,69 @@
+####################################################################
+# Windows PowerShell: Extracting Strings Using Regular Expressions #
+####################################################################
+To build a script that will extract data from a text file and place the extracted text into another file, we need three main elements:
+
+1) The input file that will be parsed
+
+(new-object System.Net.WebClient).DownloadFile("http://pastebin.com/raw.php?i=rDN3CMLc", "c:\ps\emails.txt")
+(new-object System.Net.WebClient).DownloadFile("http://pastebin.com/raw.php?i=XySD8Mi2", "c:\ps\ip_addresses.txt")
+(new-object System.Net.WebClient).DownloadFile("http://pastebin.com/raw.php?i=v5Yq66sH", "c:\ps\URL_addresses.txt")
+
+2) The regular expression that the input file will be compared against
+
+3) The output file for where the extracted data will be placed.
+
+Windows PowerShell has a “select-string” cmdlet which can be used to quickly scan a file to see if a certain string value exists. 
+Using some of the parameters of this cmdlet, we are able to search through a file to see whether any strings match a certain pattern, and then output the results to a separate file.
+
+To demonstrate this concept, below is a Windows PowerShell script I created to search through a text file for strings that match the Regular Expression (or RegEx for short) pattern belonging to e-mail addresses.
+
+$input_path = ‘c:\ps\emails.txt’
+$output_file = ‘c:\ps\extracted_addresses.txt’
+$regex = ‘\b[A-Za-z0-9._%-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,4}\b’
+select-string -Path $input_path -Pattern $regex -AllMatches | % { $_.Matches } | % { $_.Value } > $output_file
+
+In this script, we have the following variables:
+
+1) $input_path to hold the path to the input file we want to parse
+
+2) $output_file to hold the path to the file we want the results to be stored in
+
+3) $regex to hold the regular expression pattern to be used when the strings are being matched.
+
+The select-string cmdlet contains various parameters as follows:
+
+1) “-Path” which takes as input the full path to the input file
+
+2) “-Pattern” which takes as input the regular expression used in the matching process
+
+3) “-AllMatches” which searches for more than one match (without this parameter it would stop after the first match is found) and is piped to “$.Matches” and then “$_.Value” which represent using the current values of all the matches.
+
+Using “>” the results are written to the destination specified in the $output_file variable.
+
+Here are two further examples of this script which incorporate a regular expression for extracting IP addresses and URLs.
+
+IP addresses
+------------
+For the purposes of this example, I ran the tracert command to trace the route from my host to google.com and saved the results into a file called ip_addresses.txt. You may choose to use this script for extracting IP addresses from router logs, firewall logs, debug logs, etc.
+
+$input_path = ‘c:\ps\ip_addresses.txt’
+$output_file = ‘c:\ps\extracted_ip_addresses.txt’
+$regex = ‘\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b’
+select-string -Path $input_path -Pattern $regex -AllMatches | % { $_.Matches } | % { $_.Value } > $output_file
+
+
+URLs
+----
+For the purposes of this example, I created a couple of dummy web server log entries and saved them into URL_addresses.txt. 
+You may choose to use this script for extracting URL addresses from proxy logs, network packet capture logs, debug logs, etc.
+
+$input_path = ‘c:\ps\URL_addresses.txt’
+$output_file = ‘c:\ps\extracted_URL_addresses.txt’
+$regex = ‘([a-zA-Z]{3,})://([\w-]+\.)+[\w-]+(/[\w- ./?%&=]*)*?’
+select-string -Path $input_path -Pattern $regex -AllMatches | % { $_.Matches } | % { $_.Value } > $output_file
+
+
+In addition to the examples above, many other types of strings can be extracted using this script. 
+All you need to do is switch the regular expression in the “$regex” variable! 
+In fact, the beauty of such a PowerShell script is its simplicity and speed of execution.
