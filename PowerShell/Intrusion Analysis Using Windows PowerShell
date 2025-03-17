@@ -1,0 +1,58 @@
+###############################################
+# Intrusion Analysis Using Windows PowerShell #
+###############################################
+
+Download sample file http://pastebin.com/raw.php?i=ysnhXxTV into the c:\ps directory
+
+
+
+
+
+(new-object System.Net.WebClient).DownloadFile("http://pastebin.com/raw.php?i=ysnhXxTV", "c:\ps\CiscoLogFileExamples.txt")
+
+Select-String 192.168.208.63 .\CiscoLogFileExamples.txt 
+
+
+
+
+The Select-String cmdlet searches for text and text patterns in input strings and files. You can use it like Grep in UNIX and Findstr in Windows.
+
+Select-String 192.168.208.63 .\CiscoLogFileExamples.txt | select line
+
+
+
+
+To see how many connections are made when analyzing a single host, the output from that can be piped to another command: Measure-Object.
+
+Select-String 192.168.208.63 .\CiscoLogFileExamples.txt | select line | Measure-Object
+
+
+
+To select all IP addresses in the file expand the matches property, select the value, get unique values and measure the output. 
+
+Select-String “\b(?:\d{1,3}\.){3}\d{1,3}\b” .\CiscoLogFileExamples.txt | select -ExpandProperty matches | select -ExpandProperty value | Sort-Object -Unique | Measure-Object
+
+
+
+Removing Measure-Object shows all the individual IPs instead of just the count of the IP addresses. The Measure-Object command counts the IP addresses. 
+
+Select-String “\b(?:\d{1,3}\.){3}\d{1,3}\b” .\CiscoLogFileExamples.txt | select -ExpandProperty matches | select -ExpandProperty value | Sort-Object -Unique
+
+
+In order to determine which IP addresses have the most communication the last commands are removed to determine the value of the matches. Then the group command is issued on the piped output to group all the IP addresses (value), and then sort the objects by using the alias for Sort-Object: sort count –des.
+This sorts the IP addresses in a descending pattern as well as count and deliver the output to the shell.
+
+Select-String “\b(?:\d{1,3}\.){3}\d{1,3}\b” .\CiscoLogFileExamples.txt | select -ExpandProperty matches | select value | group value | sort count -des
+
+
+
+
+This will get the setting for logs in the windows firewall which should be enabled in GPO policy for analysis. 
+The command shows that the Firewall log is at:
+%systemroot%\system32\LogFiles\Firewall\pfirewall.log, in order to open the file PowerShell will need to be run with administrative privileges.
+
+
+First step is to get the above command into a variable using script logic.
+Thankfully PowerShell has a built-in integrated scripting environment, PowerShell.ise. 
+
+netsh advfirewall show allprofiles | Select-String FileName | select -ExpandProperty line | Select-String “%systemroot%.+\.log" | select -ExpandProperty matches | select -ExpandProperty value | sort –uniq
