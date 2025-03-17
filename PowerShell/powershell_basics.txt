@@ -1,0 +1,79 @@
+#####################
+# Powershell Basics #
+#####################
+
+PowerShell is Microsoft’s new scripting language that has been built in since the release Vista. 
+
+PowerShell file extension end in .ps1 . 
+
+An important note is that you cannot double click on a PowerShell script to execute it. 
+
+To open a PowerShell command prompt either hit Windows Key + R and type in PowerShell or Start -> All Programs -> Accessories -> Windows PowerShell -> Windows PowerShell.
+
+dir 
+cd 
+ls
+cd c:\
+
+
+To obtain a list of cmdlets, use the Get-Command cmdlet
+
+Get-Command
+ 
+
+
+You can use the Get-Alias cmdlet to see a full list of aliased commands.
+
+Get-Alias
+
+
+
+Don't worry you won't blow up your machine with Powershell
+Get-Process | stop-process 				What will this command do?
+Get-Process | stop-process -whatif
+
+
+To get help with a cmdlet, use the Get-Help cmdlet along with the cmdlet you want information about.
+
+Get-Help Get-Command
+
+Get-Help Get-Service –online
+
+Get-Service -Name TermService, Spooler
+
+Get-Service –N BITS
+
+Start-Transcript 
+
+PowerShell variables begin with the $ symbol. First lets create a variable
+
+$serv = Get-Service –N Spooler
+
+To see the value of a variable you can just call it in the terminal.
+
+$serv
+
+$serv.gettype().fullname
+ 
+
+Get-Member is another extremely useful cmdlet that will enumerate the available methods and properties of an object. You can pipe the object to Get-Member or pass it in
+
+$serv | Get-Member
+
+Get-Member -InputObject $serv
+
+
+Let’s use a method and a property with our object. 
+
+$serv.Status
+$serv.Stop()
+$serv.Refresh()
+$serv.Status
+$serv.Start()
+$serv.Refresh()
+$serv.Status
+ 
+
+
+
+Methods can return properties and properties can have sub properties. You can chain them together by appending them to the first call.
