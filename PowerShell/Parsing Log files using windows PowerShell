@@ -1,0 +1,34 @@
+##############################################
+# Parsing Log files using windows PowerShell #
+##############################################
+
+Download the sample IIS log http://pastebin.com/LBn64cyA 
+
+
+(new-object System.Net.WebClient).DownloadFile("http://pastebin.com/raw.php?i=LBn64cyA", "c:\ps\u_ex1104.log")
+
+Get-Content ".\*log" | ? { ($_ | Select-String "WebDAV")}  
+
+
+
+The above command would give us all the WebDAV requests.
+
+To filter this to a particular user name, use the below command:
+
+Get-Content ".\*log" | ? { ($_ | Select-String "WebDAV") -and ($_ | Select-String "OPTIONS")}  
+
+ 
+
+Some more options that will be more commonly required : 
+
+For Outlook Web Access : Replace WebDAV with OWA 
+
+For EAS : Replace WebDAV with Microsoft-server-activesync 
+
+For ECP : Replace WebDAV with ECP
+
+ 
+
+To find out the count of the EWS request we can go ahead and run the below command
+
+(Get-Content ".\*log" | ? { ($_ | Select-String "WebDAV") -and ($_ | Select-String "Useralias")}).count
