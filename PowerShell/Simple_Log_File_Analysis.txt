@@ -1,0 +1,11 @@
+############################
+# Simple Log File Analysis #
+############################
+
+You'll need to create the directory c:\ps and download sample iss log https://github.com/slytechroot/old_junk/blob/main/PowerShell/for_simple_log_file_analysis.txt
+
+
+mkdir c:\ps
+cd c:\ps
+(new-object System.Net.WebClient).DownloadFile("https://github.com/slytechroot/old_junk/blob/main/PowerShell/for_simple_log_file_analysis.txt", "c:\ps\u_ex1104.log")
+
