@@ -1,0 +1,48 @@
+#################################
+# Packet Sniffer For Powershell #
+#################################
+
+Reference:
+http://poshcode.org/764
+http://blog.robbiefoust.com/?p=68
+http://blog.robbiefoust.com/?p=9
+
+I was looking for a Powershell script that would capture raw IP packets on the network and shove them into an object, but the only one I was able to find was a commercial cmdlet that was out of my budget. So, I decided that I would attempt to write my own. I figured it would be a great learning exercise (and it was), but I went into the project with the goal of avoiding any 3rd party software, to avoid compiling anything (like a cmdlet written in C#), and I didn’t want to install a driver shim. In other words, I wanted a plain ‘ol script that could be run on any computer.
+
+I basically spent a lot of time googling and I got a lot of help from the guys over in the #Powershell IRC channel (irc.freenode.net). All of that combined with trial-and-error, I give you…. *drumroll* get-packet.ps1.
+
+The script recognizes IPv4 TCP, UDP, ICMP, and IGMP packets (for now). The thing that took me the longest amount of time trying to figure out was how to get all packets that the network card was seeing on the wire, not just packets destined for my IP address and a particular port number. The solution was hard to find but wasn’t terribly difficult to understand.
+
+# Create a new socket... SocketType should be Raw, and ProtocolType must be IP for promiscuous mode.
+$socket = new-object system.net.sockets.socket([Net.Sockets.AddressFamily]::InterNetwork,[Net.Sockets.SocketType]::Raw,[Net.Sockets.ProtocolType]::IP)
+
+# Include the IP header so we get the full packet
+$socket.setsocketoption("IP","HeaderIncluded",$true)
+
+# bind to a local IP address$ipendpoint = new-object system.net.ipendpoint([net.ipaddress]"$localIP",0)$socket.bind($ipendpoint)
+
+# this switches the NIC driver into promiscuous mode.  This requires admin rights.
+[void]$socket.iocontrol([net.sockets.iocontrolcode]::ReceiveAll,$byteIn,$byteOut)
+I read somewhere that .net sockets really just uses winsock under the hood, so it really helped my understanding to read both the winsock and dotnet documentation regarding sockets on msdn. I won’t bother repeating what that documentation says here but if you’re trying to decypher this script and can’t quite figure it out, feel free to ask questions and I’ll try to explain.
+
+Something else that I probably knew at one point but had since forgotten was that the byte order on the network wire is reversed. On the wire it is “Big Endian” and on the PC it is “Little Endian.” Wikipedia has a great explanation on Endianness. Figuring out how to interpret the IP packets was the next biggest time suck and endianness was a large part of it. Once I realized that NetworkToHostOrder didn’t support unsigned ints, I simply wrote a few functions to reverse the byte order (from “Network” to “Host”) and used BitConverter to return the correct data type.
+
+# Takes a 2 byte array, switches it from big endian to little endian, and converts it to uint16.
+function NetworkToHostUInt16 ($value) { [Array]::Reverse($value) [BitConverter]::ToUInt16($value,0) }
+
+# Takes a 4 byte array, switches it from big endian to little endian, and converts it to uint32.
+function NetworkToHostUInt32 ($value) { [Array]::Reverse($value) [BitConverter]::ToUInt32($value,0) }
+
+# Takes a byte array, switches it from big endian to little endian, and converts it to a string.
+function ByteToString ($value) { $AsciiEncoding = new-object system.text.asciiencoding $AsciiEncoding.GetString($value) }
+After getting all the data out of the packets, I shove the ones I really want into a psobject. When running the script, it will be visually more appealing if you pipe the output to format-table.
+
+PS C:\> ./get-packet.ps1 | ft
+There are a lot more protocol types that I could be looking for, and I’ll probably add some of the more common ones eventually. I’ve also looked into adding support to export and import the libpcap file format, but after looking at the libpcap source code, there’s a lot of ugly in there that I might just avoid for now.
+
+quick way to done this is
+
+(new-object System.Net.WebClient).DownloadFile("http://poshcode.org/get/764", "c:\ps\get-packet.ps1")
+PS C:\> ./get-packet.ps1 | ft
+
+try to open some web page
