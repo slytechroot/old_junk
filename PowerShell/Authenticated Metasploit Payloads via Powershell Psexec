@@ -1,0 +1,22 @@
+#########################################################
+#Authenticated Metasploit Payloads via Powershell Psexec#
+#########################################################
+
+Reference:
+http://securitypadawan.blogspot.com/2013/07/authenticated-metasploit-payloads-via.html
+
+I love powershell and in a windows environment, powershell is king. Add the ability to perform native code injection and sprinkle in some metasploit and the possibilities are endless. There is a really awesome collection of tools called Powersploit by @mattifestation . These are powershell scripts that take advantage of "features" of powershell to do some cool stuff.
+
+@obscuresec is also a contributor to the powersploit project, and not too long ago he had a really cool blog post detailing one way to execute a meterpreter payload within a powershell process. I thought this idea was really cool so I decided to try and take a stab at writing a metasploit module that implements a slightly modified version of this technique.
+
+Many times in a penetration test I find myself having valid credentials to a target machine, but my payload keeps getting busted when I try and upgrade my shell to meterpreter.
+
+This module allows you to use metasploit's existing powershell encoded payloads, or you can specify a file to use that contains a powershell script (such as powersploit) that will be executed on the target machine within the powershell process using the LPATH variable.
+
+At the very minimum, will need to set the LHOST, RHOST, ARCH, SMBUSER and SMBPASS variables.
+
+And if all goes as planned...
+
+Also we can see that the only thing spawned on the target machine is one powershell process:
+
+You can find the module on github https://github.com/jakxx/metasploit-framework/blob/powershell_psexec/modules/exploits/windows/powershell/powershell_psexec.rb.
